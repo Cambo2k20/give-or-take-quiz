@@ -383,7 +383,7 @@ const populationAndHistoryQuestions: readonly Question[] = [
     prompt:
       "What was Phoenix's population in the 2020 U.S. Census, counting the city proper within its legal boundaries (not the metro area)?",
     answer: 1_608_139,
-    min: 100_000,
+    min: 700_000,
     max: 10_000_000,
     scale: "log",
     unit: "people",
@@ -402,7 +402,7 @@ const populationAndHistoryQuestions: readonly Question[] = [
     prompt:
       "What was Philadelphia's population in the 2020 U.S. Census, counting the city proper within its legal boundaries (not the metro area)?",
     answer: 1_603_797,
-    min: 100_000,
+    min: 700_000,
     max: 10_000_000,
     scale: "log",
     unit: "people",
@@ -421,7 +421,7 @@ const populationAndHistoryQuestions: readonly Question[] = [
     prompt:
       "What was San Antonio's population in the 2020 U.S. Census, counting the city proper within its legal boundaries (not the metro area)?",
     answer: 1_434_625,
-    min: 100_000,
+    min: 700_000,
     max: 10_000_000,
     scale: "log",
     unit: "people",
@@ -440,7 +440,7 @@ const populationAndHistoryQuestions: readonly Question[] = [
     prompt:
       "What was San Diego's population in the 2020 U.S. Census, counting the city proper within its legal boundaries (not the metro area)?",
     answer: 1_386_932,
-    min: 100_000,
+    min: 700_000,
     max: 10_000_000,
     scale: "log",
     unit: "people",
@@ -459,7 +459,7 @@ const populationAndHistoryQuestions: readonly Question[] = [
     prompt:
       "What was Dallas' population in the 2020 U.S. Census, counting the city proper within its legal boundaries (not the metro area)?",
     answer: 1_304_379,
-    min: 100_000,
+    min: 700_000,
     max: 10_000_000,
     scale: "log",
     unit: "people",
@@ -478,8 +478,8 @@ const populationAndHistoryQuestions: readonly Question[] = [
     prompt:
       "What was San Jose's population in the 2020 U.S. Census, counting the city proper within its legal boundaries (not the metro area)?",
     answer: 1_013_240,
-    min: 100_000,
-    max: 10_000_000,
+    min: 300_000,
+    max: 8_000_000,
     scale: "log",
     unit: "people",
     referenceYear: "2020 decennial census (city proper)",
@@ -497,8 +497,8 @@ const populationAndHistoryQuestions: readonly Question[] = [
     prompt:
       "What was Austin's population in the 2020 U.S. Census, counting the city proper within its legal boundaries (not the metro area)?",
     answer: 961_855,
-    min: 100_000,
-    max: 10_000_000,
+    min: 300_000,
+    max: 8_000_000,
     scale: "log",
     unit: "people",
     referenceYear: "2020 decennial census (city proper)",
@@ -516,8 +516,8 @@ const populationAndHistoryQuestions: readonly Question[] = [
     prompt:
       "What was Jacksonville's population in the 2020 U.S. Census, counting the consolidated city proper within its legal boundaries (not the metro area)?",
     answer: 949_611,
-    min: 100_000,
-    max: 10_000_000,
+    min: 300_000,
+    max: 8_000_000,
     scale: "log",
     unit: "people",
     referenceYear: "2020 decennial census (consolidated city proper)",
@@ -535,8 +535,8 @@ const populationAndHistoryQuestions: readonly Question[] = [
     prompt:
       "What was Fort Worth's population in the 2020 U.S. Census, counting the city proper within its legal boundaries (not the metro area)?",
     answer: 918_915,
-    min: 100_000,
-    max: 10_000_000,
+    min: 300_000,
+    max: 8_000_000,
     scale: "log",
     unit: "people",
     referenceYear: "2020 decennial census (city proper)",
@@ -554,8 +554,8 @@ const populationAndHistoryQuestions: readonly Question[] = [
     prompt:
       "What was Columbus, Ohio's population in the 2020 U.S. Census, counting the city proper within its legal boundaries (not the metro area)?",
     answer: 905_748,
-    min: 100_000,
-    max: 10_000_000,
+    min: 300_000,
+    max: 8_000_000,
     scale: "log",
     unit: "people",
     referenceYear: "2020 decennial census (city proper)",
@@ -573,8 +573,8 @@ const populationAndHistoryQuestions: readonly Question[] = [
     prompt:
       "What was Charlotte's population in the 2020 U.S. Census, counting the city proper within its legal boundaries (not the metro area)?",
     answer: 874_579,
-    min: 100_000,
-    max: 10_000_000,
+    min: 300_000,
+    max: 8_000_000,
     scale: "log",
     unit: "people",
     referenceYear: "2020 decennial census (city proper)",
@@ -625,8 +625,8 @@ const populationAndHistoryQuestions: readonly Question[] = [
     subtype: "event",
     prompt: "In what year did Constantinople fall to the Ottoman Empire?",
     answer: 1453,
-    min: 1000,
-    max: 2025,
+    min: 800,
+    max: 1800,
     scale: "linear",
     unit: "year",
     source: {
@@ -643,8 +643,8 @@ const populationAndHistoryQuestions: readonly Question[] = [
     prompt:
       "In what year did Christopher Columbus' first voyage reach the Caribbean?",
     answer: 1492,
-    min: 1000,
-    max: 2025,
+    min: 800,
+    max: 1800,
     scale: "linear",
     unit: "year",
     source: {
@@ -661,8 +661,8 @@ const populationAndHistoryQuestions: readonly Question[] = [
     prompt:
       "In what year did Martin Luther circulate the Ninety-five Theses?",
     answer: 1517,
-    min: 1000,
-    max: 2025,
+    min: 850,
+    max: 1850,
     scale: "linear",
     unit: "year",
     source: {
@@ -678,8 +678,8 @@ const populationAndHistoryQuestions: readonly Question[] = [
     subtype: "event",
     prompt: "In what year did the Spanish Armada campaign take place?",
     answer: 1588,
-    min: 1000,
-    max: 2025,
+    min: 900,
+    max: 1900,
     scale: "linear",
     unit: "year",
     source: {
@@ -695,8 +695,8 @@ const populationAndHistoryQuestions: readonly Question[] = [
     subtype: "event",
     prompt: "In what year was the Gunpowder Plot uncovered?",
     answer: 1605,
-    min: 1000,
-    max: 2025,
+    min: 950,
+    max: 1950,
     scale: "linear",
     unit: "year",
     source: {
@@ -713,8 +713,8 @@ const populationAndHistoryQuestions: readonly Question[] = [
     prompt:
       "In what year was Jamestown, the first permanent English settlement in North America, founded?",
     answer: 1607,
-    min: 1000,
-    max: 2025,
+    min: 950,
+    max: 1950,
     scale: "linear",
     unit: "year",
     source: {
@@ -731,8 +731,8 @@ const populationAndHistoryQuestions: readonly Question[] = [
     prompt:
       "In what year did the Mayflower settlers establish Plymouth Colony?",
     answer: 1620,
-    min: 1000,
-    max: 2025,
+    min: 950,
+    max: 1950,
     scale: "linear",
     unit: "year",
     source: {
