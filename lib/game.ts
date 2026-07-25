@@ -1,13 +1,34 @@
 import { questions } from "./questions";
-import type { GameMode, Question } from "./types";
+import type {
+  GameMode,
+  Question,
+  QuestionCategory,
+  QuestionUnit,
+} from "./types";
 
 export const STORAGE_KEY = "close-enough:v1";
+
+export const QUESTIONS_PER_GAME = 10;
+
+/** Every mode that draws from a single category, in mode-chooser order. */
+export const CATEGORIES: readonly QuestionCategory[] = [
+  "population",
+  "history",
+  "size",
+  "quantity",
+  "physics",
+];
+
+export const GAME_MODES: readonly GameMode[] = [...CATEGORIES, "mixed"];
 
 export type BestScores = Record<GameMode, number>;
 
 const EMPTY_BEST_SCORES: BestScores = {
   population: 0,
   history: 0,
+  size: 0,
+  quantity: 0,
+  physics: 0,
   mixed: 0,
 };
 
@@ -74,10 +95,46 @@ export function formatYear(value: number): string {
   return `${value} CE`;
 }
 
+/**
+ * Appended after the formatted number. Empty where the prompt already names
+ * what is being counted (`people`, `count`) or the formatter supplies its own
+ * wording (`year`, `usd`).
+ */
+const UNIT_SUFFIXES: Record<QuestionUnit, string> = {
+  people: "",
+  year: "",
+  count: "",
+  usd: "",
+  percent: "%",
+  metre: " m",
+  kilometre: " km",
+  "square-kilometre": " km²",
+  kilogram: " kg",
+  tonne: " tonnes",
+  second: " seconds",
+  minute: " minutes",
+  hour: " hours",
+  day: " days",
+  "duration-year": " years",
+  kph: " km/h",
+  celsius: " °C",
+};
+
+// Sliders only ever emit whole numbers, but a stored answer may be fractional.
+const UNIT_FRACTION_DIGITS: Partial<Record<QuestionUnit, number>> = {
+  percent: 1,
+  celsius: 1,
+};
+
 export function formatQuestionValue(question: Question, value: number): string {
-  return question.unit === "year"
-    ? formatYear(value)
-    : new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 }).format(value);
+  if (question.unit === "year") return formatYear(value);
+
+  const formatted = new Intl.NumberFormat("en-GB", {
+    maximumFractionDigits: UNIT_FRACTION_DIGITS[question.unit] ?? 0,
+  }).format(value);
+
+  if (question.unit === "usd") return `$${formatted}`;
+  return `${formatted}${UNIT_SUFFIXES[question.unit]}`;
 }
 
 function shuffled<T>(items: readonly T[], rng: () => number): T[] {
@@ -89,31 +146,26 @@ function shuffled<T>(items: readonly T[], rng: () => number): T[] {
   return copy;
 }
 
+function byCategory(category: QuestionCategory): Question[] {
+  return questions.filter((question) => question.category === category);
+}
+
 export function selectQuestions(
   mode: GameMode,
   rng: () => number = Math.random,
 ): Question[] {
-  const population = questions.filter(
-    (question) => question.category === "population",
-  );
-  const history = questions.filter(
-    (question) => question.category === "history",
-  );
-
   if (mode === "mixed") {
+    // An even draw from every category, so no one topic dominates a round.
+    const perCategory = Math.floor(QUESTIONS_PER_GAME / CATEGORIES.length);
     return shuffled(
-      [
-        ...shuffled(population, rng).slice(0, 5),
-        ...shuffled(history, rng).slice(0, 5),
-      ],
+      CATEGORIES.flatMap((category) =>
+        shuffled(byCategory(category), rng).slice(0, perCategory),
+      ),
       rng,
     );
   }
 
-  return shuffled(
-    mode === "population" ? population : history,
-    rng,
-  ).slice(0, 10);
+  return shuffled(byCategory(mode), rng).slice(0, QUESTIONS_PER_GAME);
 }
 
 export function readBestScores(storage?: StorageLike | null): BestScores {
@@ -126,21 +178,22 @@ export function readBestScores(storage?: StorageLike | null): BestScores {
     if (!raw) return { ...EMPTY_BEST_SCORES };
     const stored = JSON.parse(raw) as {
       version?: number;
-      bestScores?: Partial<BestScores>;
+      bestScores?: Partial<Record<GameMode, unknown>>;
     };
-    if (
-      stored.version !== 1 ||
-      typeof stored.bestScores?.population !== "number" ||
-      typeof stored.bestScores?.history !== "number" ||
-      typeof stored.bestScores?.mixed !== "number"
-    ) {
+    if (stored.version !== 1 || !stored.bestScores) {
       return { ...EMPTY_BEST_SCORES };
     }
-    return {
-      population: stored.bestScores.population,
-      history: stored.bestScores.history,
-      mixed: stored.bestScores.mixed,
-    };
+
+    // Each mode is read independently so a record written before a mode
+    // existed keeps its other scores instead of resetting the lot.
+    const scores = { ...EMPTY_BEST_SCORES };
+    for (const mode of GAME_MODES) {
+      const value = stored.bestScores[mode];
+      if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
+        scores[mode] = value;
+      }
+    }
+    return scores;
   } catch {
     return { ...EMPTY_BEST_SCORES };
   }

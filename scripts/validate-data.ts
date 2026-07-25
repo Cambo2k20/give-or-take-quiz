@@ -1,5 +1,9 @@
 import { questions } from "../lib/questions";
-import type { QuestionSubtype } from "../lib/types";
+import type {
+  QuestionCategory,
+  QuestionSubtype,
+  QuestionUnit,
+} from "../lib/types";
 
 const errors: string[] = [];
 const ids = new Set<string>();
@@ -7,6 +11,46 @@ const counts: Record<QuestionSubtype, number> = {
   country: 0,
   city: 0,
   event: 0,
+  length: 0,
+  area: 0,
+  mass: 0,
+  count: 0,
+  percentage: 0,
+  money: 0,
+  duration: 0,
+  speed: 0,
+  temperature: 0,
+};
+
+/** Every subtype belongs to exactly one category and one set of units. */
+const SUBTYPE_RULES: Record<
+  QuestionSubtype,
+  { category: QuestionCategory; units: readonly QuestionUnit[] }
+> = {
+  country: { category: "population", units: ["people"] },
+  city: { category: "population", units: ["people"] },
+  event: { category: "history", units: ["year"] },
+  length: { category: "size", units: ["metre", "kilometre"] },
+  area: { category: "size", units: ["square-kilometre"] },
+  mass: { category: "size", units: ["kilogram", "tonne"] },
+  count: { category: "quantity", units: ["count"] },
+  percentage: { category: "quantity", units: ["percent"] },
+  money: { category: "quantity", units: ["usd"] },
+  duration: {
+    category: "physics",
+    units: ["second", "minute", "hour", "day", "duration-year"],
+  },
+  speed: { category: "physics", units: ["kph"] },
+  temperature: { category: "physics", units: ["celsius"] },
+};
+
+/** Minimum records per category, so every mode can deal a full round. */
+const MINIMUM_PER_CATEGORY: Record<QuestionCategory, number> = {
+  population: 30,
+  history: 30,
+  size: 30,
+  quantity: 30,
+  physics: 30,
 };
 
 const report = (id: string, message: string) => {
@@ -109,19 +153,60 @@ for (const question of questions) {
       report(question.id, "history year sliders must use a linear scale");
     }
   }
+
+  const rule = SUBTYPE_RULES[question.subtype];
+  if (rule) {
+    if (question.category !== rule.category) {
+      report(
+        question.id,
+        `subtype ${question.subtype} belongs to the ${rule.category} category`,
+      );
+    }
+    if (!rule.units.includes(question.unit)) {
+      report(
+        question.id,
+        `subtype ${question.subtype} cannot use the ${question.unit} unit`,
+      );
+    }
+  }
+
+  // A percentage slider that does not span 0-100 misrepresents the quantity.
+  if (question.subtype === "percentage") {
+    if (question.min !== 0 || question.max !== 100) {
+      report(question.id, "percentage sliders must span 0 to 100");
+    }
+  }
+
+  // Every money question is a historical figure, so it must say which year.
+  if (question.subtype === "money" && !question.referenceYear) {
+    report(question.id, "money questions require a referenceYear");
+  }
 }
 
-if (questions.length < 60) {
-  errors.push(`question bank has ${questions.length} records; expected at least 60`);
-}
 if (counts.country < 15) {
   errors.push(`question bank has ${counts.country} countries; expected at least 15`);
 }
 if (counts.city < 15) {
   errors.push(`question bank has ${counts.city} cities; expected at least 15`);
 }
-if (counts.event < 30) {
-  errors.push(`question bank has ${counts.event} events; expected at least 30`);
+
+for (const [category, minimum] of Object.entries(MINIMUM_PER_CATEGORY)) {
+  const total = questions.filter(
+    (question) => question.category === category,
+  ).length;
+  if (total < minimum) {
+    errors.push(
+      `question bank has ${total} ${category} records; expected at least ${minimum}`,
+    );
+  }
+}
+
+// Every subtype needs at least a full round of its own so a mode can never
+// deal the same question twice.
+for (const [subtype, total] of Object.entries(counts)) {
+  if (total < 10) {
+    errors.push(`question bank has ${total} ${subtype} records; expected at least 10`);
+  }
 }
 
 if (errors.length > 0) {
@@ -131,7 +216,8 @@ if (errors.length > 0) {
   }
   process.exitCode = 1;
 } else {
-  console.log(
-    `Validated ${questions.length} questions: ${counts.country} countries, ${counts.city} cities, ${counts.event} historic events.`,
-  );
+  const breakdown = Object.entries(counts)
+    .map(([subtype, total]) => `${total} ${subtype}`)
+    .join(", ");
+  console.log(`Validated ${questions.length} questions: ${breakdown}.`);
 }
