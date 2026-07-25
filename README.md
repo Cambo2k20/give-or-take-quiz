@@ -1,9 +1,12 @@
 # Give or Take
 
 [![CI](https://github.com/Cambo2k20/give-or-take-quiz/actions/workflows/ci.yml/badge.svg)](https://github.com/Cambo2k20/give-or-take-quiz/actions/workflows/ci.yml)
+[![Deploy](https://github.com/Cambo2k20/give-or-take-quiz/actions/workflows/deploy.yml/badge.svg)](https://github.com/Cambo2k20/give-or-take-quiz/actions/workflows/deploy.yml)
 
 A quick, source-backed quiz about the scale of populations and the timing of
 historic events. Move the slider, lock in a guess, and see how close you were.
+
+**Play it at <https://cambo2k20.github.io/give-or-take-quiz/>**
 
 ## How to play
 
@@ -15,10 +18,11 @@ Choose one of three 10-question modes:
 - **Mixed** — five population questions and five history questions.
 
 Each round draws unique questions from the local question bank. Move the
-slider to your estimate and select **Lock in guess**. The answer, difference,
-explanation, source, and points are then revealed. After question 10, the game
-shows the full breakdown, updates the best score for that mode, and offers a
-shareable result.
+slider to your estimate and select **Lock in guess**. The slider then shades
+the distance between your guess and the answer, and the round is scored with a
+verdict, the explanation, the source, and the points. After question 10, the
+game shows the full breakdown, updates the best score for that mode, and
+offers a shareable result.
 
 ## Scoring
 
@@ -35,6 +39,16 @@ quickly, and the farthest possible miss earns zero. A 10-question game is
 worth up to **10,000 points**. Scoring uses the displayed scale, so population
 answers are compared logarithmically while history answers are compared
 linearly.
+
+Each round's score also picks the verdict shown on the reveal:
+
+| Points | Verdict |
+| --- | --- |
+| 980 and above | Bullseye! |
+| 850–979 | So close! |
+| 600–849 | Not bad. |
+| 300–599 | Off the mark. |
+| Below 300 | Way off. |
 
 ## Local, sourced data
 
@@ -60,10 +74,14 @@ requests.
 
 ## Privacy
 
-The application code has no account requirement, analytics, or gameplay
-backend. Questions are shipped with the app, and best scores stay in the
-browser's `localStorage` under `close-enough:v1`. Clearing site data removes
-them. The question dataset contains no player or other personal data.
+The application has no account requirement, analytics, or gameplay backend.
+It is a static site: questions ship with the app, and nothing you do is sent
+anywhere. Best scores stay in the browser's `localStorage` under
+`close-enough:v1`, and the light/dark preference under `give-or-take:theme`.
+Clearing site data removes them. The question dataset contains no player or
+other personal data.
+
+Fonts are self-hosted, so the app makes no third-party requests at all.
 
 Sharing happens only after the player selects **Share result**. The game uses
 the device's native share sheet when available and otherwise copies the result
@@ -81,38 +99,41 @@ npm ci
 npm run dev
 ```
 
-Open the local address printed in the terminal.
+The dev server prints a local address. Because the site is built for a project
+Pages path, that address includes the repo name — for example
+<http://localhost:5173/give-or-take-quiz/>.
 
 | Command | Purpose |
 | --- | --- |
-| `npm run dev` | Start the vinext development server |
+| `npm run dev` | Start the Vite development server |
 | `npm test` | Run the Vitest test suite once |
 | `npm run test:watch` | Run tests in watch mode |
 | `npm run validate:data` | Validate the local question bank |
 | `npm run lint` | Run ESLint |
-| `npm run build` | Validate data and create a production build |
-| `npm start` | Start the built application |
+| `npm run build` | Validate data, type-check, and build to `dist/` |
+| `npm run preview` | Serve the built `dist/` locally |
 
 Tests cover scale conversion, scoring, year formatting, question selection,
 best-score storage, core game flow, results, persistence, and share fallback
-behaviour. CI runs `npm ci`, `npm test`, and `npm run build` for every push and
-pull request.
+behaviour. CI runs `npm ci`, `npm run lint`, `npm test`, and `npm run build`
+for every push and pull request.
 
-## Build and deploy with Sites
+## Deploying to GitHub Pages
 
-Run a clean production check before publishing:
+The app is a static single-page build with no server, database, or runtime
+configuration. [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)
+tests, builds, and publishes `dist/` on every push to `main`.
+
+One-time setup: in the repository, open **Settings → Pages** and set
+**Source** to **GitHub Actions**.
+
+`vite.config.ts` sets `base` to `/give-or-take-quiz/`, which is the path a
+project Pages site is served from. If you move the app to a custom domain or
+any host that serves it from the root, build with `BASE_PATH=/` instead:
 
 ```bash
-npm ci
-npm test
-npm run build
+BASE_PATH=/ npm run build
 ```
-
-The repository includes [`.openai/hosting.json`](.openai/hosting.json) for
-OpenAI Sites. Connect `Cambo2k20/give-or-take-quiz` in Sites, build the tracked
-source, save a version, and deploy that saved version. The game uses local
-assets and currently needs no D1 or R2 binding, database migration, secret, or
-other runtime setup.
 
 ## License
 

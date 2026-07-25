@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import Game from "@/app/Game";
+import Game from "@/src/Game";
 import { readBestScores } from "@/lib/game";
 
 function categoryButton(mode: "Population" | "History" | "Mixed") {
