@@ -107,6 +107,60 @@ describe("Game", () => {
     ).toBeEnabled();
   });
 
+  it("plays the hero demo without banking a score", async () => {
+    const user = userEvent.setup();
+    render(<Game />);
+
+    // The slider is on the home page itself, before any category is chosen.
+    expect(screen.getByRole("slider")).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: /check my guess/i }));
+
+    expect(screen.getByRole("slider")).toBeDisabled();
+    expect(screen.getByText(/^Answer$/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /play a full round/i }),
+    ).toBeInTheDocument();
+
+    // A warm-up must not touch the stored best scores.
+    expect(readBestScores(window.localStorage)).toEqual(
+      expect.objectContaining({ mixed: 0 }),
+    );
+  });
+
+  it("re-arms the hero demo when another question is requested", async () => {
+    const user = userEvent.setup();
+    render(<Game />);
+
+    await user.click(screen.getByRole("button", { name: /check my guess/i }));
+    await user.click(screen.getByRole("button", { name: /try another/i }));
+
+    expect(screen.getByRole("slider")).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: /check my guess/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /play a full round/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("starts a mixed round from the hero demo", async () => {
+    const user = userEvent.setup();
+    render(<Game />);
+
+    await user.click(screen.getByRole("button", { name: /check my guess/i }));
+    await user.click(
+      screen.getByRole("button", { name: /play a full round/i }),
+    );
+
+    expect(
+      await screen.findByRole("button", { name: /lock in guess/i }),
+    ).toBeEnabled();
+    expect(
+      screen.queryByRole("heading", { name: /how close can you get\?/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it("copies the result when Web Share is unavailable, then returns to categories", async () => {
     const user = userEvent.setup();
     const writeText = vi

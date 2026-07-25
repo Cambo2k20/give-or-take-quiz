@@ -208,6 +208,16 @@ export function questionCount(mode: GameMode): number {
   return mode === "mixed" ? questions.length : byCategory(mode).length;
 }
 
+/**
+ * One question for the home-page demo, drawn from the whole bank so the hero
+ * shows the breadth of the subjects rather than one corner of them. The demo
+ * is never scored or recorded, so it ignores question history by design.
+ */
+export function pickDemoQuestion(rng: () => number = Math.random): Question {
+  const index = Math.floor(rng() * questions.length);
+  return questions[Math.min(questions.length - 1, Math.max(0, index))];
+}
+
 export function selectQuestions(
   mode: GameMode,
   rng: () => number = Math.random,
