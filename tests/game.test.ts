@@ -131,7 +131,7 @@ describe("formatYear", () => {
 });
 
 describe("selectQuestions", () => {
-  it.each(["population", "history", "size", "quantity", "physics"] as const)(
+  it.each(["geography", "history", "science", "space", "human-world"] as const)(
     "returns ten unique %s questions",
     (mode) => {
       const selected = selectQuestions(mode, seededRandom(1234));
@@ -166,25 +166,25 @@ describe("selectQuestions", () => {
 
 describe("best-score storage", () => {
   const emptyScores = {
-    population: 0,
+    geography: 0,
     history: 0,
-    size: 0,
-    quantity: 0,
-    physics: 0,
+    science: 0,
+    space: 0,
+    "human-world": 0,
     mixed: 0,
   };
 
   it("uses a versioned, application-specific key", () => {
-    expect(STORAGE_KEY).toBe("close-enough:v1");
+    expect(STORAGE_KEY).toBe("close-enough:v2");
   });
 
   it("round-trips best scores through an injected Storage object", () => {
     const scores = {
-      population: 7_800,
+      geography: 7_800,
       history: 8_250,
-      size: 6_400,
-      quantity: 7_100,
-      physics: 5_950,
+      science: 6_400,
+      space: 7_100,
+      "human-world": 5_950,
       mixed: 9_100,
     };
 

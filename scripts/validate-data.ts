@@ -1,6 +1,7 @@
+import { CATEGORIES, QUESTIONS_PER_GAME } from "../lib/game";
 import { questions } from "../lib/questions";
 import type {
-  QuestionCategory,
+  QuestionMeasure,
   QuestionSubtype,
   QuestionUnit,
 } from "../lib/types";
@@ -22,36 +23,29 @@ const counts: Record<QuestionSubtype, number> = {
   temperature: 0,
 };
 
-/** Every subtype belongs to exactly one category and one set of units. */
+/** Every subtype belongs to exactly one measure and one set of units. */
 const SUBTYPE_RULES: Record<
   QuestionSubtype,
-  { category: QuestionCategory; units: readonly QuestionUnit[] }
+  { measure: QuestionMeasure; units: readonly QuestionUnit[] }
 > = {
-  country: { category: "population", units: ["people"] },
-  city: { category: "population", units: ["people"] },
-  event: { category: "history", units: ["year"] },
-  length: { category: "size", units: ["metre", "kilometre"] },
-  area: { category: "size", units: ["square-kilometre"] },
-  mass: { category: "size", units: ["kilogram", "tonne"] },
-  count: { category: "quantity", units: ["count"] },
-  percentage: { category: "quantity", units: ["percent"] },
-  money: { category: "quantity", units: ["usd"] },
+  country: { measure: "population", units: ["people"] },
+  city: { measure: "population", units: ["people"] },
+  event: { measure: "history", units: ["year"] },
+  length: { measure: "size", units: ["metre", "kilometre"] },
+  area: { measure: "size", units: ["square-kilometre"] },
+  mass: { measure: "size", units: ["kilogram", "tonne"] },
+  count: { measure: "quantity", units: ["count"] },
+  percentage: { measure: "quantity", units: ["percent"] },
+  money: { measure: "quantity", units: ["usd"] },
   duration: {
-    category: "physics",
+    measure: "physics",
     units: ["second", "minute", "hour", "day", "duration-year"],
   },
-  speed: { category: "physics", units: ["kph"] },
-  temperature: { category: "physics", units: ["celsius"] },
+  speed: { measure: "physics", units: ["kph"] },
+  temperature: { measure: "physics", units: ["celsius"] },
 };
 
-/** Minimum records per category, so every mode can deal a full round. */
-const MINIMUM_PER_CATEGORY: Record<QuestionCategory, number> = {
-  population: 30,
-  history: 30,
-  size: 30,
-  quantity: 30,
-  physics: 30,
-};
+const VALID_CATEGORIES = new Set<string>(CATEGORIES);
 
 const report = (id: string, message: string) => {
   errors.push(`${id}: ${message}`);
@@ -113,7 +107,11 @@ for (const question of questions) {
     report(question.id, "source URL is invalid");
   }
 
-  if (question.category === "population") {
+  if (!VALID_CATEGORIES.has(question.category)) {
+    report(question.id, `${question.category} is not a known category`);
+  }
+
+  if (question.measure === "population") {
     if (!["country", "city"].includes(question.subtype)) {
       report(question.id, "population questions must be country or city");
     }
@@ -142,7 +140,7 @@ for (const question of questions) {
     }
   }
 
-  if (question.category === "history") {
+  if (question.measure === "history") {
     if (question.subtype !== "event") {
       report(question.id, "history questions must use the event subtype");
     }
@@ -156,10 +154,10 @@ for (const question of questions) {
 
   const rule = SUBTYPE_RULES[question.subtype];
   if (rule) {
-    if (question.category !== rule.category) {
+    if (question.measure !== rule.measure) {
       report(
         question.id,
-        `subtype ${question.subtype} belongs to the ${rule.category} category`,
+        `subtype ${question.subtype} belongs to the ${rule.measure} measure`,
       );
     }
     if (!rule.units.includes(question.unit)) {
@@ -190,13 +188,15 @@ if (counts.city < 15) {
   errors.push(`question bank has ${counts.city} cities; expected at least 15`);
 }
 
-for (const [category, minimum] of Object.entries(MINIMUM_PER_CATEGORY)) {
+// Each category is a mode of its own, so it must be able to deal a full round
+// without asking the same question twice.
+for (const category of CATEGORIES) {
   const total = questions.filter(
     (question) => question.category === category,
   ).length;
-  if (total < minimum) {
+  if (total < QUESTIONS_PER_GAME) {
     errors.push(
-      `question bank has ${total} ${category} records; expected at least ${minimum}`,
+      `question bank has ${total} ${category} records; expected at least ${QUESTIONS_PER_GAME}`,
     );
   }
 }
