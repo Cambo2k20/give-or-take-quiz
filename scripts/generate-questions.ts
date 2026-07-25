@@ -23,6 +23,7 @@ if (!url || !key) {
 type Row = {
   id: string;
   category: Question["category"];
+  measure: Question["measure"];
   subtype: Question["subtype"];
   prompt: string;
   answer: string;
@@ -42,9 +43,10 @@ const supabase = createClient(url, key, { auth: { persistSession: false } });
 const { data, error } = await supabase
   .from("questions")
   .select(
-    "id, category, subtype, prompt, answer, min, max, scale, unit, reference_year, source_title, source_url, explanation",
+    "id, category, measure, subtype, prompt, answer, min, max, scale, unit, reference_year, source_title, source_url, explanation",
   )
   .order("category")
+  .order("measure")
   .order("subtype")
   .order("id")
   .returns<Row[]>();
@@ -79,6 +81,7 @@ const record = (row: Row) => {
   return `  {
     id: ${str(row.id)},
     category: ${str(row.category)},
+    measure: ${str(row.measure)},
     subtype: ${str(row.subtype)},
     prompt: ${str(row.prompt)},
     answer: ${num(row.answer)},

@@ -1,12 +1,28 @@
-export type GameMode =
+/**
+ * What a question is about. This is the axis players choose between, and it is
+ * deliberately separate from `QuestionMeasure`: "how tall is the Burj Khalifa"
+ * and "what did the Golden Gate Bridge cost" are both about the built world
+ * even though one is a length and the other a sum of money.
+ */
+export type QuestionCategory =
+  | "geography"
+  | "history"
+  | "science"
+  | "space"
+  | "human-world";
+
+export type GameMode = QuestionCategory | "mixed";
+
+/**
+ * What a question measures. Groups the subtypes, and drives validation and
+ * slider behaviour rather than anything the player picks.
+ */
+export type QuestionMeasure =
   | "population"
   | "history"
   | "size"
   | "quantity"
-  | "physics"
-  | "mixed";
-
-export type QuestionCategory = Exclude<GameMode, "mixed">;
+  | "physics";
 
 export type QuestionSubtype =
   | "country"
@@ -55,6 +71,7 @@ export interface QuestionSource {
 export interface Question {
   id: string;
   category: QuestionCategory;
+  measure: QuestionMeasure;
   subtype: QuestionSubtype;
   prompt: string;
   answer: number;

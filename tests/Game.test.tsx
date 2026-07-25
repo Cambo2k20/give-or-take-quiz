@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import Game from "@/src/Game";
 import { readBestScores } from "@/lib/game";
 
-function categoryButton(mode: "Population" | "History" | "Mixed") {
+function categoryButton(mode: "Geography" | "History" | "Mixed") {
   const label = screen.getByText(mode, { exact: true, selector: "strong" });
   const button = label.closest("button");
 
@@ -16,7 +16,7 @@ function categoryButton(mode: "Population" | "History" | "Mixed") {
 
 async function startGame(
   user: ReturnType<typeof userEvent.setup>,
-  mode: "Population" | "History" | "Mixed",
+  mode: "Geography" | "History" | "Mixed",
 ) {
   await user.click(categoryButton(mode));
   expect(
@@ -26,7 +26,7 @@ async function startGame(
 
 async function completeRound(
   user: ReturnType<typeof userEvent.setup>,
-  mode: "Population" | "History" | "Mixed" = "History",
+  mode: "Geography" | "History" | "Mixed" = "History",
 ) {
   await startGame(user, mode);
 
@@ -55,11 +55,11 @@ describe("Game", () => {
     expect(
       screen.getByRole("heading", { name: /how close can you get\?/i }),
     ).toBeInTheDocument();
-    expect(categoryButton("Population")).toBeInTheDocument();
+    expect(categoryButton("Geography")).toBeInTheDocument();
     expect(categoryButton("History")).toBeInTheDocument();
     expect(categoryButton("Mixed")).toBeInTheDocument();
 
-    await startGame(user, "Population");
+    await startGame(user, "Geography");
 
     expect(
       screen.queryByRole("heading", { name: /how close can you get\?/i }),

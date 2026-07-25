@@ -47,10 +47,14 @@ const ShuffleIcon = () => (
   </svg>
 );
 
-const RulerIcon = () => (
+const RocketIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-    <rect x="2" y="7" width="20" height="10" rx="2" />
-    <path d="M7 7v3M12 7v4M17 7v3" strokeLinecap="round" />
+    <path
+      d="M12 2c3 2.2 4.8 5.7 4.8 9.6L12 16l-4.8-4.4C7.2 7.7 9 4.2 12 2Z"
+      strokeLinejoin="round"
+    />
+    <path d="M7.2 11.6 4 14l1.6 3.4M16.8 11.6 20 14l-1.6 3.4" strokeLinejoin="round" />
+    <circle cx="12" cy="9" r="1.8" />
   </svg>
 );
 
@@ -75,39 +79,39 @@ const MODES: Array<{
   icon: ReactNode;
 }> = [
   {
-    mode: "population",
-    title: "Population",
-    description: "Countries and cities, from compact capitals to billions.",
-    note: "10 questions · log scale",
+    mode: "geography",
+    title: "Geography",
+    description: "Countries, cities, oceans, deserts and the shape of the land.",
+    note: "10 questions · 54 in the bank",
     icon: <GlobeIcon />,
   },
   {
     mode: "history",
     title: "History",
-    description: "Place inventions, turning points and empires on the timeline.",
-    note: "10 questions · timeline",
+    description: "Place turning points on the timeline, and price the past.",
+    note: "10 questions · 42 in the bank",
     icon: <ClockIcon />,
   },
   {
-    mode: "size",
-    title: "Size",
-    description: "How long, how wide and how heavy things really are.",
-    note: "10 questions · log scale",
-    icon: <RulerIcon />,
-  },
-  {
-    mode: "quantity",
-    title: "Quantity",
-    description: "How many, what share of the world, and what it cost.",
-    note: "10 questions · counts and shares",
-    icon: <StackIcon />,
-  },
-  {
-    mode: "physics",
-    title: "Physics",
-    description: "How long it takes, how fast it moves, how hot it gets.",
-    note: "10 questions · time, speed, heat",
+    mode: "science",
+    title: "Science",
+    description: "Physics, chemistry and the animal kingdom, by the numbers.",
+    note: "10 questions · 22 in the bank",
     icon: <BoltIcon />,
+  },
+  {
+    mode: "space",
+    title: "Space",
+    description: "Orbits, planets and the machines we have sent up there.",
+    note: "10 questions · 15 in the bank",
+    icon: <RocketIcon />,
+  },
+  {
+    mode: "human-world",
+    title: "Human World",
+    description: "What we have built, how we live, and how fast we can go.",
+    note: "10 questions · 17 in the bank",
+    icon: <StackIcon />,
   },
   {
     mode: "mixed",
@@ -119,11 +123,11 @@ const MODES: Array<{
 ];
 
 const MODE_LABELS: Record<GameMode, string> = {
-  population: "Population",
+  geography: "Geography",
   history: "History",
-  size: "Size",
-  quantity: "Quantity",
-  physics: "Physics",
+  science: "Science",
+  space: "Space",
+  "human-world": "Human World",
   mixed: "Mixed",
 };
 

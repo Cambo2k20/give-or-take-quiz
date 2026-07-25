@@ -6,17 +6,19 @@ import type {
   QuestionUnit,
 } from "./types";
 
-export const STORAGE_KEY = "close-enough:v1";
+// v2: modes changed from measurement kinds to subjects, so v1 best scores are
+// recorded against categories that no longer exist.
+export const STORAGE_KEY = "close-enough:v2";
 
 export const QUESTIONS_PER_GAME = 10;
 
 /** Every mode that draws from a single category, in mode-chooser order. */
 export const CATEGORIES: readonly QuestionCategory[] = [
-  "population",
+  "geography",
   "history",
-  "size",
-  "quantity",
-  "physics",
+  "science",
+  "space",
+  "human-world",
 ];
 
 export const GAME_MODES: readonly GameMode[] = [...CATEGORIES, "mixed"];
@@ -24,11 +26,11 @@ export const GAME_MODES: readonly GameMode[] = [...CATEGORIES, "mixed"];
 export type BestScores = Record<GameMode, number>;
 
 const EMPTY_BEST_SCORES: BestScores = {
-  population: 0,
+  geography: 0,
   history: 0,
-  size: 0,
-  quantity: 0,
-  physics: 0,
+  science: 0,
+  space: 0,
+  "human-world": 0,
   mixed: 0,
 };
 
