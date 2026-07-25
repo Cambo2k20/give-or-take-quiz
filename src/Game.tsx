@@ -9,9 +9,11 @@ import {
 } from "react";
 import {
   type BestScores,
+  QUESTIONS_PER_GAME,
   accuracyTier,
   formatQuestionValue,
   positionToValue,
+  questionCount,
   readBestScores,
   scoreGuess,
   selectQuestions,
@@ -107,70 +109,60 @@ const MODES: Array<{
   mode: GameMode;
   title: string;
   description: string;
-  note: string;
   icon: ReactNode;
 }> = [
   {
     mode: "population",
     title: "Population",
     description: "How many people live in a country, a city, or online.",
-    note: "10 questions · 35 in the bank",
     icon: <PeopleIcon />,
   },
   {
     mode: "history",
     title: "History",
     description: "Place turning points on the timeline, and price the past.",
-    note: "10 questions · 42 in the bank",
     icon: <ClockIcon />,
   },
   {
     mode: "geography",
     title: "Geography",
     description: "Oceans, deserts, mountains and the shape of the land.",
-    note: "10 questions · 24 in the bank",
     icon: <GlobeIcon />,
   },
   {
     mode: "science",
     title: "Science",
     description: "Physics, chemistry and the workings of the human body.",
-    note: "10 questions · 14 in the bank",
     icon: <BoltIcon />,
   },
   {
     mode: "animals",
     title: "Animals",
     description: "What they weigh, how fast they run, how long they carry.",
-    note: "10 questions · 10 in the bank",
     icon: <PawIcon />,
   },
   {
     mode: "space",
     title: "Space",
     description: "Orbits, planets and the machines we have sent up there.",
-    note: "10 questions · 15 in the bank",
     icon: <RocketIcon />,
   },
   {
     mode: "technology",
     title: "Technology",
     description: "The tallest, heaviest and fastest things we have built.",
-    note: "10 questions · 11 in the bank",
     icon: <StackIcon />,
   },
   {
     mode: "movies",
     title: "Movies",
     description: "When films landed, and what they took at the box office.",
-    note: "10 questions · 10 in the bank",
     icon: <FilmIcon />,
   },
   {
     mode: "mixed",
     title: "Mixed",
     description: "A draw from every category at once.",
-    note: "10 questions · a bit of everything",
     icon: <ShuffleIcon />,
   },
 ];
@@ -204,6 +196,14 @@ const SUBTYPE_LABELS: Record<Question["subtype"], string> = {
 
 function formatPoints(points: number) {
   return new Intl.NumberFormat("en-GB").format(points);
+}
+
+/** Read off the bank, so adding questions updates the chooser by itself. */
+function modeNote(mode: GameMode) {
+  const perRound = `${QUESTIONS_PER_GAME} questions`;
+  return mode === "mixed"
+    ? `${perRound} · a bit of everything`
+    : `${perRound} · ${formatPoints(questionCount(mode))} in the bank`;
 }
 
 function subtypeLabel(question: Question) {
@@ -576,7 +576,7 @@ export default function Game() {
                 <span className="mode-icon">{detail.icon}</span>
                 <strong>{detail.title}</strong>
                 <span className="mode-description">{detail.description}</span>
-                <span className="mode-note">{detail.note}</span>
+                <span className="mode-note">{modeNote(detail.mode)}</span>
                 {bestScores[detail.mode] > 0 && (
                   <span className="mode-best">
                     Best {formatPoints(bestScores[detail.mode])}
@@ -586,7 +586,9 @@ export default function Game() {
             ))}
           </div>
           <div className="category-footer">
-            <span>150 sourced questions, bundled with the app</span>
+            <span>
+              {formatPoints(questionCount("mixed"))} sourced questions, bundled with the app
+            </span>
             <span>Best scores stay on this device</span>
           </div>
         </section>

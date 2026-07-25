@@ -158,6 +158,14 @@ function byCategory(category: QuestionCategory): Question[] {
   return questions.filter((question) => question.category === category);
 }
 
+/**
+ * How many questions a mode can draw from. Derived rather than written down,
+ * so the chooser cannot go stale the next time the bank grows.
+ */
+export function questionCount(mode: GameMode): number {
+  return mode === "mixed" ? questions.length : byCategory(mode).length;
+}
+
 export function selectQuestions(
   mode: GameMode,
   rng: () => number = Math.random,
