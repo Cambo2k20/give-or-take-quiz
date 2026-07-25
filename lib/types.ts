@@ -5,11 +5,14 @@
  * even though one is a length and the other a sum of money.
  */
 export type QuestionCategory =
-  | "geography"
+  | "population"
   | "history"
+  | "geography"
   | "science"
+  | "animals"
   | "space"
-  | "human-world";
+  | "technology"
+  | "movies";
 
 export type GameMode = QuestionCategory | "mixed";
 

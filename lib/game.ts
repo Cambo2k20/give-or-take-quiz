@@ -6,19 +6,22 @@ import type {
   QuestionUnit,
 } from "./types";
 
-// v2: modes changed from measurement kinds to subjects, so v1 best scores are
-// recorded against categories that no longer exist.
-export const STORAGE_KEY = "close-enough:v2";
+// v3: the subject list changed again, so v2 best scores are recorded against
+// categories that no longer exist.
+export const STORAGE_KEY = "close-enough:v3";
 
 export const QUESTIONS_PER_GAME = 10;
 
 /** Every mode that draws from a single category, in mode-chooser order. */
 export const CATEGORIES: readonly QuestionCategory[] = [
-  "geography",
+  "population",
   "history",
+  "geography",
   "science",
+  "animals",
   "space",
-  "human-world",
+  "technology",
+  "movies",
 ];
 
 export const GAME_MODES: readonly GameMode[] = [...CATEGORIES, "mixed"];
@@ -26,11 +29,14 @@ export const GAME_MODES: readonly GameMode[] = [...CATEGORIES, "mixed"];
 export type BestScores = Record<GameMode, number>;
 
 const EMPTY_BEST_SCORES: BestScores = {
-  geography: 0,
+  population: 0,
   history: 0,
+  geography: 0,
   science: 0,
+  animals: 0,
   space: 0,
-  "human-world": 0,
+  technology: 0,
+  movies: 0,
   mixed: 0,
 };
 
@@ -158,13 +164,25 @@ export function selectQuestions(
 ): Question[] {
   if (mode === "mixed") {
     // An even draw from every category, so no one topic dominates a round.
+    // With more categories than there is room for, each contributes its share
+    // and the shortfall is topped up from whatever is left, so a mixed round
+    // is always a full ten rather than one per category.
     const perCategory = Math.floor(QUESTIONS_PER_GAME / CATEGORIES.length);
-    return shuffled(
-      CATEGORIES.flatMap((category) =>
-        shuffled(byCategory(category), rng).slice(0, perCategory),
-      ),
-      rng,
+    const pools = CATEGORIES.map((category) =>
+      shuffled(byCategory(category), rng),
     );
+
+    const picked = pools.flatMap((pool) => pool.slice(0, perCategory));
+    const pickedIds = new Set(picked.map((question) => question.id));
+
+    // Drawn from a shuffle of the categories too, so the same topics do not
+    // always supply the remainder.
+    const remainder = shuffled(pools, rng)
+      .flatMap((pool) => pool.slice(perCategory))
+      .filter((question) => !pickedIds.has(question.id))
+      .slice(0, QUESTIONS_PER_GAME - picked.length);
+
+    return shuffled([...picked, ...remainder], rng);
   }
 
   return shuffled(byCategory(mode), rng).slice(0, QUESTIONS_PER_GAME);

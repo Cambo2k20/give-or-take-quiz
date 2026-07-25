@@ -131,7 +131,16 @@ describe("formatYear", () => {
 });
 
 describe("selectQuestions", () => {
-  it.each(["geography", "history", "science", "space", "human-world"] as const)(
+  it.each([
+    "population",
+    "history",
+    "geography",
+    "science",
+    "animals",
+    "space",
+    "technology",
+    "movies",
+  ] as const)(
     "returns ten unique %s questions",
     (mode) => {
       const selected = selectQuestions(mode, seededRandom(1234));
@@ -147,10 +156,12 @@ describe("selectQuestions", () => {
 
     expect(selected).toHaveLength(10);
     expect(new Set(selected.map(({ id }) => id)).size).toBe(10);
+    // Ten slots across eight categories, so each appears at least once and
+    // the two spare slots go wherever the shuffle sends them.
     for (const category of CATEGORIES) {
       expect(
-        selected.filter((question) => question.category === category),
-      ).toHaveLength(2);
+        selected.filter((question) => question.category === category).length,
+      ).toBeGreaterThanOrEqual(1);
     }
   });
 
@@ -166,25 +177,31 @@ describe("selectQuestions", () => {
 
 describe("best-score storage", () => {
   const emptyScores = {
-    geography: 0,
+    population: 0,
     history: 0,
+    geography: 0,
     science: 0,
+    animals: 0,
     space: 0,
-    "human-world": 0,
+    technology: 0,
+    movies: 0,
     mixed: 0,
   };
 
   it("uses a versioned, application-specific key", () => {
-    expect(STORAGE_KEY).toBe("close-enough:v2");
+    expect(STORAGE_KEY).toBe("close-enough:v3");
   });
 
   it("round-trips best scores through an injected Storage object", () => {
     const scores = {
-      geography: 7_800,
+      population: 7_800,
       history: 8_250,
-      science: 6_400,
-      space: 7_100,
-      "human-world": 5_950,
+      geography: 6_400,
+      science: 7_100,
+      animals: 5_950,
+      space: 6_700,
+      technology: 7_450,
+      movies: 8_010,
       mixed: 9_100,
     };
 

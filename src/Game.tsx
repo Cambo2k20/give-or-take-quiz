@@ -72,6 +72,31 @@ const StackIcon = () => (
   </svg>
 );
 
+const PeopleIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <circle cx="9" cy="8" r="3.2" />
+    <path d="M3.5 19.5a5.5 5.5 0 0 1 11 0" strokeLinecap="round" />
+    <path d="M16 5.6a3.2 3.2 0 0 1 0 6M17.5 14.6a5.5 5.5 0 0 1 3 4.9" strokeLinecap="round" />
+  </svg>
+);
+
+const PawIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <ellipse cx="8" cy="7.5" rx="1.9" ry="2.5" />
+    <ellipse cx="16" cy="7.5" rx="1.9" ry="2.5" />
+    <ellipse cx="4.6" cy="12.6" rx="1.7" ry="2.2" />
+    <ellipse cx="19.4" cy="12.6" rx="1.7" ry="2.2" />
+    <path d="M12 12.5c2.8 0 5 2.2 5 4.6 0 1.7-1.4 2.9-3.1 2.9h-3.8c-1.7 0-3.1-1.2-3.1-2.9 0-2.4 2.2-4.6 5-4.6Z" strokeLinejoin="round" />
+  </svg>
+);
+
+const FilmIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <rect x="2.5" y="5" width="19" height="14" rx="2" />
+    <path d="M7 5v14M17 5v14M2.5 12h19M2.5 8.5h4.5M2.5 15.5h4.5M17 8.5h4.5M17 15.5h4.5" strokeLinecap="round" />
+  </svg>
+);
+
 const BoltIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" strokeLinejoin="round" />
@@ -86,11 +111,11 @@ const MODES: Array<{
   icon: ReactNode;
 }> = [
   {
-    mode: "geography",
-    title: "Geography",
-    description: "Countries, cities, oceans, deserts and the shape of the land.",
-    note: "10 questions · 54 in the bank",
-    icon: <GlobeIcon />,
+    mode: "population",
+    title: "Population",
+    description: "How many people live in a country, a city, or online.",
+    note: "10 questions · 35 in the bank",
+    icon: <PeopleIcon />,
   },
   {
     mode: "history",
@@ -100,11 +125,25 @@ const MODES: Array<{
     icon: <ClockIcon />,
   },
   {
+    mode: "geography",
+    title: "Geography",
+    description: "Oceans, deserts, mountains and the shape of the land.",
+    note: "10 questions · 24 in the bank",
+    icon: <GlobeIcon />,
+  },
+  {
     mode: "science",
     title: "Science",
-    description: "Physics, chemistry and the animal kingdom, by the numbers.",
-    note: "10 questions · 22 in the bank",
+    description: "Physics, chemistry and the workings of the human body.",
+    note: "10 questions · 14 in the bank",
     icon: <BoltIcon />,
+  },
+  {
+    mode: "animals",
+    title: "Animals",
+    description: "What they weigh, how fast they run, how long they carry.",
+    note: "10 questions · 10 in the bank",
+    icon: <PawIcon />,
   },
   {
     mode: "space",
@@ -114,27 +153,37 @@ const MODES: Array<{
     icon: <RocketIcon />,
   },
   {
-    mode: "human-world",
-    title: "Human World",
-    description: "What we have built, how we live, and how fast we can go.",
-    note: "10 questions · 17 in the bank",
+    mode: "technology",
+    title: "Technology",
+    description: "The tallest, heaviest and fastest things we have built.",
+    note: "10 questions · 11 in the bank",
     icon: <StackIcon />,
+  },
+  {
+    mode: "movies",
+    title: "Movies",
+    description: "When films landed, and what they took at the box office.",
+    note: "10 questions · 10 in the bank",
+    icon: <FilmIcon />,
   },
   {
     mode: "mixed",
     title: "Mixed",
-    description: "Two questions drawn from every category.",
+    description: "A draw from every category at once.",
     note: "10 questions · a bit of everything",
     icon: <ShuffleIcon />,
   },
 ];
 
 const MODE_LABELS: Record<GameMode, string> = {
-  geography: "Geography",
+  population: "Population",
   history: "History",
+  geography: "Geography",
   science: "Science",
+  animals: "Animals",
   space: "Space",
-  "human-world": "Human World",
+  technology: "Technology",
+  movies: "Movies",
   mixed: "Mixed",
 };
 
