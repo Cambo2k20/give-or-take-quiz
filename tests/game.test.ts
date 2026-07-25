@@ -3,12 +3,17 @@ import {
   CATEGORIES,
   formatYear,
   positionToValue,
+  QUESTION_HISTORY_KEY,
+  QUESTIONS_PER_GAME,
   readBestScores,
+  readQuestionHistory,
   scoreGuess,
   selectQuestions,
+  selectQuestionsWithHistory,
   STORAGE_KEY,
   valueToPosition,
   writeBestScores,
+  writeQuestionHistory,
 } from "@/lib/game";
 
 type Question = Parameters<typeof positionToValue>[0];
@@ -172,6 +177,100 @@ describe("selectQuestions", () => {
     );
 
     expect(first).toEqual(second);
+  });
+
+  it("remembers seen questions and avoids repeats while enough remain", () => {
+    const first = selectQuestionsWithHistory(
+      "history",
+      {},
+      seededRandom(100),
+    );
+    const second = selectQuestionsWithHistory(
+      "history",
+      first.history,
+      seededRandom(200),
+    );
+    const firstIds = new Set(first.questions.map(({ id }) => id));
+
+    expect(second.questions).toHaveLength(QUESTIONS_PER_GAME);
+    expect(second.questions.every(({ id }) => !firstIds.has(id))).toBe(true);
+  });
+
+  it("finishes a small category cycle before recycling questions", () => {
+    const first = selectQuestionsWithHistory(
+      "technology",
+      {},
+      seededRandom(300),
+    );
+    const second = selectQuestionsWithHistory(
+      "technology",
+      first.history,
+      seededRandom(400),
+    );
+    const firstIds = new Set(first.questions.map(({ id }) => id));
+    const secondIds = new Set(second.questions.map(({ id }) => id));
+
+    expect(secondIds.size).toBe(QUESTIONS_PER_GAME);
+    expect(
+      second.questions.filter(({ id }) => !firstIds.has(id)),
+    ).toHaveLength(1);
+  });
+
+  it("remembers mixed questions while keeping every category represented", () => {
+    const first = selectQuestionsWithHistory("mixed", {}, seededRandom(500));
+    const second = selectQuestionsWithHistory(
+      "mixed",
+      first.history,
+      seededRandom(600),
+    );
+    const firstIds = new Set(first.questions.map(({ id }) => id));
+
+    expect(second.questions.every(({ id }) => !firstIds.has(id))).toBe(true);
+    for (const category of CATEGORIES) {
+      expect(
+        second.questions.some((question) => question.category === category),
+      ).toBe(true);
+    }
+  });
+});
+
+describe("question history storage", () => {
+  it("round-trips valid seen IDs and drops invalid data", () => {
+    const draw = selectQuestionsWithHistory("history", {}, seededRandom(700));
+    writeQuestionHistory(draw.history, window.localStorage);
+
+    expect(window.localStorage.getItem(QUESTION_HISTORY_KEY)).not.toBeNull();
+    expect(readQuestionHistory(window.localStorage)).toEqual(draw.history);
+
+    window.localStorage.setItem(
+      QUESTION_HISTORY_KEY,
+      JSON.stringify({
+        version: 1,
+        seenByMode: {
+          history: [
+            draw.questions[0]?.id,
+            draw.questions[0]?.id,
+            "not-a-question",
+            42,
+          ],
+        },
+      }),
+    );
+
+    expect(readQuestionHistory(window.localStorage).history).toEqual([
+      draw.questions[0]?.id,
+    ]);
+  });
+
+  it("falls back safely for malformed or unknown versions", () => {
+    window.localStorage.setItem(QUESTION_HISTORY_KEY, "{not valid JSON");
+    expect(readQuestionHistory(window.localStorage)).toEqual({});
+
+    window.localStorage.setItem(
+      QUESTION_HISTORY_KEY,
+      JSON.stringify({ version: 999, seenByMode: {} }),
+    );
+    expect(readQuestionHistory(window.localStorage)).toEqual({});
   });
 });
 

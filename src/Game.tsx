@@ -15,10 +15,12 @@ import {
   positionToValue,
   questionCount,
   readBestScores,
+  readQuestionHistory,
   scoreGuess,
-  selectQuestions,
+  selectQuestionsWithHistory,
   valueToPosition,
   writeBestScores,
+  writeQuestionHistory,
 } from "../lib/game";
 import { signOut } from "../lib/auth";
 import type { GameMode, Question } from "../lib/types";
@@ -308,6 +310,7 @@ export default function Game() {
   // client-rendered, so there is no server pass to mismatch against.
   const [theme, setTheme] = useState<Theme>(readTheme);
   const [bestScores, setBestScores] = useState<BestScores>(readBestScores);
+  const [questionHistory, setQuestionHistory] = useState(readQuestionHistory);
   const [shareStatus, setShareStatus] = useState("");
   const focusHeadingRef = useRef<HTMLHeadingElement>(null);
   const auth = useAuth();
@@ -398,8 +401,11 @@ export default function Game() {
   }
 
   function startGame(selectedMode: GameMode) {
+    const draw = selectQuestionsWithHistory(selectedMode, questionHistory);
     setMode(selectedMode);
-    setGameQuestions(selectQuestions(selectedMode));
+    setGameQuestions(draw.questions);
+    setQuestionHistory(draw.history);
+    writeQuestionHistory(draw.history);
     setQuestionIndex(0);
     setPosition(0.5);
     setLocked(false);

@@ -11,6 +11,7 @@ import type {
 export const STORAGE_KEY = "close-enough:v3";
 
 export const QUESTIONS_PER_GAME = 10;
+export const QUESTION_HISTORY_KEY = "give-or-take:question-history:v1";
 
 /** Every mode that draws from a single category, in mode-chooser order. */
 export const CATEGORIES: readonly QuestionCategory[] = [
@@ -27,6 +28,7 @@ export const CATEGORIES: readonly QuestionCategory[] = [
 export const GAME_MODES: readonly GameMode[] = [...CATEGORIES, "mixed"];
 
 export type BestScores = Record<GameMode, number>;
+export type QuestionHistory = Partial<Record<GameMode, string[]>>;
 
 const EMPTY_BEST_SCORES: BestScores = {
   population: 0,
@@ -158,6 +160,46 @@ function byCategory(category: QuestionCategory): Question[] {
   return questions.filter((question) => question.category === category);
 }
 
+function drawAvoidingSeen(
+  pool: readonly Question[],
+  count: number,
+  seenIds: readonly string[],
+  rng: () => number,
+): { picked: Question[]; seenIds: string[] } {
+  if (pool.length < count) {
+    throw new Error(
+      `Cannot draw ${count} unique questions from a pool of ${pool.length}.`,
+    );
+  }
+
+  const poolIds = new Set(pool.map((question) => question.id));
+  const seen = new Set(seenIds.filter((id) => poolIds.has(id)));
+  const unseen = shuffled(
+    pool.filter((question) => !seen.has(question.id)),
+    rng,
+  );
+  const picked = unseen.slice(0, count);
+
+  if (picked.length === count) {
+    for (const question of picked) seen.add(question.id);
+    return { picked, seenIds: [...seen] };
+  }
+
+  // This draw finishes the old cycle. Fill the remaining slots from a fresh
+  // shuffle, excluding questions already chosen for this round, and remember
+  // only those refill questions as the beginning of the next cycle.
+  const pickedIds = new Set(picked.map((question) => question.id));
+  const refill = shuffled(
+    pool.filter((question) => !pickedIds.has(question.id)),
+    rng,
+  ).slice(0, count - picked.length);
+
+  return {
+    picked: [...picked, ...refill],
+    seenIds: refill.map((question) => question.id),
+  };
+}
+
 /**
  * How many questions a mode can draw from. Derived rather than written down,
  * so the chooser cannot go stale the next time the bank grows.
@@ -170,30 +212,112 @@ export function selectQuestions(
   mode: GameMode,
   rng: () => number = Math.random,
 ): Question[] {
+  return selectQuestionsWithHistory(mode, {}, rng).questions;
+}
+
+export function selectQuestionsWithHistory(
+  mode: GameMode,
+  history: QuestionHistory,
+  rng: () => number = Math.random,
+): { questions: Question[]; history: QuestionHistory } {
   if (mode === "mixed") {
-    // An even draw from every category, so no one topic dominates a round.
-    // With more categories than there is room for, each contributes its share
-    // and the shortfall is topped up from whatever is left, so a mixed round
-    // is always a full ten rather than one per category.
-    const perCategory = Math.floor(QUESTIONS_PER_GAME / CATEGORIES.length);
-    const pools = CATEGORIES.map((category) =>
-      shuffled(byCategory(category), rng),
+    // Every category contributes once. The two spare slots go to two randomly
+    // selected categories, keeping the round broad without always favouring
+    // the same subjects.
+    const extraCategories = new Set(
+      shuffled(CATEGORIES, rng).slice(
+        0,
+        QUESTIONS_PER_GAME - CATEGORIES.length,
+      ),
     );
+    const mixedSeen = history.mixed ?? [];
+    const nextSeen: string[] = [];
+    const picked = CATEGORIES.flatMap((category) => {
+      const pool = byCategory(category);
+      const poolIds = new Set(pool.map((question) => question.id));
+      const draw = drawAvoidingSeen(
+        pool,
+        extraCategories.has(category) ? 2 : 1,
+        mixedSeen.filter((id) => poolIds.has(id)),
+        rng,
+      );
+      nextSeen.push(...draw.seenIds);
+      return draw.picked;
+    });
 
-    const picked = pools.flatMap((pool) => pool.slice(0, perCategory));
-    const pickedIds = new Set(picked.map((question) => question.id));
-
-    // Drawn from a shuffle of the categories too, so the same topics do not
-    // always supply the remainder.
-    const remainder = shuffled(pools, rng)
-      .flatMap((pool) => pool.slice(perCategory))
-      .filter((question) => !pickedIds.has(question.id))
-      .slice(0, QUESTIONS_PER_GAME - picked.length);
-
-    return shuffled([...picked, ...remainder], rng);
+    return {
+      questions: shuffled(picked, rng),
+      history: { ...history, mixed: nextSeen },
+    };
   }
 
-  return shuffled(byCategory(mode), rng).slice(0, QUESTIONS_PER_GAME);
+  const draw = drawAvoidingSeen(
+    byCategory(mode),
+    QUESTIONS_PER_GAME,
+    history[mode] ?? [],
+    rng,
+  );
+  return {
+    questions: shuffled(draw.picked, rng),
+    history: { ...history, [mode]: draw.seenIds },
+  };
+}
+
+export function readQuestionHistory(
+  storage?: StorageLike | null,
+): QuestionHistory {
+  const target =
+    storage ?? (typeof window === "undefined" ? null : window.localStorage);
+  if (!target) return {};
+
+  try {
+    const raw = target.getItem(QUESTION_HISTORY_KEY);
+    if (!raw) return {};
+    const stored = JSON.parse(raw) as {
+      version?: number;
+      seenByMode?: Partial<Record<GameMode, unknown>>;
+    };
+    if (stored.version !== 1 || !stored.seenByMode) return {};
+
+    const history: QuestionHistory = {};
+    for (const mode of GAME_MODES) {
+      const ids = stored.seenByMode[mode];
+      if (!Array.isArray(ids)) continue;
+      const validIds = new Set(
+        (mode === "mixed" ? questions : byCategory(mode)).map(
+          (question) => question.id,
+        ),
+      );
+      history[mode] = [
+        ...new Set(
+          ids.filter(
+            (id): id is string => typeof id === "string" && validIds.has(id),
+          ),
+        ),
+      ];
+    }
+    return history;
+  } catch {
+    return {};
+  }
+}
+
+export function writeQuestionHistory(
+  history: QuestionHistory,
+  storage?: StorageLike | null,
+) {
+  const target =
+    storage ?? (typeof window === "undefined" ? null : window.localStorage);
+  if (!target) return;
+
+  try {
+    target.setItem(
+      QUESTION_HISTORY_KEY,
+      JSON.stringify({ version: 1, seenByMode: history }),
+    );
+  } catch {
+    // Disabled or full local storage must never interrupt play.
+  }
 }
 
 export function readBestScores(storage?: StorageLike | null): BestScores {
