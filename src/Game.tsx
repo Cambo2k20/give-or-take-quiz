@@ -1,8 +1,7 @@
-"use client";
-
 import {
   type CSSProperties,
   type KeyboardEvent,
+  type ReactNode,
   useEffect,
   useMemo,
   useRef,
@@ -10,6 +9,7 @@ import {
 } from "react";
 import {
   type BestScores,
+  accuracyTier,
   formatQuestionValue,
   positionToValue,
   readBestScores,
@@ -19,37 +19,59 @@ import {
   writeBestScores,
 } from "../lib/game";
 import type { GameMode, Question } from "../lib/types";
+import { type Theme, applyTheme, readTheme } from "./theme";
 
 type Phase = "category" | "playing" | "results";
 type RoundResult = { question: Question; guess: number; points: number };
 
+const GlobeIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18" />
+  </svg>
+);
+
+const ClockIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5.5l3.5 2" strokeLinecap="round" />
+  </svg>
+);
+
+const ShuffleIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <path d="M4 7h3.5l9 10H20M4 17h3.5l9-10H20" strokeLinecap="round" />
+    <path d="M17 4l3 3-3 3M17 14l3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 const MODES: Array<{
   mode: GameMode;
-  number: string;
   title: string;
   description: string;
   note: string;
+  icon: ReactNode;
 }> = [
   {
     mode: "population",
-    number: "01",
     title: "Population",
     description: "Countries and cities, from compact capitals to billions.",
-    note: "10 questions · logarithmic scale",
+    note: "10 questions · log scale",
+    icon: <GlobeIcon />,
   },
   {
     mode: "history",
-    number: "02",
     title: "History",
     description: "Place inventions, turning points and empires on the timeline.",
-    note: "10 questions · linear timeline",
+    note: "10 questions · timeline",
+    icon: <ClockIcon />,
   },
   {
     mode: "mixed",
-    number: "03",
     title: "Mixed",
     description: "Five population questions and five moments from history.",
-    note: "10 questions · a little of both",
+    note: "10 questions · a bit of both",
+    icon: <ShuffleIcon />,
   },
 ];
 
@@ -81,6 +103,54 @@ function differenceLabel(question: Question, guess: number) {
   return `${formatPoints(difference)} ${difference === 1 ? "person" : "people"}`;
 }
 
+function verdictDetail(question: Question, guess: number) {
+  if (guess === question.answer) return "Exactly right.";
+  const direction =
+    question.unit === "year"
+      ? guess < question.answer
+        ? "too early"
+        : "too late"
+      : guess < question.answer
+        ? "under"
+        : "over";
+  return `You were ${differenceLabel(question, guess)} ${direction}.`;
+}
+
+function prefersReducedMotion() {
+  return (
+    typeof window.matchMedia !== "function" ||
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
+/** Counts up to `target` once `enabled`, so the points land rather than appear. */
+function useCountUp(target: number, enabled: boolean) {
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (!enabled) {
+      setValue(0);
+      return;
+    }
+    if (target === 0 || prefersReducedMotion()) {
+      setValue(target);
+      return;
+    }
+
+    const duration = 550;
+    const start = performance.now();
+    let frame = requestAnimationFrame(function step(now) {
+      const progress = Math.min(1, (now - start) / duration);
+      setValue(Math.round(target * (1 - (1 - progress) ** 3)));
+      if (progress < 1) frame = requestAnimationFrame(step);
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [target, enabled]);
+
+  return value;
+}
+
 async function copyText(text: string) {
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(text);
@@ -104,22 +174,31 @@ export default function Game() {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [position, setPosition] = useState(0.5);
   const [locked, setLocked] = useState(false);
+  const [revealing, setRevealing] = useState(false);
   const [results, setResults] = useState<RoundResult[]>([]);
-  const [bestScores, setBestScores] = useState<BestScores>({
-    population: 0,
-    history: 0,
-    mixed: 0,
-  });
+  // Read straight from the browser during the first render. The app is fully
+  // client-rendered, so there is no server pass to mismatch against.
+  const [theme, setTheme] = useState<Theme>(readTheme);
+  const [bestScores, setBestScores] = useState<BestScores>(readBestScores);
   const [shareStatus, setShareStatus] = useState("");
   const focusHeadingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setBestScores(readBestScores()), 0);
-    return () => window.clearTimeout(timer);
-  }, []);
-  useEffect(() => {
     if (phase !== "category") focusHeadingRef.current?.focus();
   }, [phase, questionIndex]);
+
+  // Hold the pre-reveal frame long enough for the marker transition to run.
+  useEffect(() => {
+    if (!revealing) return;
+    let inner = 0;
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => setRevealing(false));
+    });
+    return () => {
+      cancelAnimationFrame(outer);
+      cancelAnimationFrame(inner);
+    };
+  }, [revealing]);
 
   const totalScore = useMemo(
     () => results.reduce((sum, result) => sum + result.points, 0),
@@ -128,6 +207,23 @@ export default function Game() {
   const question = gameQuestions[questionIndex];
   const guess = question ? positionToValue(question, position) : 0;
   const currentResult = results[questionIndex];
+  const tier = currentResult ? accuracyTier(currentResult.points) : null;
+  const countedPoints = useCountUp(
+    currentResult?.points ?? 0,
+    Boolean(currentResult),
+  );
+
+  const answerPosition = question
+    ? valueToPosition(question, question.answer)
+    : 0;
+  const bandLeft = Math.min(position, answerPosition);
+  const bandWidth = Math.abs(answerPosition - position);
+
+  function toggleTheme() {
+    const next: Theme = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    applyTheme(next);
+  }
 
   function startGame(selectedMode: GameMode) {
     setMode(selectedMode);
@@ -135,6 +231,7 @@ export default function Game() {
     setQuestionIndex(0);
     setPosition(0.5);
     setLocked(false);
+    setRevealing(false);
     setResults([]);
     setShareStatus("");
     setPhase("playing");
@@ -147,6 +244,7 @@ export default function Game() {
       { question, guess, points: scoreGuess(question, guess) },
     ]);
     setLocked(true);
+    setRevealing(true);
   }
 
   function goToNextQuestion() {
@@ -164,6 +262,7 @@ export default function Game() {
     setQuestionIndex((current) => current + 1);
     setPosition(0.5);
     setLocked(false);
+    setRevealing(false);
   }
 
   function handleSliderKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -174,8 +273,10 @@ export default function Game() {
     const large =
       question.scale === "linear" ? Math.max(10 / yearSpan, 0.02) : 0.05;
     let next: number | null = null;
-    if (event.key === "ArrowLeft" || event.key === "ArrowDown") next = position - fine;
-    if (event.key === "ArrowRight" || event.key === "ArrowUp") next = position + fine;
+    if (event.key === "ArrowLeft" || event.key === "ArrowDown")
+      next = position - fine;
+    if (event.key === "ArrowRight" || event.key === "ArrowUp")
+      next = position + fine;
     if (event.key === "PageDown") next = position - large;
     if (event.key === "PageUp") next = position + large;
     if (event.key === "Home") next = 0;
@@ -219,15 +320,37 @@ export default function Game() {
           <span className="wordmark-mark" aria-hidden="true" />
           <span>Give or Take</span>
         </button>
-        <div className="header-note">
-          {phase === "playing" ? (
-            <>
-              <span>{MODE_LABELS[mode]}</span>
-              <strong>{formatPoints(totalScore)} pts</strong>
-            </>
-          ) : (
-            <span>No sign-in. No tracking.</span>
+        <div className="header-side">
+          {phase === "playing" && (
+            <p className="score-chip">
+              {MODE_LABELS[mode]} · <strong>{formatPoints(totalScore)}</strong>
+            </p>
           )}
+          <button
+            className="theme-toggle"
+            type="button"
+            onClick={toggleTheme}
+            aria-label={
+              theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+            }
+          >
+            {theme === "dark" ? (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <circle cx="12" cy="12" r="4.5" />
+                <path
+                  d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path
+                  d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </button>
         </div>
       </header>
 
@@ -248,11 +371,8 @@ export default function Game() {
                 key={detail.mode}
                 onClick={() => startGame(detail.mode)}
               >
-                <span className="mode-number">{detail.number}</span>
-                <span className="mode-title-row">
-                  <strong>{detail.title}</strong>
-                  <span aria-hidden="true">↗</span>
-                </span>
+                <span className="mode-icon">{detail.icon}</span>
+                <strong>{detail.title}</strong>
                 <span className="mode-description">{detail.description}</span>
                 <span className="mode-note">{detail.note}</span>
                 {bestScores[detail.mode] > 0 && (
@@ -264,7 +384,7 @@ export default function Game() {
             ))}
           </div>
           <div className="category-footer">
-            <span>60+ locally stored, sourced questions</span>
+            <span>60 sourced questions, bundled with the app</span>
             <span>Best scores stay on this device</span>
           </div>
         </section>
@@ -272,55 +392,57 @@ export default function Game() {
 
       {phase === "playing" && question && (
         <section className="game-screen">
-          <div className="progress-row">
-            <span>
-              Question {String(questionIndex + 1).padStart(2, "0")} /{" "}
-              {String(gameQuestions.length).padStart(2, "0")}
-            </span>
-            <div
-              className="progress-track"
-              role="progressbar"
-              aria-label="Game progress"
-              aria-valuemin={1}
-              aria-valuemax={gameQuestions.length}
-              aria-valuenow={questionIndex + 1}
-            >
+          <div
+            className="progress-dots"
+            role="progressbar"
+            aria-label="Game progress"
+            aria-valuemin={1}
+            aria-valuemax={gameQuestions.length}
+            aria-valuenow={questionIndex + 1}
+          >
+            {gameQuestions.map((item, index) => (
               <span
-                style={{
-                  width: `${((questionIndex + 1) / gameQuestions.length) * 100}%`,
-                }}
+                key={item.id}
+                className={
+                  index === questionIndex
+                    ? "is-current"
+                    : index < questionIndex
+                      ? "is-done"
+                      : undefined
+                }
               />
-            </div>
+            ))}
           </div>
 
           <article className="question-card">
-            <div className="question-meta">
-              <span>{subtypeLabel(question)}</span>
-              <span>
-                {question.scale === "log" ? "Logarithmic scale" : "Linear timeline"}
-              </span>
-            </div>
+            <span className="question-tag">{subtypeLabel(question)}</span>
             <h1 ref={focusHeadingRef} tabIndex={-1}>
               {question.prompt}
             </h1>
 
             <div
-              className={`estimate-panel${locked ? " is-locked" : ""}`}
+              className={`estimate-panel${revealing ? " is-revealing" : ""}${tier ? ` tier-${tier.id}` : ""}`}
               style={
                 {
                   "--guess-position": `${position * 100}%`,
-                  "--answer-position": `${valueToPosition(question, question.answer) * 100}%`,
+                  "--answer-position": `${answerPosition * 100}%`,
+                  "--band-left": `${bandLeft * 100}%`,
+                  "--band-width": `${bandWidth * 100}%`,
                 } as CSSProperties
               }
             >
-              <p className="estimate-label">
-                {locked ? "Your locked guess" : "Your estimate"}
-              </p>
               <output className="estimate-value" htmlFor="estimate-slider">
                 {formatQuestionValue(question, guess)}
-                <span>{unitSuffix(question)}</span>
               </output>
+              <span className="estimate-label">
+                {locked ? "Your locked guess" : "Your estimate"}
+              </span>
+
               <div className="slider-wrap">
+                <span className="slider-rail" aria-hidden="true" />
+                <span className="slider-fill" aria-hidden="true" />
+                {locked && <span className="miss-band" aria-hidden="true" />}
+                {locked && <span className="answer-dot" aria-hidden="true" />}
                 <input
                   id="estimate-slider"
                   className="estimate-slider"
@@ -337,11 +459,6 @@ export default function Game() {
                   }
                   onKeyDown={handleSliderKeyDown}
                 />
-                {locked && (
-                  <span className="answer-marker" aria-hidden="true">
-                    <span />
-                  </span>
-                )}
               </div>
               <div className="range-labels" aria-hidden="true">
                 <span>{formatQuestionValue(question, question.min)}</span>
@@ -360,22 +477,25 @@ export default function Game() {
                 Lock in guess
               </button>
             ) : (
-              <div className="reveal" aria-live="polite">
-                <div className="reveal-score">
-                  <div>
-                    <span>Correct answer</span>
+              <div className={`reveal tier-${tier?.id ?? "far"}`} aria-live="polite">
+                <div className="verdict">
+                  <h2>{tier?.headline}</h2>
+                  <p>{verdictDetail(question, currentResult.guess)}</p>
+                </div>
+                <div className="stat-tiles">
+                  <div className="stat-tile">
+                    <span>Answer</span>
+                    <strong>{formatQuestionValue(question, question.answer)}</strong>
+                  </div>
+                  <div className="stat-tile">
+                    <span>Your guess</span>
                     <strong>
-                      {formatQuestionValue(question, question.answer)}
-                      {unitSuffix(question)}
+                      {formatQuestionValue(question, currentResult.guess)}
                     </strong>
                   </div>
-                  <div>
-                    <span>You were off by</span>
-                    <strong>{differenceLabel(question, currentResult.guess)}</strong>
-                  </div>
-                  <div className="points-earned">
+                  <div className="stat-tile is-points">
                     <span>Points</span>
-                    <strong>+{formatPoints(currentResult.points)}</strong>
+                    <strong>+{formatPoints(countedPoints)}</strong>
                   </div>
                 </div>
                 <p className="reveal-fact">{question.explanation}</p>
@@ -406,65 +526,65 @@ export default function Game() {
       {phase === "results" && (
         <section className="results-screen">
           <div className="results-hero">
-            <div>
-              <p className="eyebrow">{MODE_LABELS[mode]} · Game complete</p>
-              <h1 ref={focusHeadingRef} tabIndex={-1}>
-                Final score
-              </h1>
-            </div>
+            <p className="eyebrow">{MODE_LABELS[mode]} · Game complete</p>
+            <h1 ref={focusHeadingRef} tabIndex={-1}>
+              Final score
+            </h1>
             <div className="final-score">
               <strong>{formatPoints(totalScore)}</strong>
               <span>/ 10,000</span>
             </div>
-          </div>
-          <div className="result-summary">
-            <p>
-              {totalScore === bestScores[mode] && totalScore > 0
-                ? "That’s your best score in this category."
-                : `Your best ${MODE_LABELS[mode].toLowerCase()} score is ${formatPoints(bestScores[mode])}.`}
-            </p>
-            <div className="result-actions">
-              <button
-                className="primary-button"
-                type="button"
-                onClick={() => startGame(mode)}
-              >
-                Play again
-              </button>
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={() => setPhase("category")}
-              >
-                Change category
-              </button>
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={shareResult}
-              >
-                Share result
-              </button>
+            <div className="result-summary">
+              <p>
+                {totalScore === bestScores[mode] && totalScore > 0
+                  ? "That’s your best score in this category."
+                  : `Your best ${MODE_LABELS[mode].toLowerCase()} score is ${formatPoints(bestScores[mode])}.`}
+              </p>
+              <div className="result-actions">
+                <button
+                  className="primary-button"
+                  type="button"
+                  onClick={() => startGame(mode)}
+                >
+                  Play again
+                </button>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => setPhase("category")}
+                >
+                  Change category
+                </button>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={shareResult}
+                >
+                  Share result
+                </button>
+              </div>
+              <p className="share-status" role="status">
+                {shareStatus}
+              </p>
             </div>
-            <p className="share-status" role="status">
-              {shareStatus}
-            </p>
           </div>
+
           <div className="breakdown">
             <div className="section-heading">
               <h2>Question by question</h2>
               <span>{results.length} rounds</span>
             </div>
             <ol className="result-list">
-              {results.map((result, index) => (
-                <li key={result.question.id}>
-                  <span className="result-index">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
+              {results.map((result) => (
+                <li
+                  key={result.question.id}
+                  className={`tier-${accuracyTier(result.points).id}`}
+                >
                   <div className="result-question">
                     <strong>{result.question.prompt}</strong>
                     <span>
-                      Your guess {formatQuestionValue(result.question, result.guess)}
+                      Your guess{" "}
+                      {formatQuestionValue(result.question, result.guess)}
                       {unitSuffix(result.question)} · Answer{" "}
                       {formatQuestionValue(result.question, result.question.answer)}
                       {unitSuffix(result.question)}
@@ -481,7 +601,7 @@ export default function Game() {
       )}
 
       <footer className="site-footer">
-        <span>Give or Take</span>
+        <strong>Give or Take</strong>
         <span>Facts have sources. Guesses are all yours.</span>
       </footer>
     </main>

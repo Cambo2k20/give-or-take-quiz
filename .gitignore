@@ -4,19 +4,14 @@
 /node_modules
 /.pnp
 .pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
 
-# testing
-/coverage
+# build output
+/dist/
+/coverage/
 
-# next.js
-/.next/
-/.vinext/
-/out/
+# vite
+/.vite/
+*.tsbuildinfo
 
 # misc
 .DS_Store
@@ -31,14 +26,11 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
-# vercel
-.vercel
-
-# typescript
-next-env.d.ts
-/dist/
-/.wrangler/
-/outputs/
+# local scratch
 /work/
+/outputs/
 /.npm-cache/
-*.tsbuildinfo
+
+# leftovers from the pre-Vite toolchain; safe to delete from your checkout
+/.vinext/
+/.wrangler/

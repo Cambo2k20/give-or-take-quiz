@@ -46,6 +46,27 @@ export function scoreGuess(question: Question, guess: number): number {
   return Math.round(1000 * (1 - distance) ** 2);
 }
 
+export type AccuracyTier = {
+  id: "bullseye" | "close" | "fair" | "wide" | "far";
+  headline: string;
+};
+
+const ACCURACY_TIERS: ReadonlyArray<{ floor: number } & AccuracyTier> = [
+  { floor: 980, id: "bullseye", headline: "Bullseye!" },
+  { floor: 850, id: "close", headline: "So close!" },
+  { floor: 600, id: "fair", headline: "Not bad." },
+  { floor: 300, id: "wide", headline: "Off the mark." },
+  { floor: 0, id: "far", headline: "Way off." },
+];
+
+/** Turns a round score into the verdict shown above the reveal. */
+export function accuracyTier(points: number): AccuracyTier {
+  const tier =
+    ACCURACY_TIERS.find((candidate) => points >= candidate.floor) ??
+    ACCURACY_TIERS[ACCURACY_TIERS.length - 1];
+  return { id: tier.id, headline: tier.headline };
+}
+
 export function formatYear(value: number): string {
   if (value <= 0) {
     return `${value === 0 ? 1 : Math.abs(value)} BCE`;
