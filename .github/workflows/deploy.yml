@@ -36,7 +36,34 @@ jobs:
       - name: Run tests
         run: npm test
 
+      # Without these the build still succeeds, but supabase.ts sees no
+      # credentials, leaderboardEnabled is false, and the deployed site quietly
+      # drops the Leaderboard and Sign in buttons. Fail loudly instead of
+      # shipping a silently reduced app.
+      - name: Check Supabase configuration
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          missing=0
+          if [ -z "$VITE_SUPABASE_URL" ]; then
+            echo "::error::VITE_SUPABASE_URL is not set."
+            missing=1
+          fi
+          if [ -z "$VITE_SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "::error::VITE_SUPABASE_PUBLISHABLE_KEY is not set."
+            missing=1
+          fi
+          if [ "$missing" -eq 1 ]; then
+            echo "::error::Add them under Settings -> Secrets and variables -> Actions -> Variables. Both are publishable values, not secrets."
+            exit 1
+          fi
+          echo "Supabase configuration present for $VITE_SUPABASE_URL"
+
       - name: Build
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
         run: npm run build
 
       - name: Configure Pages
