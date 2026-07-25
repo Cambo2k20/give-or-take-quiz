@@ -45,6 +45,26 @@ const ShuffleIcon = () => (
   </svg>
 );
 
+const RulerIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <rect x="2" y="7" width="20" height="10" rx="2" />
+    <path d="M7 7v3M12 7v4M17 7v3" strokeLinecap="round" />
+  </svg>
+);
+
+const StackIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <path d="M12 3l9 5-9 5-9-5 9-5Z" strokeLinejoin="round" />
+    <path d="M3 13l9 5 9-5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const BoltIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" strokeLinejoin="round" />
+  </svg>
+);
+
 const MODES: Array<{
   mode: GameMode;
   title: string;
@@ -67,10 +87,31 @@ const MODES: Array<{
     icon: <ClockIcon />,
   },
   {
+    mode: "size",
+    title: "Size",
+    description: "How long, how wide and how heavy things really are.",
+    note: "10 questions · log scale",
+    icon: <RulerIcon />,
+  },
+  {
+    mode: "quantity",
+    title: "Quantity",
+    description: "How many, what share of the world, and what it cost.",
+    note: "10 questions · counts and shares",
+    icon: <StackIcon />,
+  },
+  {
+    mode: "physics",
+    title: "Physics",
+    description: "How long it takes, how fast it moves, how hot it gets.",
+    note: "10 questions · time, speed, heat",
+    icon: <BoltIcon />,
+  },
+  {
     mode: "mixed",
     title: "Mixed",
-    description: "Five population questions and five moments from history.",
-    note: "10 questions · a bit of both",
+    description: "Two questions drawn from every category.",
+    note: "10 questions · a bit of everything",
     icon: <ShuffleIcon />,
   },
 ];
@@ -78,7 +119,25 @@ const MODES: Array<{
 const MODE_LABELS: Record<GameMode, string> = {
   population: "Population",
   history: "History",
+  size: "Size",
+  quantity: "Quantity",
+  physics: "Physics",
   mixed: "Mixed",
+};
+
+const SUBTYPE_LABELS: Record<Question["subtype"], string> = {
+  country: "Country population",
+  city: "City population",
+  event: "Historic event",
+  length: "Length and distance",
+  area: "Area",
+  mass: "Mass",
+  count: "How many",
+  percentage: "Share of the whole",
+  money: "Historic cost",
+  duration: "How long",
+  speed: "Speed",
+  temperature: "Temperature",
 };
 
 function formatPoints(points: number) {
@@ -86,9 +145,7 @@ function formatPoints(points: number) {
 }
 
 function subtypeLabel(question: Question) {
-  if (question.subtype === "country") return "Country population";
-  if (question.subtype === "city") return "City population";
-  return "Historic event";
+  return SUBTYPE_LABELS[question.subtype];
 }
 
 function unitSuffix(question: Question) {
@@ -100,19 +157,28 @@ function differenceLabel(question: Question, guess: number) {
   if (question.unit === "year") {
     return `${formatPoints(difference)} ${difference === 1 ? "year" : "years"}`;
   }
-  return `${formatPoints(difference)} ${difference === 1 ? "person" : "people"}`;
+  if (question.unit === "people") {
+    return `${formatPoints(difference)} ${difference === 1 ? "person" : "people"}`;
+  }
+  // Every other unit already carries its own wording out of the formatter.
+  return formatQuestionValue(question, difference);
 }
 
 function verdictDetail(question: Question, guess: number) {
   if (guess === question.answer) return "Exactly right.";
+  const behind = guess < question.answer;
   const direction =
     question.unit === "year"
-      ? guess < question.answer
+      ? behind
         ? "too early"
         : "too late"
-      : guess < question.answer
-        ? "under"
-        : "over";
+      : question.unit === "people"
+        ? behind
+          ? "under"
+          : "over"
+        : behind
+          ? "too low"
+          : "too high";
   return `You were ${differenceLabel(question, guess)} ${direction}.`;
 }
 
@@ -384,7 +450,7 @@ export default function Game() {
             ))}
           </div>
           <div className="category-footer">
-            <span>60 sourced questions, bundled with the app</span>
+            <span>150 sourced questions, bundled with the app</span>
             <span>Best scores stay on this device</span>
           </div>
         </section>

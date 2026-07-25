@@ -10,12 +10,15 @@ historic events. Move the slider, lock in a guess, and see how close you were.
 
 ## How to play
 
-Choose one of three 10-question modes:
+Choose one of six 10-question modes:
 
 - **Population** — country totals and US city-proper populations on a
   logarithmic scale.
 - **History** — historic events on a linear timeline.
-- **Mixed** — five population questions and five history questions.
+- **Size** — lengths, distances, areas and masses.
+- **Quantity** — counts, shares of the whole, and what things cost at the time.
+- **Physics** — durations, speeds and temperatures.
+- **Mixed** — two questions drawn from each of the five categories.
 
 Each round draws unique questions from the local question bank. Move the
 slider to your estimate and select **Lock in guess**. The slider then shades
@@ -52,20 +55,31 @@ Each round's score also picks the verdict shown on the reveal:
 
 ## Local, sourced data
 
-The 60-question dataset lives in [`lib/questions.ts`](lib/questions.ts) and is
-bundled with the application; gameplay does not depend on a live data API.
-It contains:
+The 150-question dataset is bundled with the application; gameplay does not
+depend on a live data API. [`lib/questions.ts`](lib/questions.ts) holds the
+population and history records and joins on three further banks:
 
-- 15 country questions using fixed 2024 midyear population snapshots from the
-  World Bank;
-- 15 US city questions using 2020 US Census city-proper counts; and
-- 30 historic events, each linked to an institutional or reference source.
+| File | Contents |
+| --- | --- |
+| [`lib/questions.ts`](lib/questions.ts) | 15 country and 15 city populations, 30 historic events |
+| [`lib/questions-size.ts`](lib/questions-size.ts) | 10 lengths, 10 areas, 10 masses |
+| [`lib/questions-quantity.ts`](lib/questions-quantity.ts) | 10 counts, 10 shares, 10 historic costs |
+| [`lib/questions-physics.ts`](lib/questions-physics.ts) | 10 durations, 10 speeds, 10 temperatures |
 
 Every record includes its answer, bounds, scale, explanation, and source title
-and URL. Population prompts also state their reference year and whether the
-figure is a country total or city proper. The source is shown after each guess.
-These are frozen reference snapshots, so updates should be deliberate and
-reviewed against the linked source.
+and URL. These are frozen reference snapshots, so updates should be deliberate
+and reviewed against the linked source. Two rules keep them that way:
+
+- **Money questions are historical.** Each is the figure in the dollars of its
+  day, with a `referenceYear`, so no current price ever needs re-checking.
+- **Temperature questions are records or constants** rather than any live
+  reading, and always use a linear scale, since a logarithmic slider cannot
+  represent the negative values several of them need.
+
+Slider bounds matter as much as the fact. The slider opens at its midpoint, so
+an answer sitting near the middle of its range pays a player who never touches
+it; bounds are chosen to be believable at both ends while keeping the answer
+clear of the centre.
 
 Run `npm run validate:data` to check IDs, record shape, slider bounds, source
 URLs, population definitions, and category coverage. This validation also

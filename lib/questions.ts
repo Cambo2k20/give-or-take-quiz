@@ -1,7 +1,12 @@
+import { physicsQuestions } from "./questions-physics";
+import { quantityQuestions } from "./questions-quantity";
+import { sizeQuestions } from "./questions-size";
 import type { Question } from "./types";
 
 /**
- * A local, deterministic question bank.
+ * The population and history half of a local, deterministic question bank.
+ * `questions` at the foot of this file joins it to the size, quantity and
+ * physics banks.
  *
  * Population figures are fixed snapshots rather than live values. Country
  * questions use the UN DESA World Population Prospects 2024 midyear series,
@@ -9,7 +14,7 @@ import type { Question } from "./types";
  * City questions use the 2020 U.S. decennial census count for the legally
  * incorporated city ("city proper"), not an urban area or metro.
  */
-export const questions: readonly Question[] = [
+const populationAndHistoryQuestions: readonly Question[] = [
   {
     id: "population-country-india-2024",
     category: "population",
@@ -1108,16 +1113,10 @@ export const questions: readonly Question[] = [
   },
 ];
 
-export const questionBank: readonly Question[] = questions;
-
-export const countryQuestions = questions.filter(
-  (question) => question.subtype === "country",
-);
-
-export const cityQuestions = questions.filter(
-  (question) => question.subtype === "city",
-);
-
-export const historyQuestions = questions.filter(
-  (question) => question.subtype === "event",
-);
+/** The whole bank: every category the game can draw from. */
+export const questions: readonly Question[] = [
+  ...populationAndHistoryQuestions,
+  ...sizeQuestions,
+  ...quantityQuestions,
+  ...physicsQuestions,
+];

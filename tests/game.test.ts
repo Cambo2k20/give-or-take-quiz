@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  CATEGORIES,
   formatYear,
   positionToValue,
   readBestScores,
@@ -130,7 +131,7 @@ describe("formatYear", () => {
 });
 
 describe("selectQuestions", () => {
-  it.each(["population", "history"] as const)(
+  it.each(["population", "history", "size", "quantity", "physics"] as const)(
     "returns ten unique %s questions",
     (mode) => {
       const selected = selectQuestions(mode, seededRandom(1234));
@@ -146,12 +147,11 @@ describe("selectQuestions", () => {
 
     expect(selected).toHaveLength(10);
     expect(new Set(selected.map(({ id }) => id)).size).toBe(10);
-    expect(
-      selected.filter(({ category }) => category === "population"),
-    ).toHaveLength(5);
-    expect(
-      selected.filter(({ category }) => category === "history"),
-    ).toHaveLength(5);
+    for (const category of CATEGORIES) {
+      expect(
+        selected.filter((question) => question.category === category),
+      ).toHaveLength(2);
+    }
   });
 
   it("is deterministic when supplied the same random sequence", () => {
@@ -168,6 +168,9 @@ describe("best-score storage", () => {
   const emptyScores = {
     population: 0,
     history: 0,
+    size: 0,
+    quantity: 0,
+    physics: 0,
     mixed: 0,
   };
 
@@ -176,7 +179,14 @@ describe("best-score storage", () => {
   });
 
   it("round-trips best scores through an injected Storage object", () => {
-    const scores = { population: 7_800, history: 8_250, mixed: 9_100 };
+    const scores = {
+      population: 7_800,
+      history: 8_250,
+      size: 6_400,
+      quantity: 7_100,
+      physics: 5_950,
+      mixed: 9_100,
+    };
 
     writeBestScores(scores, window.localStorage);
 
