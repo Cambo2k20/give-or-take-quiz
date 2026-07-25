@@ -1,12 +1,4 @@
-import {
-  type CSSProperties,
-  type KeyboardEvent,
-  type ReactNode,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import {
   type BestScores,
   QUESTIONS_PER_GAME,
@@ -18,7 +10,6 @@ import {
   readQuestionHistory,
   scoreGuess,
   selectQuestionsWithHistory,
-  valueToPosition,
   writeBestScores,
   writeQuestionHistory,
 } from "../lib/game";
@@ -29,7 +20,16 @@ import {
   ConfirmEmailNotice,
   NewPasswordForm,
 } from "./AuthPanel";
+import { EstimatePanel } from "./EstimatePanel";
+import { HeroDemo } from "./HeroDemo";
 import { JoinLeaderboardForm, LeaderboardPanel } from "./Leaderboard";
+import {
+  formatPoints,
+  subtypeLabel,
+  unitSuffix,
+  useCountUp,
+  verdictDetail,
+} from "./questionText";
 import { type Theme, applyTheme, readTheme } from "./theme";
 import { useAuth } from "./useAuth";
 import { useLeaderboard } from "./useLeaderboard";
@@ -181,104 +181,12 @@ const MODE_LABELS: Record<GameMode, string> = {
   mixed: "Mixed",
 };
 
-const SUBTYPE_LABELS: Record<Question["subtype"], string> = {
-  country: "Country population",
-  city: "City population",
-  event: "Historic event",
-  length: "Length and distance",
-  area: "Area",
-  mass: "Mass",
-  count: "How many",
-  percentage: "Share of the whole",
-  money: "Historic cost",
-  duration: "How long",
-  speed: "Speed",
-  temperature: "Temperature",
-};
-
-function formatPoints(points: number) {
-  return new Intl.NumberFormat("en-GB").format(points);
-}
-
 /** Read off the bank, so adding questions updates the chooser by itself. */
 function modeNote(mode: GameMode) {
   const perRound = `${QUESTIONS_PER_GAME} questions`;
   return mode === "mixed"
     ? `${perRound} · a bit of everything`
     : `${perRound} · ${formatPoints(questionCount(mode))} in the bank`;
-}
-
-function subtypeLabel(question: Question) {
-  return SUBTYPE_LABELS[question.subtype];
-}
-
-function unitSuffix(question: Question) {
-  return question.unit === "people" ? " people" : "";
-}
-
-function differenceLabel(question: Question, guess: number) {
-  const difference = Math.abs(question.answer - guess);
-  if (question.unit === "year") {
-    return `${formatPoints(difference)} ${difference === 1 ? "year" : "years"}`;
-  }
-  if (question.unit === "people") {
-    return `${formatPoints(difference)} ${difference === 1 ? "person" : "people"}`;
-  }
-  // Every other unit already carries its own wording out of the formatter.
-  return formatQuestionValue(question, difference);
-}
-
-function verdictDetail(question: Question, guess: number) {
-  if (guess === question.answer) return "Exactly right.";
-  const behind = guess < question.answer;
-  const direction =
-    question.unit === "year"
-      ? behind
-        ? "too early"
-        : "too late"
-      : question.unit === "people"
-        ? behind
-          ? "under"
-          : "over"
-        : behind
-          ? "too low"
-          : "too high";
-  return `You were ${differenceLabel(question, guess)} ${direction}.`;
-}
-
-function prefersReducedMotion() {
-  return (
-    typeof window.matchMedia !== "function" ||
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
-}
-
-/** Counts up to `target` once `enabled`, so the points land rather than appear. */
-function useCountUp(target: number, enabled: boolean) {
-  const [value, setValue] = useState(0);
-
-  useEffect(() => {
-    if (!enabled) {
-      setValue(0);
-      return;
-    }
-    if (target === 0 || prefersReducedMotion()) {
-      setValue(target);
-      return;
-    }
-
-    const duration = 550;
-    const start = performance.now();
-    let frame = requestAnimationFrame(function step(now) {
-      const progress = Math.min(1, (now - start) / duration);
-      setValue(Math.round(target * (1 - (1 - progress) ** 3)));
-      if (progress < 1) frame = requestAnimationFrame(step);
-    });
-
-    return () => cancelAnimationFrame(frame);
-  }, [target, enabled]);
-
-  return value;
 }
 
 async function copyText(text: string) {
@@ -352,12 +260,6 @@ export default function Game() {
     currentResult?.points ?? 0,
     Boolean(currentResult),
   );
-
-  const answerPosition = question
-    ? valueToPosition(question, question.answer)
-    : 0;
-  const bandLeft = Math.min(position, answerPosition);
-  const bandWidth = Math.abs(answerPosition - position);
 
   const { profile: player, publish, resetSubmit, loadBoard } = leaderboard;
   const canPublish = auth.canUseLeaderboard;
@@ -443,28 +345,6 @@ export default function Game() {
     setPosition(0.5);
     setLocked(false);
     setRevealing(false);
-  }
-
-  function handleSliderKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (!question || locked) return;
-    const yearSpan = question.max - question.min;
-    const fine =
-      question.scale === "linear" ? Math.max(1 / yearSpan, 0.0001) : 0.005;
-    const large =
-      question.scale === "linear" ? Math.max(10 / yearSpan, 0.02) : 0.05;
-    let next: number | null = null;
-    if (event.key === "ArrowLeft" || event.key === "ArrowDown")
-      next = position - fine;
-    if (event.key === "ArrowRight" || event.key === "ArrowUp")
-      next = position + fine;
-    if (event.key === "PageDown") next = position - large;
-    if (event.key === "PageUp") next = position + large;
-    if (event.key === "Home") next = 0;
-    if (event.key === "End") next = 1;
-    if (next !== null) {
-      event.preventDefault();
-      setPosition(Math.min(1, Math.max(0, next)));
-    }
   }
 
   async function shareResult() {
@@ -571,6 +451,10 @@ export default function Game() {
               Ten questions. One slider. Put your instinct somewhere on the line.
             </p>
           </div>
+
+          <HeroDemo onPlay={() => startGame("mixed")} />
+
+          <p className="mode-grid-label">Or pick a category</p>
           <div className="mode-grid" aria-label="Choose a category">
             {MODES.map((detail) => (
               <button
@@ -630,57 +514,15 @@ export default function Game() {
               {question.prompt}
             </h1>
 
-            <div
-              className={`estimate-panel${revealing ? " is-revealing" : ""}${tier ? ` tier-${tier.id}` : ""}`}
-              style={
-                {
-                  "--guess-position": `${position * 100}%`,
-                  "--answer-position": `${answerPosition * 100}%`,
-                  "--band-left": `${bandLeft * 100}%`,
-                  "--band-width": `${bandWidth * 100}%`,
-                } as CSSProperties
-              }
-            >
-              <output className="estimate-value" htmlFor="estimate-slider">
-                {formatQuestionValue(question, guess)}
-              </output>
-              <span className="estimate-label">
-                {locked ? "Your locked guess" : "Your estimate"}
-              </span>
-
-              <div className="slider-wrap">
-                <span className="slider-rail" aria-hidden="true" />
-                <span className="slider-fill" aria-hidden="true" />
-                {locked && <span className="miss-band" aria-hidden="true" />}
-                {locked && <span className="answer-dot" aria-hidden="true" />}
-                <input
-                  id="estimate-slider"
-                  className="estimate-slider"
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.0001"
-                  value={position}
-                  disabled={locked}
-                  aria-label="Your estimate"
-                  aria-valuetext={`${formatQuestionValue(question, guess)}${unitSuffix(question)}`}
-                  onChange={(event) =>
-                    setPosition(Number.parseFloat(event.target.value))
-                  }
-                  onKeyDown={handleSliderKeyDown}
-                />
-              </div>
-              <div className="range-labels" aria-hidden="true">
-                <span>{formatQuestionValue(question, question.min)}</span>
-                <span>{formatQuestionValue(question, question.max)}</span>
-              </div>
-              {!locked && (
-                <p className="keyboard-help">
-                  Drag, tap, or use arrow keys. Page Up/Down moves faster;
-                  Home/End jumps to the limits.
-                </p>
-              )}
-            </div>
+            <EstimatePanel
+              question={question}
+              position={position}
+              onPositionChange={setPosition}
+              locked={locked}
+              revealing={revealing}
+              tierId={tier?.id}
+              sliderId="estimate-slider"
+            />
 
             {!locked ? (
               <button className="primary-button" type="button" onClick={lockGuess}>

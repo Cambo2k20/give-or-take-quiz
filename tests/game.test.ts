@@ -5,6 +5,7 @@ import {
   positionToValue,
   QUESTION_HISTORY_KEY,
   QUESTIONS_PER_GAME,
+  pickDemoQuestion,
   readBestScores,
   readQuestionHistory,
   scoreGuess,
@@ -231,6 +232,30 @@ describe("selectQuestions", () => {
         second.questions.some((question) => question.category === category),
       ).toBe(true);
     }
+  });
+});
+
+describe("pickDemoQuestion", () => {
+  it("draws from the whole bank rather than one category", () => {
+    const drawn = new Set(
+      Array.from({ length: 200 }, (_, index) =>
+        pickDemoQuestion(seededRandom(index)).category,
+      ),
+    );
+
+    expect(drawn.size).toBeGreaterThan(1);
+  });
+
+  it("is deterministic when supplied the same random sequence", () => {
+    expect(pickDemoQuestion(seededRandom(7)).id).toBe(
+      pickDemoQuestion(seededRandom(7)).id,
+    );
+  });
+
+  it("stays in range at both ends of the random sequence", () => {
+    expect(pickDemoQuestion(() => 0)).toBeDefined();
+    // Math.random never returns 1, but an injected sequence might.
+    expect(pickDemoQuestion(() => 1)).toBeDefined();
   });
 });
 
