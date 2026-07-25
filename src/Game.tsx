@@ -19,9 +19,11 @@ import {
   writeBestScores,
 } from "../lib/game";
 import type { GameMode, Question } from "../lib/types";
+import { JoinLeaderboardForm, LeaderboardPanel } from "./Leaderboard";
 import { type Theme, applyTheme, readTheme } from "./theme";
+import { useLeaderboard } from "./useLeaderboard";
 
-type Phase = "category" | "playing" | "results";
+type Phase = "category" | "playing" | "results" | "leaderboard";
 type RoundResult = { question: Question; guess: number; points: number };
 
 const GlobeIcon = () => (
@@ -248,6 +250,9 @@ export default function Game() {
   const [bestScores, setBestScores] = useState<BestScores>(readBestScores);
   const [shareStatus, setShareStatus] = useState("");
   const focusHeadingRef = useRef<HTMLHeadingElement>(null);
+  const leaderboard = useLeaderboard();
+  // One publish per finished round, whatever React does with effects.
+  const publishedRef = useRef(false);
 
   useEffect(() => {
     if (phase !== "category") focusHeadingRef.current?.focus();
@@ -285,6 +290,40 @@ export default function Game() {
   const bandLeft = Math.min(position, answerPosition);
   const bandWidth = Math.abs(answerPosition - position);
 
+  const { profile: player, publish, resetSubmit, loadBoard } = leaderboard;
+
+  // Publish the moment a round ends, but only for a player who already has a
+  // name. Everyone else is offered the join form on the results screen.
+  useEffect(() => {
+    if (phase !== "results" || publishedRef.current) return;
+    if (!player || results.length === 0) return;
+    publishedRef.current = true;
+    void publish(
+      mode,
+      results.map((result) => ({
+        question_id: result.question.id,
+        guess: result.guess,
+      })),
+    );
+  }, [phase, mode, results, player, publish]);
+
+  async function joinAndPublish(name: string) {
+    await leaderboard.join(name);
+    publishedRef.current = true;
+    await publish(
+      mode,
+      results.map((result) => ({
+        question_id: result.question.id,
+        guess: result.guess,
+      })),
+    );
+  }
+
+  function openLeaderboard() {
+    setPhase("leaderboard");
+    void loadBoard(mode);
+  }
+
   function toggleTheme() {
     const next: Theme = theme === "dark" ? "light" : "dark";
     setTheme(next);
@@ -300,6 +339,8 @@ export default function Game() {
     setRevealing(false);
     setResults([]);
     setShareStatus("");
+    publishedRef.current = false;
+    resetSubmit();
     setPhase("playing");
   }
 
@@ -391,6 +432,15 @@ export default function Game() {
             <p className="score-chip">
               {MODE_LABELS[mode]} · <strong>{formatPoints(totalScore)}</strong>
             </p>
+          )}
+          {leaderboard.enabled && phase !== "playing" && (
+            <button
+              className="board-button"
+              type="button"
+              onClick={openLeaderboard}
+            >
+              Leaderboard
+            </button>
           )}
           <button
             className="theme-toggle"
@@ -635,6 +685,41 @@ export default function Game() {
             </div>
           </div>
 
+          {leaderboard.enabled && leaderboard.ready && (
+            <div className="board-callout">
+              {!player ? (
+                <JoinLeaderboardForm onJoin={joinAndPublish} />
+              ) : (
+                <div className="board-status" role="status">
+                  {leaderboard.submit.status === "sending" &&
+                    "Saving your score…"}
+                  {leaderboard.submit.status === "sent" && (
+                    <>
+                      Saved as <strong>{player.displayName}</strong>. The server
+                      scored this round{" "}
+                      <strong>
+                        {formatPoints(leaderboard.submit.totalScore)}
+                      </strong>
+                      .
+                    </>
+                  )}
+                  {leaderboard.submit.status === "failed" && (
+                    <span className="is-error">
+                      {leaderboard.submit.message}
+                    </span>
+                  )}
+                </div>
+              )}
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={openLeaderboard}
+              >
+                See the leaderboard
+              </button>
+            </div>
+          )}
+
           <div className="breakdown">
             <div className="section-heading">
               <h2>Question by question</h2>
@@ -662,6 +747,58 @@ export default function Game() {
                 </li>
               ))}
             </ol>
+          </div>
+        </section>
+      )}
+
+      {phase === "leaderboard" && (
+        <section className="board-screen">
+          <div className="results-hero">
+            <p className="eyebrow">Best score per player</p>
+            <h1 ref={focusHeadingRef} tabIndex={-1}>
+              Leaderboard
+            </h1>
+          </div>
+
+          <div className="board-modes" aria-label="Choose a category">
+            {MODES.map((detail) => (
+              <button
+                key={detail.mode}
+                type="button"
+                className={`board-mode${detail.mode === mode ? " is-current" : ""}`}
+                aria-pressed={detail.mode === mode}
+                onClick={() => {
+                  setMode(detail.mode);
+                  void loadBoard(detail.mode);
+                }}
+              >
+                {detail.title}
+              </button>
+            ))}
+          </div>
+
+          <LeaderboardPanel
+            rows={leaderboard.board}
+            loading={leaderboard.boardLoading}
+            error={leaderboard.boardError}
+            profile={player}
+          />
+
+          <div className="result-actions">
+            <button
+              className="primary-button"
+              type="button"
+              onClick={() => startGame(mode)}
+            >
+              Play {MODE_LABELS[mode]}
+            </button>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => setPhase("category")}
+            >
+              Back
+            </button>
           </div>
         </section>
       )}
