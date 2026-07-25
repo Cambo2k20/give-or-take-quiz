@@ -66,9 +66,9 @@ export async function currentProfile(): Promise<PlayerProfile | null> {
 }
 
 /**
- * Claims a display name, signing in anonymously first if needed. Anonymous
- * because the game asks for nothing else; a player who wants their scores on
- * another device can link an email later.
+ * Claims a display name for the signed-in account. Requires a confirmed
+ * address: the row level security policy on profiles enforces the same rule,
+ * so this check only exists to give a clearer message than a policy violation.
  */
 export async function joinLeaderboard(name: string): Promise<PlayerProfile> {
   const supabaseClient = client();
@@ -78,13 +78,15 @@ export async function joinLeaderboard(name: string): Promise<PlayerProfile> {
   if (invalid) throw new Error(invalid);
 
   const { data: sessionData } = await supabaseClient.auth.getSession();
-  let userId = sessionData.session?.user.id;
+  const user = sessionData.session?.user;
+  const userId = user?.id;
 
   if (!userId) {
-    const { data, error } = await supabaseClient.auth.signInAnonymously();
-    if (error) throw new Error(error.message);
-    userId = data.user?.id;
-    if (!userId) throw new Error("Could not start a session.");
+    throw new Error("Sign in to claim a name on the leaderboard.");
+  }
+
+  if (!(user?.email_confirmed_at ?? user?.confirmed_at)) {
+    throw new Error("Confirm your email address first.");
   }
 
   const { error } = await supabaseClient
