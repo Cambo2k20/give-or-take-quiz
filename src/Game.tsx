@@ -18,12 +18,19 @@ import {
   valueToPosition,
   writeBestScores,
 } from "../lib/game";
+import { signOut } from "../lib/auth";
 import type { GameMode, Question } from "../lib/types";
+import {
+  AuthPanel,
+  ConfirmEmailNotice,
+  NewPasswordForm,
+} from "./AuthPanel";
 import { JoinLeaderboardForm, LeaderboardPanel } from "./Leaderboard";
 import { type Theme, applyTheme, readTheme } from "./theme";
+import { useAuth } from "./useAuth";
 import { useLeaderboard } from "./useLeaderboard";
 
-type Phase = "category" | "playing" | "results" | "leaderboard";
+type Phase = "category" | "playing" | "results" | "leaderboard" | "account";
 type RoundResult = { question: Question; guess: number; points: number };
 
 const GlobeIcon = () => (
@@ -254,13 +261,19 @@ export default function Game() {
   const [bestScores, setBestScores] = useState<BestScores>(readBestScores);
   const [shareStatus, setShareStatus] = useState("");
   const focusHeadingRef = useRef<HTMLHeadingElement>(null);
-  const leaderboard = useLeaderboard();
+  const auth = useAuth();
+  const leaderboard = useLeaderboard(auth.user?.id ?? null);
   // One publish per finished round, whatever React does with effects.
   const publishedRef = useRef(false);
 
+  // Following a reset link drops the player back on the app with a recovery
+  // session, so the account screen takes over until the new password is set.
+  // Derived rather than pushed into state, so it cannot fight with navigation.
+  const activePhase: Phase = auth.recovering ? "account" : phase;
+
   useEffect(() => {
-    if (phase !== "category") focusHeadingRef.current?.focus();
-  }, [phase, questionIndex]);
+    if (activePhase !== "category") focusHeadingRef.current?.focus();
+  }, [activePhase, questionIndex]);
 
   // Hold the pre-reveal frame long enough for the marker transition to run.
   useEffect(() => {
@@ -295,12 +308,13 @@ export default function Game() {
   const bandWidth = Math.abs(answerPosition - position);
 
   const { profile: player, publish, resetSubmit, loadBoard } = leaderboard;
+  const canPublish = auth.canUseLeaderboard;
 
   // Publish the moment a round ends, but only for a player who already has a
   // name. Everyone else is offered the join form on the results screen.
   useEffect(() => {
     if (phase !== "results" || publishedRef.current) return;
-    if (!player || results.length === 0) return;
+    if (!player || !canPublish || results.length === 0) return;
     publishedRef.current = true;
     void publish(
       mode,
@@ -309,7 +323,7 @@ export default function Game() {
         guess: result.guess,
       })),
     );
-  }, [phase, mode, results, player, publish]);
+  }, [phase, mode, results, player, canPublish, publish]);
 
   async function joinAndPublish(name: string) {
     await leaderboard.join(name);
@@ -432,19 +446,38 @@ export default function Game() {
           <span>Give or Take</span>
         </button>
         <div className="header-side">
-          {phase === "playing" && (
+          {activePhase === "playing" && (
             <p className="score-chip">
               {MODE_LABELS[mode]} · <strong>{formatPoints(totalScore)}</strong>
             </p>
           )}
-          {leaderboard.enabled && phase !== "playing" && (
-            <button
-              className="board-button"
-              type="button"
-              onClick={openLeaderboard}
-            >
-              Leaderboard
-            </button>
+          {leaderboard.enabled && activePhase !== "playing" && (
+            <>
+              <button
+                className="board-button"
+                type="button"
+                onClick={openLeaderboard}
+              >
+                Leaderboard
+              </button>
+              {auth.status === "signed-in" ? (
+                <button
+                  className="board-button"
+                  type="button"
+                  onClick={() => setPhase("account")}
+                >
+                  {player?.displayName ?? auth.user?.email ?? "Account"}
+                </button>
+              ) : (
+                <button
+                  className="board-button"
+                  type="button"
+                  onClick={() => setPhase("account")}
+                >
+                  Sign in
+                </button>
+              )}
+            </>
           )}
           <button
             className="theme-toggle"
@@ -474,7 +507,7 @@ export default function Game() {
         </div>
       </header>
 
-      {phase === "category" && (
+      {activePhase === "category" && (
         <section className="category-screen">
           <div className="hero-copy">
             <p className="eyebrow">A game of informed guesses</p>
@@ -510,7 +543,7 @@ export default function Game() {
         </section>
       )}
 
-      {phase === "playing" && question && (
+      {activePhase === "playing" && question && (
         <section className="game-screen">
           <div
             className="progress-dots"
@@ -643,7 +676,7 @@ export default function Game() {
         </section>
       )}
 
-      {phase === "results" && (
+      {activePhase === "results" && (
         <section className="results-screen">
           <div className="results-hero">
             <p className="eyebrow">{MODE_LABELS[mode]} · Game complete</p>
@@ -691,7 +724,17 @@ export default function Game() {
 
           {leaderboard.enabled && leaderboard.ready && (
             <div className="board-callout">
-              {!player ? (
+              {auth.status === "signed-out" ? (
+                <>
+                  <p className="board-status">
+                    Your score is saved on this device. Sign in to put it on the
+                    leaderboard.
+                  </p>
+                  <AuthPanel compact />
+                </>
+              ) : !auth.canUseLeaderboard ? (
+                <ConfirmEmailNotice email={auth.user?.email ?? null} />
+              ) : !player ? (
                 <JoinLeaderboardForm onJoin={joinAndPublish} />
               ) : (
                 <div className="board-status" role="status">
@@ -755,7 +798,7 @@ export default function Game() {
         </section>
       )}
 
-      {phase === "leaderboard" && (
+      {activePhase === "leaderboard" && (
         <section className="board-screen">
           <div className="results-hero">
             <p className="eyebrow">Best score per player</p>
@@ -802,6 +845,75 @@ export default function Game() {
               onClick={() => setPhase("category")}
             >
               Back
+            </button>
+          </div>
+        </section>
+      )}
+
+      {activePhase === "account" && (
+        <section className="account-screen">
+          <div className="results-hero">
+            <p className="eyebrow">
+              {auth.status === "signed-in" ? "Your account" : "Optional"}
+            </p>
+            <h1 ref={focusHeadingRef} tabIndex={-1}>
+              {auth.status === "signed-in" ? "Account" : "Sign in"}
+            </h1>
+            <p className="account-lede">
+              You never need an account to play. Signing in only puts your
+              scores on the leaderboard under a name of your choosing.
+            </p>
+          </div>
+
+          {auth.recovering ? (
+            <NewPasswordForm onDone={auth.endRecovery} />
+          ) : auth.status === "signed-in" ? (
+            <div className="account-detail">
+              <dl className="account-facts">
+                <div>
+                  <dt>Signed in as</dt>
+                  <dd>{auth.user?.email ?? "unknown"}</dd>
+                </div>
+                <div>
+                  <dt>Leaderboard name</dt>
+                  <dd>{player?.displayName ?? "Not chosen yet"}</dd>
+                </div>
+                <div>
+                  <dt>Email confirmed</dt>
+                  <dd>{auth.user?.emailConfirmed ? "Yes" : "Not yet"}</dd>
+                </div>
+              </dl>
+
+              {!auth.canUseLeaderboard && (
+                <ConfirmEmailNotice email={auth.user?.email ?? null} />
+              )}
+
+              {auth.canUseLeaderboard && !player && (
+                <JoinLeaderboardForm onJoin={(name) => leaderboard.join(name)} />
+              )}
+
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => {
+                  void signOut();
+                  setPhase("category");
+                }}
+              >
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <AuthPanel onSignedIn={() => setPhase("category")} />
+          )}
+
+          <div className="result-actions">
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => setPhase("category")}
+            >
+              Back to the game
             </button>
           </div>
         </section>

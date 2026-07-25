@@ -22,39 +22,47 @@ export type SubmitState =
  * a timer or polls: the board is fetched when someone asks to see it, and a
  * round is published only once the player has chosen a name.
  */
-export function useLeaderboard() {
-  const [profile, setProfile] = useState<PlayerProfile | null>(null);
-  const [ready, setReady] = useState(!leaderboardEnabled);
+export function useLeaderboard(userId: string | null) {
+  // Keyed by account, so the profile belonging to a previous sign-in is never
+  // shown to the next one. Deriving both profile and ready from this keeps the
+  // signed-out case out of the effect entirely.
+  const [loaded, setLoaded] = useState<{
+    userId: string;
+    profile: PlayerProfile | null;
+  } | null>(null);
   const [board, setBoard] = useState<LeaderboardRow[]>([]);
   const [boardLoading, setBoardLoading] = useState(false);
   const [boardError, setBoardError] = useState<string | null>(null);
   const [submit, setSubmit] = useState<SubmitState>({ status: "idle" });
 
-  // Signed out, this only reads the stored session and makes no request.
+  const forThisUser = userId && loaded?.userId === userId ? loaded : null;
+  const profile = forThisUser?.profile ?? null;
+  const ready = !leaderboardEnabled || !userId || forThisUser !== null;
+
+  // Only ever fetches for a signed-in account, and only from a callback, so no
+  // state is set synchronously while rendering.
   useEffect(() => {
-    if (!leaderboardEnabled) return;
+    if (!leaderboardEnabled || !userId) return;
     let cancelled = false;
 
     currentProfile()
       .then((found) => {
-        if (!cancelled) setProfile(found);
+        if (!cancelled) setLoaded({ userId, profile: found });
       })
       .catch(() => {
         // A profile that cannot be read is indistinguishable from not having
         // one yet, and either way the game is still playable.
-      })
-      .finally(() => {
-        if (!cancelled) setReady(true);
+        if (!cancelled) setLoaded({ userId, profile: null });
       });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [userId]);
 
   const join = useCallback(async (name: string) => {
     const joined = await joinLeaderboard(name);
-    setProfile(joined);
+    setLoaded({ userId: joined.id, profile: joined });
     return joined;
   }, []);
 
