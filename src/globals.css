@@ -1788,6 +1788,282 @@ h2 {
   width: 100%;
 }
 
+/* ── Progression ────────────────────────────────────────────────────────── */
+
+.account-nav {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.account-nav-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  background: var(--sunk);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+}
+
+.account-nav-item:hover {
+  border-color: var(--accent);
+}
+
+.account-nav-item strong {
+  font-family: var(--font-display);
+  font-size: 18px;
+}
+
+.account-nav-item span {
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.progress-of {
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.unlocks-empty {
+  margin-top: 16px;
+  padding: 20px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: 16px;
+  background: var(--sunk);
+}
+
+.unlocks-empty p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.unlocks-empty strong {
+  color: var(--ink);
+}
+
+.unlocks-progress {
+  margin-top: 10px !important;
+}
+
+.progress-panel {
+  margin: 22px 0;
+  padding-top: 20px;
+  border-top: 1.5px solid var(--line);
+}
+
+.progress-summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+}
+
+.progress-eyebrow {
+  margin: 0;
+  color: var(--accent-ink);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.progress-total {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 5vw, 38px);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-summary-note {
+  margin: 0;
+  flex: 1 1 240px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.rank-grid,
+.achievement-grid {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.rank-card {
+  padding: 14px 16px;
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  background: var(--sunk);
+}
+
+.rank-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rank-card-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.rank-card-name strong {
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+/* Titles run long — "Legend of the Silver Screen" — so they wrap rather than
+   stretch the card or get clipped. */
+.rank-card-title {
+  color: var(--accent-ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.rank-card-number {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rank-card-number strong {
+  color: var(--ink);
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.rank-bar {
+  margin-top: 12px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--rail);
+  overflow: hidden;
+}
+
+.rank-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 400ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.rank-card-foot {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.achievement {
+  padding: 14px 16px;
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  background: var(--sunk);
+  opacity: 0.62;
+}
+
+.achievement.is-earned {
+  background: var(--surface);
+  border-color: var(--accent);
+  opacity: 1;
+}
+
+.achievement-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.achievement-head strong {
+  font-family: var(--font-display);
+  font-size: 16px;
+}
+
+.achievement-tick {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.achievement-detail {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.achievement-progress {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tier is carried by the left edge, so a colourblind player still reads the
+   earned state from the border and the tick rather than hue alone. */
+.achievement.tier-bronze { border-left-width: 4px; }
+.achievement.tier-silver { border-left-width: 6px; }
+.achievement.tier-gold { border-left-width: 8px; }
+
+.progress-ribbon {
+  width: min(100%, var(--content));
+  margin: 18px auto 0;
+  padding: 14px 18px;
+  border: 1.5px solid var(--accent);
+  border-radius: 16px;
+  background: var(--accent-wash);
+}
+
+.progress-ribbon p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent-ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.progress-ribbon p + p {
+  margin-top: 6px;
+}
+
+.achievement-pip {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 .account-detail {
   margin-top: 24px;
   padding: 24px;

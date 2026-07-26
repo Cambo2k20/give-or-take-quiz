@@ -38,13 +38,21 @@ import {
   todaysDailySet,
   writeDailyProgress,
 } from "../lib/daily";
-import type { GameMode, Question } from "../lib/types";
+import type { GameMode, Question, QuestionCategory } from "../lib/types";
 import {
   AuthPanel,
   ConfirmEmailNotice,
   NewPasswordForm,
 } from "./AuthPanel";
 import { DailyArchive, DailyStrip } from "./Daily";
+import {
+  AchievementPanel,
+  ProgressRibbon,
+  RankPanel,
+  UnlocksPanel,
+  hasEarnedTitle,
+} from "./Progress";
+import { useProgress } from "./useProgress";
 import { EstimatePanel } from "./EstimatePanel";
 import { HeroDemo } from "./HeroDemo";
 import { JoinLeaderboardForm } from "./Leaderboard";
@@ -67,7 +75,10 @@ type Phase =
   | "account"
   | "daily-archive"
   | "survival"
-  | "survival-over";
+  | "survival-over"
+  | "ranks"
+  | "achievements"
+  | "unlocks";
 type RoundResult = { question: Question; guess: number; points: number };
 
 /**
@@ -281,6 +292,33 @@ export default function Game() {
   const focusHeadingRef = useRef<HTMLHeadingElement>(null);
   const auth = useAuth();
   const leaderboard = useLeaderboard(auth.user?.id ?? null);
+  // Progression is derived on the server from recorded rounds, so it only
+  // exists for a player who has a name to record them against.
+  const progress = useProgress(leaderboard.profile?.id ?? null);
+  const { refresh: refreshProgress } = progress;
+
+  /** Subject label and icon by category, so Progress renders what MODES does. */
+  const categoryLabels = useMemo(
+    () =>
+      Object.fromEntries(
+        MODES.filter((detail) => detail.mode !== "mixed").map((detail) => [
+          detail.mode,
+          { title: detail.title, icon: detail.icon },
+        ]),
+      ) as Record<QuestionCategory, { title: string; icon: ReactNode }>,
+    [],
+  );
+  /** Rank by subject, for the home cards. */
+  const rankByCategory = useMemo(
+    () =>
+      new Map(
+        (progress.progress?.categories ?? []).map((entry) => [
+          entry.category,
+          entry,
+        ]),
+      ),
+    [progress.progress],
+  );
   // One publish per finished round, whatever React does with effects.
   const publishedRef = useRef(false);
 
@@ -362,8 +400,23 @@ export default function Game() {
       question_id: result.question.id,
       guess: result.guess,
     }));
-    void (dailyDate ? publishDaily(dailyDate, guesses) : publish(mode, guesses));
-  }, [phase, mode, results, player, canPublish, publish, publishDaily, dailyDate]);
+    // Progress is re-read only once the server has actually taken the round;
+    // a failed publish has moved nothing.
+    void (dailyDate ? publishDaily(dailyDate, guesses) : publish(mode, guesses))
+      .then((recorded) => {
+        if (recorded) void refreshProgress();
+      });
+  }, [
+    phase,
+    mode,
+    results,
+    player,
+    canPublish,
+    publish,
+    publishDaily,
+    dailyDate,
+    refreshProgress,
+  ]);
 
   // A finished run posts the whole sequence, fatal guess included: the server
   // re-judges every one and refuses a run that did not actually end in a miss.
@@ -376,18 +429,21 @@ export default function Game() {
         question_id: result.question.id,
         guess: result.guess,
       })),
-    );
-  }, [phase, survivalGuesses, player, canPublish, publishSurvival]);
+    ).then((recorded) => {
+      if (recorded) void refreshProgress();
+    });
+  }, [phase, survivalGuesses, player, canPublish, publishSurvival, refreshProgress]);
 
   async function joinAndPublishSurvival(name: string) {
     await leaderboard.join(name);
     publishedRef.current = true;
-    await publishSurvival(
+    const recorded = await publishSurvival(
       survivalGuesses.map((result) => ({
         question_id: result.question.id,
         guess: result.guess,
       })),
     );
+    if (recorded) await refreshProgress();
   }
 
   async function joinAndPublish(name: string) {
@@ -397,11 +453,10 @@ export default function Game() {
       question_id: result.question.id,
       guess: result.guess,
     }));
-    if (dailyDate) {
-      await publishDaily(dailyDate, guesses);
-    } else {
-      await publish(mode, guesses);
-    }
+    const recorded = dailyDate
+      ? await publishDaily(dailyDate, guesses)
+      : await publish(mode, guesses);
+    if (recorded) await refreshProgress();
   }
 
   /** Loads whichever board a scope names, and shows the board screen. */
@@ -768,11 +823,25 @@ export default function Game() {
                 <strong>{detail.title}</strong>
                 <span className="mode-description">{detail.description}</span>
                 <span className="mode-note">{modeNote(detail.mode)}</span>
-                {bestScores[detail.mode] > 0 && (
-                  <span className="mode-best">
-                    Best {formatPoints(bestScores[detail.mode])}
-                  </span>
-                )}
+                {(() => {
+                  // A title only appears once it has been earned — Newcomer is
+                  // for the account screen, not the front page.
+                  const earnedTitle = hasEarnedTitle(
+                    rankByCategory.get(detail.mode as QuestionCategory)?.title,
+                  )
+                    ? rankByCategory.get(detail.mode as QuestionCategory)?.title
+                    : null;
+                  const best = bestScores[detail.mode];
+                  if (best <= 0 && !earnedTitle) return null;
+
+                  return (
+                    <span className="mode-best">
+                      {best > 0 && `Best ${formatPoints(best)}`}
+                      {best > 0 && earnedTitle && " · "}
+                      {earnedTitle}
+                    </span>
+                  );
+                })()}
               </button>
             ))}
           </div>
@@ -941,6 +1010,8 @@ export default function Game() {
             </div>
           </div>
 
+          <ProgressRibbon change={progress.change} labels={categoryLabels} />
+
           {leaderboard.enabled && leaderboard.ready && (
             <div className="board-callout">
               {auth.status === "signed-out" ? (
@@ -1077,6 +1148,9 @@ export default function Game() {
           onShare={shareResult}
           shareStatus={shareStatus}
           headingRef={focusHeadingRef}
+          progressRibbon={
+            <ProgressRibbon change={progress.change} labels={categoryLabels} />
+          }
           boardCallout={
             leaderboard.enabled && leaderboard.ready ? (
               <div className="board-callout">
@@ -1199,6 +1273,50 @@ export default function Game() {
                 <JoinLeaderboardForm onJoin={(name) => leaderboard.join(name)} />
               )}
 
+              {/*
+                Three doors rather than three stacked panels: ranks,
+                achievements and unlocks are each long enough to bury whatever
+                follows them on this screen.
+              */}
+              {progress.progress && (
+                <div className="account-nav" aria-label="Your progress">
+                  <button
+                    className="account-nav-item"
+                    type="button"
+                    onClick={() => setPhase("ranks")}
+                  >
+                    <strong>Ranks</strong>
+                    <span>
+                      {formatPoints(progress.progress.totalXp)} XP across eight
+                      subjects
+                    </span>
+                  </button>
+                  <button
+                    className="account-nav-item"
+                    type="button"
+                    onClick={() => setPhase("achievements")}
+                  >
+                    <strong>Achievements</strong>
+                    <span>
+                      {
+                        progress.progress.achievements.filter(
+                          (item) => item.earned,
+                        ).length
+                      }{" "}
+                      of {progress.progress.achievements.length} earned
+                    </span>
+                  </button>
+                  <button
+                    className="account-nav-item"
+                    type="button"
+                    onClick={() => setPhase("unlocks")}
+                  >
+                    <strong>Unlocks</strong>
+                    <span>Themes, coming soon</span>
+                  </button>
+                </div>
+              )}
+
               <button
                 className="secondary-button"
                 type="button"
@@ -1221,6 +1339,50 @@ export default function Game() {
               onClick={() => setPhase("category")}
             >
               Back to the game
+            </button>
+          </div>
+        </section>
+      )}
+
+      {(activePhase === "ranks" ||
+        activePhase === "achievements" ||
+        activePhase === "unlocks") && (
+        <section className="account-screen">
+          <div className="results-hero">
+            <p className="eyebrow">Your progress</p>
+            <h1 ref={focusHeadingRef} tabIndex={-1}>
+              {activePhase === "ranks"
+                ? "Ranks"
+                : activePhase === "achievements"
+                  ? "Achievements"
+                  : "Unlocks"}
+            </h1>
+          </div>
+
+          {progress.progress ? (
+            activePhase === "ranks" ? (
+              <RankPanel
+                progress={progress.progress}
+                labels={categoryLabels}
+              />
+            ) : activePhase === "achievements" ? (
+              <AchievementPanel progress={progress.progress} />
+            ) : (
+              <UnlocksPanel progress={progress.progress} />
+            )
+          ) : (
+            <p className="board-empty" role="status">
+              Sign in to start earning ranks and achievements.
+            </p>
+          )}
+
+          <div className="result-actions">
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => setPhase("account")}
+            >
+              Back to account
             </button>
           </div>
         </section>

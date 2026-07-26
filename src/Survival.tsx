@@ -142,6 +142,8 @@ type SurvivalOverProps = {
   headingRef: React.RefObject<HTMLHeadingElement | null>;
   /** Sign-in prompt, join form or save status — whatever applies. */
   boardCallout?: ReactNode;
+  /** Rank-ups and achievements the run just earned, if any. */
+  progressRibbon?: ReactNode;
 };
 
 export function SurvivalOver({
@@ -155,6 +157,7 @@ export function SurvivalOver({
   shareStatus,
   headingRef,
   boardCallout,
+  progressRibbon,
 }: SurvivalOverProps) {
   const isBest = survived >= best && survived > 0;
 
@@ -198,6 +201,7 @@ export function SurvivalOver({
         </div>
       </div>
 
+      {progressRibbon}
       {boardCallout}
     </section>
   );
