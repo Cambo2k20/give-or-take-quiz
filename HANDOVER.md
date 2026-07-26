@@ -17,15 +17,22 @@ is not project documentation. Delete it before merging.
 **Run everything from that worktree.** There is a second, stale worktree at
 `.claude/worktrees/home-page-ideas-cfa94c` sitting 8 commits behind — ignore it.
 
-Git state:
+Git state (updated — read this over section 10's own git notes, which are
+now stale):
 
-- `89f857c "hero"` and `9e2e472 "fixes"` — **committed and pushed**, open as
-  [PR #8](https://github.com/Cambo2k20/give-or-take-quiz/pull/8) against `main`.
-  Covers the hero slider, the daily challenge end to end, and the per-question
-  slider start. Both CI checks pass.
-- **Everything in section 10 below (Survival) is uncommitted**, added in a
-  later session on top of that PR. `git status` shows 7 modified files and 7
-  untracked. Nothing from this section has been pushed.
+- **Everything through Survival and the home-page reorder is merged to
+  `main`.** PR [#8](https://github.com/Cambo2k20/give-or-take-quiz/pull/8)
+  ("fixes" — hero, daily, slider start), [#9](https://github.com/Cambo2k20/give-or-take-quiz/pull/9)
+  ("leaderboard redesign" — all of section 10, Survival) and [#11](https://github.com/Cambo2k20/give-or-take-quiz/pull/11)
+  ("fix" — the daily-strip reorder and the README rewrite) are all merged.
+  `origin/main` is at `232e1e1`, a direct merge of `6467612`. None of this was
+  committed through me — the user committed and merged it locally between
+  sessions, which is why earlier revisions of this file called it
+  uncommitted. Section 10's "Still open" list item about deciding whether to
+  stack on PR #8 is resolved; ignore it.
+- **Section 11 (category progression) is the only uncommitted work**, added
+  in this session on top of the merged history above. `git status` shows 3
+  modified files and 7 untracked. Nothing from it has been pushed.
 
 ---
 
@@ -286,7 +293,7 @@ Still open:
 
 ```bash
 npm run validate:data      # category bank + daily schedule
-npm test                   # 100 tests — does NOT type-check
+npm test                   # 135 tests — does NOT type-check
 npx tsc --noEmit           # type check
 npm run build              # validate + tsc + vite build
 npm run lint
@@ -487,18 +494,180 @@ were run directly against `zwovdyyuacuipfhtycxw`, not through the app.
 
 ### Still open
 
-1. **Nothing in this section is committed.** Decide whether it stacks onto
-   PR #8 (still open) or goes out as its own PR once you've played it.
-2. **Higher-or-lower** needs an authored `data/pairs.json` before it's worth
+Item 1 below (committing) is **resolved** — this section shipped in PR #9,
+merged. The rest were never about git state and are still genuinely open:
+
+1. **Higher-or-lower** needs an authored `data/pairs.json` before it's worth
    building — see above.
-3. **Live/competitive survival** (a shared room, same question at the same
+2. **Live/competitive survival** (a shared room, same question at the same
    moment) needs the answer-bundling problem fixed first, plus something to
    own the clock (Edge Function + scheduled tick, or a Postgres state
    machine) since there is no game server today. The async, same-puzzle
    version built here was chosen deliberately over this for the first pass.
-4. **The fixed-drag exploit (section 6a) is still open** — a player who drags
+3. **The fixed-drag exploit (section 6a) is still open** — a player who drags
    to the same rail position on every question still beats survival's early
    windows exactly as they would a classic round, since the window is centred
    on the *guess*. Only a scoring-curve change fixes this, same conclusion as
    section 6a reached for classic play. The wordmark wrap at 375px is also
    still just cosmetic and unaddressed.
+
+---
+
+## 11. Category progression: ranks, achievements, unlocks groundwork (uncommitted)
+
+The user asked for unlockable themes. That surfaced two things that needed
+building first — a progression system to hang unlocks off, and (once ranks
+went per-category) an account screen that could no longer fit everything on
+one page. Both landed in this session; the themes themselves did not.
+
+### Why it looks the way it does
+
+**The server owns every definition; the client only renders.** The population
+prompt rule and the survival window schedule have both already drifted between
+two copies of themselves (sections 5.3 and 10). Achievements would have been
+the worst case of that pattern, so here there is exactly one: `player_stats`
+pivots derived facts into `(stat_key, value)` rows, `achievements` is a
+catalogue table, and `player_achievements` joins the two generically. **Adding
+an achievement is an `INSERT`, not a migration and not a code change**, and
+every one back-fills over rounds already recorded — verified live, two
+achievements were already earned from history that predates this feature.
+
+**XP is credited per question, to that question's own category** — not per
+round to the round's mode. `round_answers` already joins to `questions.category`
+for every mode, so Mixed spreads across all eight subjects automatically, a
+Mixed round's Space question feeds the Space rank, a daily question feeds
+whichever subject it's about, and a survival run credits whatever it dealt.
+No mode is a dead end, and nothing new is tracked.
+
+**The curve is two SQL functions, not a table of thresholds.**
+`xp_for_rank(rank) = ceil(450 * (rank - 1)^1.5)`, chosen so rank 5 lands at
+about five rounds of a subject (the user's explicit ask) and rank 30 at about
+a hundred. The exponent carries the shape rather than the coefficient, so
+slowing the early game didn't drag the whole ladder out with it. **Caught
+before shipping:** the first draft used `round()` instead of `ceil()`, which
+let `xp_for_rank(4)` return a value one XP short of what `rank_for_xp` needed
+to award rank 4 — ranks 4, 15 and 30 were all silently unreachable at their
+advertised threshold. Found by round-tripping all 60 ranks against each other
+in SQL before applying anything; `ceil()` fixed every boundary exactly.
+
+**Titles are per-category and per-rank-floor, falling through to `Newcomer`.**
+`rank_titles` holds one row per `(category, rank_floor)`; a player's title is
+whichever floor is highest at or below their rank, and every category seeds a
+floor-1 row of `Newcomer` so ranks 1-4 always resolve to something. The user
+was explicit that `Newcomer` should never appear on the home page — the home
+mode cards show a title only once `hasEarnedTitle()` is true (i.e. not
+`Newcomer`), so an unplayed or barely-played subject looks exactly as it did
+before this feature.
+
+**The account screen got a hard course-correction mid-build.** The first pass
+put a full rank grid and a full achievements grid directly on the account
+screen, under the existing sign-in details. The user's next message was "far
+too much on the account screen. need a button for ranks and a button for
+achievements and button for unlocks" — so `RankPanel`, `AchievementPanel` and
+`UnlocksPanel` were split into three destinations (`ranks` / `achievements` /
+`unlocks` phases), reached from three short nav buttons on the account screen
+itself, each with a one-line summary and nothing else. `tests/Progress.test.tsx`
+pins this shape directly — one test asserts the account screen has the three
+buttons and *none* of `RankPanel`'s or `AchievementPanel`'s content, which is
+exactly the regression that prompted the split.
+
+**Unlocks is an honest placeholder, not a fake gallery.** No theme palettes
+exist yet. Rather than mock up swatches that promise something the app can't
+deliver, the screen says plainly that nothing is unlockable yet, that themes
+will be tied to ranks and achievements, and (the one thing it *can* honestly
+show) how many subject titles are already held toward whatever gates get
+chosen. This is a deliberate half-step: the door exists so the account nav
+isn't lying about having three things behind it, but nothing behind that
+particular door is invented.
+
+### What's live in production (`zwovdyyuacuipfhtycxw`)
+
+Two more migrations, same discipline as the daily's and survival's — applied,
+then the local file renamed to the server-assigned version:
+
+| Version | Name | Why |
+| --- | --- | --- |
+| `20260726111833` | `add_category_progression` | `xp_for_rank`/`rank_for_xp`, `rank_titles` (48 titles + 8 `Newcomer` rows), `player_category_xp`, `player_progress` |
+| `20260726112719` | `add_achievements` | `player_stats` (incl. a gaps-and-islands streak query), `achievements` catalogue (15 seeded), `player_achievements` |
+
+**The daily streak is now server-truth, not just a `localStorage` number.**
+`player_stats.longest_daily_streak` numbers each player's distinct
+`puzzle_date`s and groups by `date - row_number()`, which gives every date in
+a consecutive run the same anchor. The real account only has one daily played,
+which can't distinguish a working query from a broken one, so it was proven
+on synthetic dates instead: three runs of 3, 5 and 2 separated by gaps
+returned exactly `[5, 3, 2]`, longest 5.
+
+Both views are `security_invoker`, matching the pattern `harden_security_definer_exposure`
+established; the security advisor shows no new findings, only the pre-existing
+leaked-password-protection warning that predates this work.
+
+### Files
+
+- `supabase/migrations/20260726111833_add_category_progression.sql`,
+  `20260726112719_add_achievements.sql` — the two migrations above.
+- `lib/progress.ts` — `fetchProgress(playerId)` (two parallel reads: the
+  per-category view and the achievements view, since joining them server-side
+  would mean a row per subject per achievement), `diffProgress(before, after)`
+  for the reveal ribbon. Read-only by design: submitting a round *is* the
+  write, so there is no client-side XP to keep in sync.
+- `src/useProgress.ts` — keyed by account like `useLeaderboard`. The pre-round
+  snapshot lives in a `ref`, not state, so a round finishing can't race a
+  re-render into diffing a snapshot against itself. **Lint caught a real bug
+  here**: the first draft called `setState` synchronously in an effect body
+  on the signed-out path. Fixed by deriving `change` from `(playerId, change)`
+  the same way `loaded` is already derived, which needed no clearing at all.
+- `src/Progress.tsx` — `RankPanel`, `AchievementPanel`, `UnlocksPanel`,
+  `ProgressRibbon` (silent when nothing moved, so it never becomes
+  furniture), `hasEarnedTitle()`.
+- `src/Game.tsx` — `useProgress` wired alongside `useLeaderboard`; a
+  `categoryLabels` map borrowed from `MODES` so `Progress.tsx` never
+  disagrees with the mode chooser on a subject's name or icon; progress
+  refreshes only after a publish call actually returns a recorded round, not
+  unconditionally; three new phases (`ranks` / `achievements` / `unlocks`)
+  plus the account-screen nav buttons that open them; home mode cards now
+  show `Best 8,240 - Census Scout`, title suppressed while `Newcomer`.
+- `src/Survival.tsx` — `progressRibbon` prop alongside the existing
+  `boardCallout`, rendered on the death screen.
+
+### Tests and verification
+
+`tests/progress.test.ts` - `fetchProgress` (chooser-order output including
+subjects never played, XP summed correctly, the rank-bar fraction computed
+and clamped, achievement mapping, a read failure surfacing rather than
+returning partial data) and `diffProgress` (nothing reported with no prior
+snapshot, nothing reported when nothing moved, a rank-up caught, XP gained
+within a rank *not* miscounted as a rank-up, a newly earned achievement
+caught without re-announcing an old one). `tests/Progress.test.tsx` - the
+three-doors shape itself: the account screen shows only the nav and none of
+the panel content, each door opens its own screen, achievements show
+progress, `Newcomer` never appears on the home cards. 135/135 tests pass,
+`tsc`, lint and build all clean by exit code.
+
+Browser-verified signed-out (the only state reachable without entering
+credentials): no console errors, the sign-in screen renders with no progress
+UI leaking through and no crash from the hook having no player, home mode
+cards show no badge at all when neither a best score nor a title exists, and
+zero network requests to `player_progress` or `player_achievements` while
+signed out — confirming the hook correctly does nothing without a profile.
+The signed-in screens (ranks, achievements, unlocks, and the reveal ribbons)
+are verified only by `tests/Progress.test.tsx`'s fixture data, the same
+limitation as the daily and survival sections before it.
+
+### Still open
+
+1. **Nothing in this section is committed.** It sits on top of the merged
+   history described in section 1 - decide whether it becomes its own PR.
+2. **Themes themselves do not exist.** This section is the foundation the
+   user asked to be built first; no palette, no picker, no unlock-gate
+   decisions have been made. The `UnlocksPanel` placeholder is deliberately
+   uncommitted to any specific gating scheme.
+3. **`best_subject_rank` and the three rank-keyed achievements (`Titled`,
+   `Distinguished`, `Legendary`) assume the rank ladder never changes.** If
+   the curve constants in `xp_for_rank`/`rank_for_xp` are retuned later, these
+   thresholds (5 / 15 / 30) stay meaningful because they're expressed in
+   ranks, not XP - but worth rechecking that assumption if the ladder length
+   itself ever changes.
+4. **No signed-in verification of any progression screen.** Same limitation
+   noted for the daily and survival sections: needs a real confirmed account,
+   which stays the user's step.
