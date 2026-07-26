@@ -4,14 +4,12 @@ import type { QuestionCategory } from "./types";
 /**
  * Unlockable background themes.
  *
- * A background theme is deliberately *only* a background: it never touches
- * `--ink`, `--surface`, or any token a card or button reads, so it can never
- * make existing UI illegible. It only ever overrides `--bg` — the one token
- * spoken for solely by `body`, nothing else — and paints its own artwork in a
- * layer behind everything. Adding a theme is adding a row here plus one CSS
- * block; nothing about the rest of the app has to know it exists.
+ * This file is the data-only piece of the theme registry. Each row is paired
+ * with artwork in src/themes/ThemeArtwork.tsx and semantic UI tokens in that
+ * theme's dedicated stylesheet. Custom themes own one canonical appearance;
+ * the saved light/dark preference resumes when the custom theme is removed.
  */
-export type BackgroundTheme = {
+type BackgroundThemeMetadata = {
   id: string;
   name: string;
   description: string;
@@ -19,7 +17,7 @@ export type BackgroundTheme = {
   gate: { category: QuestionCategory; rank: number; title: string };
 };
 
-export const BACKGROUND_THEMES: readonly BackgroundTheme[] = [
+export const BACKGROUND_THEMES = [
   {
     id: "deep-space",
     name: "Deep Space",
@@ -27,7 +25,10 @@ export const BACKGROUND_THEMES: readonly BackgroundTheme[] = [
       "A drifting nebula and a slow orbit behind every screen. Reduced motion holds it still.",
     gate: { category: "space", rank: 5, title: "Stargazer" },
   },
-];
+] as const satisfies readonly BackgroundThemeMetadata[];
+
+export type BackgroundTheme = (typeof BACKGROUND_THEMES)[number];
+export type BackgroundThemeId = BackgroundTheme["id"];
 
 /**
  * Local-only shortcut for visually testing a theme before its real rank gate
@@ -37,9 +38,7 @@ export const BACKGROUND_THEMES: readonly BackgroundTheme[] = [
 export function isThemeTemporarilyUnlocked(
   theme: BackgroundTheme,
 ): boolean {
-  return (
-    import.meta.env.MODE === "development" && theme.id === "deep-space"
-  );
+  return import.meta.env.MODE === "development" && theme.id === "deep-space";
 }
 
 export function isThemeUnlocked(
