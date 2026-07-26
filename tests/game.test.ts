@@ -18,6 +18,7 @@ import {
   writeBestScores,
   writeQuestionHistory,
 } from "@/lib/game";
+import { questions } from "@/lib/questions";
 
 type Question = Parameters<typeof positionToValue>[0];
 
@@ -242,23 +243,25 @@ describe("selectQuestions", () => {
   });
 
   it("finishes a small category cycle before recycling questions", () => {
-    const first = selectQuestionsWithHistory(
-      "technology",
-      {},
-      seededRandom(300),
-    );
-    const second = selectQuestionsWithHistory(
-      "technology",
-      first.history,
+    const category = "science";
+    const unseenQuestions = QUESTIONS_PER_GAME - 1;
+    const categoryQuestionIds = questions
+      .filter((question) => question.category === category)
+      .map((question) => question.id);
+    const seenQuestionIds = categoryQuestionIds.slice(0, -unseenQuestions);
+    const result = selectQuestionsWithHistory(
+      category,
+      { [category]: seenQuestionIds },
       seededRandom(400),
     );
-    const firstIds = new Set(first.questions.map(({ id }) => id));
-    const secondIds = new Set(second.questions.map(({ id }) => id));
+    const seenIds = new Set(seenQuestionIds);
+    const resultIds = new Set(result.questions.map(({ id }) => id));
 
-    expect(secondIds.size).toBe(QUESTIONS_PER_GAME);
+    expect(resultIds.size).toBe(QUESTIONS_PER_GAME);
     expect(
-      second.questions.filter(({ id }) => !firstIds.has(id)),
-    ).toHaveLength(1);
+      result.questions.filter(({ id }) => !seenIds.has(id)),
+    ).toHaveLength(unseenQuestions);
+    expect(result.history[category]).toHaveLength(1);
   });
 
   it("remembers mixed questions while keeping every category represented", () => {

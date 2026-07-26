@@ -1,19 +1,26 @@
-type DeepSpaceArtworkProps = {
-  variant: "preview" | "backdrop";
-  locked?: boolean;
-};
+import type {
+  ThemeArtworkProps,
+  ThemeArtworkStyle,
+} from "./ThemeArtwork";
+import type { BackgroundThemeId } from "../../lib/themes";
+
+export const themeId = "deep-space" satisfies BackgroundThemeId;
 
 /** Deep Space's artwork piece: one component supplies its gallery preview and
  * its full-viewport backdrop, while deep-space.css owns every visual rule. */
 export function DeepSpaceArtwork({
   variant,
   locked = false,
-}: DeepSpaceArtworkProps) {
+  tokens,
+}: ThemeArtworkProps) {
+  const tokenStyle = tokens as ThemeArtworkStyle;
+
   if (variant === "preview") {
     return (
       <div
         className={`theme-preview${locked ? " is-locked" : ""}`}
         aria-hidden="true"
+        style={tokenStyle}
       >
         <span className="theme-preview-glow" />
         <span className="theme-preview-stars" />
@@ -42,7 +49,11 @@ export function DeepSpaceArtwork({
   }
 
   return (
-    <div className="cosmic-layer" aria-hidden="true">
+    <div
+      className="cosmic-layer"
+      aria-hidden="true"
+      style={tokenStyle}
+    >
       <span className="cosmic-glow" />
       <span className="cosmic-stars" />
       <span className="cosmic-stars cosmic-stars-b" />
@@ -52,3 +63,5 @@ export function DeepSpaceArtwork({
     </div>
   );
 }
+
+export default DeepSpaceArtwork;

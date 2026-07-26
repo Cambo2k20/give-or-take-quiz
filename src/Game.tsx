@@ -274,8 +274,8 @@ export default function Game() {
   // Read straight from the browser during the first render. The app is fully
   // client-rendered, so there is no server pass to mismatch against.
   const [theme, setTheme] = useState<Theme>(readTheme);
-  // The active custom skin, if any. The light/dark preference remains stored
-  // underneath and resumes when the custom theme is removed.
+  // The active custom skin, if any. It supplies both light and dark palettes,
+  // while `theme` remains the independent mode axis.
   const [bgTheme, setBgTheme] = useState<BackgroundThemeId | null>(
     readEquippedBackgroundTheme,
   );
@@ -674,7 +674,11 @@ export default function Game() {
 
   return (
     <main className="site-shell">
-      <ThemeArtwork themeId={bgTheme} variant="backdrop" />
+      <ThemeArtwork
+        themeId={bgTheme}
+        mode={theme}
+        variant="backdrop"
+      />
       <header className="site-header">
         <button
           className="wordmark"
@@ -731,18 +735,10 @@ export default function Game() {
             className="theme-toggle"
             type="button"
             onClick={toggleTheme}
-            disabled={bgTheme !== null}
-            title={
-              bgTheme
-                ? "Remove the custom theme to change light or dark mode"
-                : undefined
-            }
             aria-label={
-              bgTheme
-                ? "Light and dark mode unavailable while a custom theme is applied"
-                : theme === "dark"
-                  ? "Switch to light mode"
-                  : "Switch to dark mode"
+              theme === "dark"
+                ? "Switch to light mode"
+                : "Switch to dark mode"
             }
           >
             {theme === "dark" ? (
@@ -1402,6 +1398,7 @@ export default function Game() {
               <UnlocksPanel
                 progress={progress.progress}
                 labels={categoryLabels}
+                themeMode={theme}
                 equippedId={bgTheme}
                 onEquip={toggleBackgroundTheme}
               />
