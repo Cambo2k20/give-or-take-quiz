@@ -220,7 +220,7 @@ export function formatQuestionValue(question: Question, value: number): string {
   return `${formatted}${UNIT_SUFFIXES[question.unit]}`;
 }
 
-function shuffled<T>(items: readonly T[], rng: () => number): T[] {
+export function shuffled<T>(items: readonly T[], rng: () => number): T[] {
   const copy = [...items];
   for (let index = copy.length - 1; index > 0; index -= 1) {
     const swapIndex = Math.floor(rng() * (index + 1));

@@ -11,11 +11,14 @@ export function LeaderboardPanel({
   loading,
   error,
   profile,
+  unit = "points",
 }: {
   rows: readonly LeaderboardRow[];
   loading: boolean;
   error: string | null;
   profile: PlayerProfile | null;
+  /** What the number means: points on a classic board, questions on survival. */
+  unit?: string;
 }) {
   if (loading) {
     return (
@@ -55,10 +58,8 @@ export function LeaderboardPanel({
               <span className="board-you"> you</span>
             )}
           </span>
-          <span className="board-rounds">
-            {row.roundsPlayed} {row.roundsPlayed === 1 ? "round" : "rounds"}
-          </span>
           <strong className="board-score">{formatPoints(row.bestScore)}</strong>
+          <span className="board-unit">{unit}</span>
         </li>
       ))}
     </ol>

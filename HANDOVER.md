@@ -19,9 +19,13 @@ is not project documentation. Delete it before merging.
 
 Git state:
 
-- `89f857c "hero"` — the hero-slider feature, **committed** (by the user, not me).
-- Everything else is **uncommitted**. `git status` shows ~10 modified files and
-  ~9 untracked. Nothing has been pushed.
+- `89f857c "hero"` and `9e2e472 "fixes"` — **committed and pushed**, open as
+  [PR #8](https://github.com/Cambo2k20/give-or-take-quiz/pull/8) against `main`.
+  Covers the hero slider, the daily challenge end to end, and the per-question
+  slider start. Both CI checks pass.
+- **Everything in section 10 below (Survival) is uncommitted**, added in a
+  later session on top of that PR. `git status` shows 7 modified files and 7
+  untracked. Nothing from this section has been pushed.
 
 ---
 
@@ -337,3 +341,164 @@ own copy, so the database must match the JSON.
 checked with real requests; 35 return 403 to scripted requests (Britannica, the
 Smithsonian, the British Museum, NIH, OECD) but load fine in a browser — that is
 bot-blocking, not rot. One genuine 404 was found and replaced.
+
+---
+
+## 10. Survival (uncommitted — added after PR #8 was opened)
+
+A second play format alongside Classic: answer until a guess lands outside a
+tightening window. No fixed length, ranked by questions survived rather than
+points, with its own server board. This came out of a design discussion about
+where new formats should live — see the reasoning below, since it explains
+several choices that would otherwise look arbitrary.
+
+### Why it looks the way it does
+
+**Format is not a `GameMode`.** Exactly the daily's pattern: subjects, best
+scores, question history and the category leaderboard stay untouched. The
+client carries a separate `PlayFormat` (`"classic" | "survival"`), and the
+server has its own `submit_survival_run` RPC, mirroring `submit_daily_round`.
+Mixing formats into the subject grid was rejected early — categories answer
+"what is this about", formats answer "how do I play", and folding one axis
+into the other is what made the *old* leaderboard (ten flat tabs) unmanageable
+in the first place.
+
+**Classic's hero stays a consequence-free warm-up, on purpose.** Two pills sit
+above the hero question (Classic · Survival). Picking Survival is an act of
+intent — it opens a real run, and question 1 of that run is the hero itself.
+Classic is left exactly as it was: `HeroDemo`, unscored, nothing banked. The
+alternative — every pill tap committing to a real round — was considered and
+rejected, because it turns the single lowest-commitment interaction in the app
+(dragging a slider out of curiosity) into its highest-commitment one.
+
+**The window is drawn as goalposts, not a band.** Early mockups drew the
+survival window as a filled band behind the slider thumb — and at the actual
+rail width (~300px), the thumb (30px) covers nearly all of even the *starting*
+±12% window, and almost the entire ±4% window it tightens to. The tightening
+is the whole point of the mode, so hiding it defeats the mode. Goalposts drawn
+*above* the rail (`.survival-window`, `.survival-post` in `globals.css`) fix
+this: two solid ticks either side of the thumb that the thumb cannot cover.
+Verified in the browser — visible and legible even on question 1's widest
+window.
+
+**The window travels with the guess, not the answer.** Centring it on the
+answer would show the answer before locking. `survivalVerdict()` in
+`lib/formats.ts` checks `|guessPosition − answerPosition| ≤ window`, and the
+window is drawn around the *thumb*.
+
+**Higher-or-lower was scoped out.** It was in the original three-format plan,
+but a count of every same-family pair in the real 197-question bank showed 79%
+of "close" pairs (ratio ≤ 3×) are populations or percentages — those two
+families cluster by nature. Length, mass, time and temperature between them
+offer only ~28 close pairs from a 197-question bank authored to *span* wild
+magnitudes on purpose, which is exactly what makes them bad pairing stock. The
+"Right — by 61 m" mockup used an invented question that does not exist in the
+bank. Shipping it today would mean "populations and percentages: higher or
+lower", which breaks the "every mode draws from all nine subjects" promise and
+would feel stale within a week. Left for a future `data/pairs.json` — same
+pattern as the daily — if the mode is still wanted once that content exists.
+
+**Boards are a separate axis on the leaderboard screen too.** `BoardScreen.tsx`
+segments Classic | Survival first, then a scope row underneath (a subject/day
+picker for Classic, static "All subjects" for Survival, since there is only
+one board today). The picker sheet doubles as a status screen — every row
+shows the player's rank on that board — built cheaply because the `leaderboard`
+view already holds one row per player per mode, so a signed-in player's entire
+category standing is one query.
+
+### What's live in production (`zwovdyyuacuipfhtycxw`)
+
+Two more migrations, applied and verified same as the daily's were:
+
+| Version | Name | Why |
+| --- | --- | --- |
+| `20260726060215` | `add_survival_game_mode` | Adds `'survival'` to the enum, alone in its own file — same Postgres restriction as `'daily'` |
+| `20260726060545` | `add_survival_runs` | Three-arm `question_count` check, `submit_survival_run`, `survival_leaderboard` view, extends `submit_round`'s guard |
+
+**The trust model matches the category and daily boards, not more, not less.**
+`submit_survival_run` re-judges every guess server-side against its own copy of
+the window schedule and rejects any run that does not end at its first miss —
+verified live with three fabricated runs (an honest death, a run that kept
+playing after dying, and an all-correct run that hadn't cleared the bank); all
+three were judged correctly. What it does **not** defend against is a player
+reading answers out of the JS bundle — true of every mode today, since all 297
+answers ship in `dist/assets/*.js` in plaintext. Fixing that means dealing
+questions from the server instead of the bundle, which is a prerequisite for
+*competitive* multiplayer survival, not this (async, single-player) version,
+and was deliberately left alone here.
+
+**The window schedule is duplicated by necessity, and verified to match
+exactly.** `SURVIVAL_*` in `lib/formats.ts` and the inline arithmetic in
+`submit_survival_run` (`greatest(0.04, 0.12 - 0.01 * ((n-1)/3))`) must agree, or
+the server will kill a run the client thought was still alive. Checked by
+generating both schedules out to 30 questions and diffing — they matched
+exactly — and `tests/formats.test.ts` pins the same 15-question sequence so a
+future change to one side without the other fails a test instead of shipping.
+**If you change the schedule, change both, in the same commit** — this is
+exactly the population-prompt-rule mistake from section 5.3, and the fix is
+the same discipline.
+
+### Files
+
+- `lib/formats.ts` — window schedule, live/die verdict (rail space, so it means
+  the same thing on a log question as a linear one), a no-repeat shuffled deck
+  over the whole non-daily bank, and a versioned `localStorage` best-run record
+  (the hero's "Best run 17" tag before anyone signs in).
+- `src/EstimatePanel.tsx` — new optional `windowHalfWidth` prop draws the
+  goalposts; omitted, the panel renders byte-identical to before this session.
+- `src/Survival.tsx` — `SurvivalRound` (in-round: a question counter instead of
+  progress dots, since a run has no known length) and `SurvivalOver` (death
+  screen: the question that ended it, run vs. best, the board callout).
+- `src/BoardScreen.tsx` — extracted from `Game.tsx` rather than grown inside it;
+  the format/scope picker described above.
+- `lib/leaderboard.ts` / `src/useLeaderboard.ts` — `submitSurvivalRun`,
+  `fetchSurvivalLeaderboard`, `fetchMyStandings` (three queries: category view
+  filtered by player, one daily row, one survival row), `rowAbove` (for the
+  standing card's gap line); `publishSurvival` / `loadSurvivalBoard` reuse the
+  same shared `record()` / `showBoard()` helpers the daily work introduced.
+- `src/Game.tsx` — `heroFormat` state, `PlayFormat` type, `startSurvival()` /
+  `lockSurvivalGuess()` / `continueSurvival()`, a `boardScope: BoardScope`
+  replacing the old `boardDate: string | null`, publish-on-death routing
+  alongside the existing daily/category guard (extended again, not replaced).
+
+### Tests and verification
+
+`tests/formats.test.ts` (window schedule incl. the SQL cross-check, verdict on
+linear *and* log-scale questions, boundary-survives, deck uniqueness and
+daily-exclusion, records round-trip). `tests/SurvivalFlow.test.tsx` (a full run
+to death with a mocked deck, asserting `publishSurvival` receives every guess
+in order including the fatal one and that `publish`/`publishDaily` are never
+called; Classic's hero stays unscored; the board-screen routing goes to
+`loadSurvivalBoard` not `loadBoard`). 119/119 tests pass, `tsc`, lint and build
+all clean by exit code.
+
+Browser-verified at 375px, both themes: goalposts visible on question 1's
+widest window (the thing the band-based mockup failed at), a full run to the
+death screen with the correct epitaph and signed-out board copy, the
+Classic/Survival board segments, and the "Which board?" picker showing a rank
+per row. One copy bug caught this way and fixed: the board footnote said "ten
+questions drawn from this subject" even for Mixed, which draws from every
+subject — `BoardScreen.tsx` now special-cases it.
+
+**Not verified:** an authenticated submission end-to-end (needs a signed-in
+confirmed account, same limitation as the daily) and the actual production
+migrations under concurrent load. The three fabricated-run SQL checks above
+were run directly against `zwovdyyuacuipfhtycxw`, not through the app.
+
+### Still open
+
+1. **Nothing in this section is committed.** Decide whether it stacks onto
+   PR #8 (still open) or goes out as its own PR once you've played it.
+2. **Higher-or-lower** needs an authored `data/pairs.json` before it's worth
+   building — see above.
+3. **Live/competitive survival** (a shared room, same question at the same
+   moment) needs the answer-bundling problem fixed first, plus something to
+   own the clock (Edge Function + scheduled tick, or a Postgres state
+   machine) since there is no game server today. The async, same-puzzle
+   version built here was chosen deliberately over this for the first pass.
+4. **The fixed-drag exploit (section 6a) is still open** — a player who drags
+   to the same rail position on every question still beats survival's early
+   windows exactly as they would a classic round, since the window is centred
+   on the *guess*. Only a scoring-curve change fixes this, same conclusion as
+   section 6a reached for classic play. The wordmark wrap at 375px is also
+   still just cosmetic and unaddressed.

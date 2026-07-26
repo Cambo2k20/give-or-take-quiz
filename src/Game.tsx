@@ -16,6 +16,19 @@ import {
 } from "../lib/game";
 import { signOut } from "../lib/auth";
 import {
+  buildSurvivalDeck,
+  readFormatRecords,
+  recordSurvivalRun,
+  survivalVerdict,
+  survivalWindow,
+  writeFormatRecords,
+  type SurvivalVerdict,
+} from "../lib/formats";
+import type { BoardScope } from "../lib/leaderboard";
+import { fetchMyStandings } from "../lib/leaderboard";
+import { BoardScreen, type Standings } from "./BoardScreen";
+import { SurvivalOver, SurvivalRound } from "./Survival";
+import {
   activeStreak,
   dailySetFor,
   playableDailyDates,
@@ -31,10 +44,10 @@ import {
   ConfirmEmailNotice,
   NewPasswordForm,
 } from "./AuthPanel";
-import { DailyArchive, DailyCard, readableDate } from "./Daily";
+import { DailyArchive, DailyCard } from "./Daily";
 import { EstimatePanel } from "./EstimatePanel";
 import { HeroDemo } from "./HeroDemo";
-import { JoinLeaderboardForm, LeaderboardPanel } from "./Leaderboard";
+import { JoinLeaderboardForm } from "./Leaderboard";
 import {
   formatPoints,
   subtypeLabel,
@@ -52,8 +65,17 @@ type Phase =
   | "results"
   | "leaderboard"
   | "account"
-  | "daily-archive";
+  | "daily-archive"
+  | "survival"
+  | "survival-over";
 type RoundResult = { question: Question; guess: number; points: number };
+
+/**
+ * How a round is played, as opposed to what it is about. Deliberately not a
+ * GameMode: subjects, best scores and question history are a separate axis,
+ * and conflating them is what made the old board row unmanageable.
+ */
+type PlayFormat = "classic" | "survival";
 
 const GlobeIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -240,9 +262,21 @@ export default function Game() {
   const [dailyProgress, setDailyProgress] = useState(readDailyProgress);
   // Non-null while the round in play is a daily, and holds which day's it is.
   const [dailyDate, setDailyDate] = useState<string | null>(null);
-  // Which board the leaderboard screen shows: a daily date, or null for the
-  // category board belonging to `mode`.
-  const [boardDate, setBoardDate] = useState<string | null>(null);
+  // Which board the leaderboard screen shows, along both axes at once.
+  const [boardScope, setBoardScope] = useState<BoardScope>({
+    kind: "category",
+    mode: "mixed",
+  });
+  const [standings, setStandings] = useState<Standings | null>(null);
+  // Which format the hero is offering. Classic keeps the consequence-free
+  // warm-up; picking Survival is the act of intent that starts a real run.
+  const [heroFormat, setHeroFormat] = useState<PlayFormat>("classic");
+  const [formatRecords, setFormatRecords] = useState(readFormatRecords);
+  const [survivalDeck, setSurvivalDeck] = useState<Question[]>([]);
+  const [survivalIndex, setSurvivalIndex] = useState(0);
+  const [survivalGuesses, setSurvivalGuesses] = useState<RoundResult[]>([]);
+  const [survivalVerdictState, setSurvivalVerdictState] =
+    useState<SurvivalVerdict | null>(null);
   const [shareStatus, setShareStatus] = useState("");
   const focusHeadingRef = useRef<HTMLHeadingElement>(null);
   const auth = useAuth();
@@ -298,11 +332,22 @@ export default function Game() {
     profile: player,
     publish,
     publishDaily,
+    publishSurvival,
     resetSubmit,
     loadBoard,
     loadDailyBoard,
+    loadSurvivalBoard,
   } = leaderboard;
   const canPublish = auth.canUseLeaderboard;
+
+  const survivalQuestion = survivalDeck[survivalIndex];
+  const survivalNumber = survivalIndex + 1;
+  const survivalGuess = survivalQuestion
+    ? positionToValue(survivalQuestion, position)
+    : 0;
+  const survivalSurvived = survivalVerdictState?.survived
+    ? survivalGuesses.length
+    : Math.max(0, survivalGuesses.length - 1);
 
   // Publish the moment a round ends, but only for a player who already has a
   // name. Everyone else is offered the join form on the results screen.
@@ -320,6 +365,31 @@ export default function Game() {
     void (dailyDate ? publishDaily(dailyDate, guesses) : publish(mode, guesses));
   }, [phase, mode, results, player, canPublish, publish, publishDaily, dailyDate]);
 
+  // A finished run posts the whole sequence, fatal guess included: the server
+  // re-judges every one and refuses a run that did not actually end in a miss.
+  useEffect(() => {
+    if (phase !== "survival-over" || publishedRef.current) return;
+    if (!player || !canPublish || survivalGuesses.length === 0) return;
+    publishedRef.current = true;
+    void publishSurvival(
+      survivalGuesses.map((result) => ({
+        question_id: result.question.id,
+        guess: result.guess,
+      })),
+    );
+  }, [phase, survivalGuesses, player, canPublish, publishSurvival]);
+
+  async function joinAndPublishSurvival(name: string) {
+    await leaderboard.join(name);
+    publishedRef.current = true;
+    await publishSurvival(
+      survivalGuesses.map((result) => ({
+        question_id: result.question.id,
+        guess: result.guess,
+      })),
+    );
+  }
+
   async function joinAndPublish(name: string) {
     await leaderboard.join(name);
     publishedRef.current = true;
@@ -334,17 +404,29 @@ export default function Game() {
     }
   }
 
-  function openLeaderboard() {
-    setBoardDate(null);
+  /** Loads whichever board a scope names, and shows the board screen. */
+  function openBoard(scope: BoardScope) {
+    setBoardScope(scope);
     setPhase("leaderboard");
-    void loadBoard(mode);
+    if (scope.kind === "survival") void loadSurvivalBoard();
+    else if (scope.kind === "daily") void loadDailyBoard(scope.date);
+    else void loadBoard(scope.mode);
+
+    // The picker shows a rank per board, so it is fetched once per visit
+    // rather than per switch. A failure just leaves the ranks blank.
+    if (player) {
+      fetchMyStandings(player.id, todayIso())
+        .then(setStandings)
+        .catch(() => setStandings(null));
+    }
   }
 
-  /** The per-day board. Reached from a daily's results or the Daily tab. */
+  function openLeaderboard() {
+    openBoard({ kind: "category", mode });
+  }
+
   function openDailyBoard(date: string) {
-    setBoardDate(date);
-    setPhase("leaderboard");
-    void loadDailyBoard(date);
+    openBoard({ kind: "daily", date });
   }
 
   function toggleTheme() {
@@ -374,6 +456,69 @@ export default function Game() {
     setQuestionHistory(draw.history);
     writeQuestionHistory(draw.history);
     beginRound(draw.questions);
+  }
+
+  /**
+   * A run draws from the whole bank in its own shuffle. Question history is
+   * untouched, as in the daily: a run is not a round, and letting it eat the
+   * category rotation would starve normal play.
+   */
+  function startSurvival(deck: Question[] = buildSurvivalDeck()) {
+    setSurvivalDeck(deck);
+    setSurvivalIndex(0);
+    setSurvivalGuesses([]);
+    setSurvivalVerdictState(null);
+    setPosition(deck[0] ? startPosition(deck[0]) : 0.5);
+    setLocked(false);
+    setRevealing(false);
+    setShareStatus("");
+    setDailyDate(null);
+    publishedRef.current = false;
+    resetSubmit();
+    setPhase("survival");
+  }
+
+  function lockSurvivalGuess() {
+    if (!survivalQuestion || locked) return;
+    const verdict = survivalVerdict(
+      survivalQuestion,
+      survivalGuess,
+      survivalNumber,
+    );
+    setSurvivalGuesses((current) => [
+      ...current,
+      {
+        question: survivalQuestion,
+        guess: survivalGuess,
+        points: scoreGuess(survivalQuestion, survivalGuess),
+      },
+    ]);
+    setSurvivalVerdictState(verdict);
+    setLocked(true);
+    setRevealing(true);
+  }
+
+  function continueSurvival() {
+    if (!locked) return;
+    const alive = survivalVerdictState?.survived ?? false;
+    const next = survivalDeck[survivalIndex + 1];
+
+    // Out of questions with the run still alive means the bank was cleared,
+    // which the server accepts as a completed run.
+    if (!alive || !next) {
+      const survived = alive ? survivalGuesses.length : survivalGuesses.length - 1;
+      const updated = recordSurvivalRun(formatRecords, Math.max(0, survived));
+      setFormatRecords(updated);
+      writeFormatRecords(updated);
+      setPhase("survival-over");
+      return;
+    }
+
+    setSurvivalIndex((current) => current + 1);
+    setSurvivalVerdictState(null);
+    setPosition(startPosition(next));
+    setLocked(false);
+    setRevealing(false);
   }
 
   /**
@@ -426,9 +571,13 @@ export default function Game() {
 
   async function shareResult() {
     // Naming the day is the point of sharing a daily: the reader can play the
-    // same ten questions and compare directly.
+    // same ten questions and compare directly. A run shares its length, which
+    // is the number the survival board ranks.
     const label = dailyDate ? `the ${dailyDate} daily` : MODE_LABELS[mode];
-    const text = `I scored ${formatPoints(totalScore)}/${formatPoints(maxScore)} in Give or Take — ${label}. How close can you get?`;
+    const text =
+      phase === "survival-over"
+        ? `I survived ${formatPoints(survivalSurvived)} questions in Give or Take. How far can you get?`
+        : `I scored ${formatPoints(totalScore)}/${formatPoints(maxScore)} in Give or Take — ${label}. How close can you get?`;
     const url = window.location.href;
     try {
       if (navigator.share) {
@@ -467,7 +616,14 @@ export default function Game() {
               <strong>{formatPoints(totalScore)}</strong>
             </p>
           )}
-          {leaderboard.enabled && activePhase !== "playing" && (
+          {activePhase === "survival" && (
+            <p className="score-chip">
+              Survival · <strong>{formatPoints(survivalSurvived)} in</strong>
+            </p>
+          )}
+          {leaderboard.enabled &&
+            activePhase !== "playing" &&
+            activePhase !== "survival" && (
             <>
               <button
                 className="board-button"
@@ -533,7 +689,54 @@ export default function Game() {
             </p>
           </div>
 
-          <HeroDemo onPlay={() => startGame("mixed")} />
+          {/* Format pills: how you play, kept off the subject grid below. */}
+          <div className="hero-formats" role="group" aria-label="Choose a format">
+            <button
+              type="button"
+              className={`hero-format${heroFormat === "classic" ? " is-current" : ""}`}
+              aria-pressed={heroFormat === "classic"}
+              onClick={() => setHeroFormat("classic")}
+            >
+              Classic
+            </button>
+            <button
+              type="button"
+              className={`hero-format${heroFormat === "survival" ? " is-current" : ""}`}
+              aria-pressed={heroFormat === "survival"}
+              onClick={() => setHeroFormat("survival")}
+            >
+              Survival
+            </button>
+          </div>
+
+          {heroFormat === "classic" ? (
+            <HeroDemo onPlay={() => startGame("mixed")} />
+          ) : (
+            <div className="hero-survival">
+              <div className="hero-survival-head">
+                <span className="question-tag">Survival</span>
+                {formatRecords.survivalBest > 0 && (
+                  <span className="hero-survival-best">
+                    Best run {formatPoints(formatRecords.survivalBest)}
+                  </span>
+                )}
+              </div>
+              <p className="hero-survival-lede">
+                Questions keep coming until one gets away from you. The window
+                you have to land in narrows every three questions.
+              </p>
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() => startSurvival()}
+              >
+                Start a run
+              </button>
+              <p className="hero-survival-note">
+                Drawn from all {formatPoints(questionCount("mixed"))} questions.
+              </p>
+            </div>
+          )}
 
           {todaysDaily && (
             <DailyCard
@@ -812,84 +1015,110 @@ export default function Game() {
       )}
 
       {activePhase === "leaderboard" && (
-        <section className="board-screen">
-          <div className="results-hero">
-            <p className="eyebrow">
-              {boardDate
-                ? `Daily · ${readableDate(boardDate)}`
-                : "Best score per player"}
-            </p>
-            <h1 ref={focusHeadingRef} tabIndex={-1}>
-              Leaderboard
-            </h1>
-          </div>
+        <BoardScreen
+          scope={boardScope}
+          onScopeChange={(next) => {
+            if (next.kind === "category") setMode(next.mode);
+            openBoard(next);
+          }}
+          modes={MODES}
+          modeLabels={MODE_LABELS}
+          rows={leaderboard.board}
+          loading={leaderboard.boardLoading}
+          error={leaderboard.boardError}
+          profile={player}
+          standings={standings}
+          todaysDailyDate={archiveDates[0] ?? null}
+          onPlay={() => {
+            if (boardScope.kind === "survival") startSurvival();
+            else if (boardScope.kind === "daily") startDaily(boardScope.date);
+            else startGame(boardScope.mode);
+          }}
+          onBack={() => setPhase("category")}
+          headingRef={focusHeadingRef}
+        />
+      )}
 
-          <div className="board-modes" aria-label="Choose a board">
-            {archiveDates.length > 0 && (
-              <button
-                type="button"
-                className={`board-mode${boardDate ? " is-current" : ""}`}
-                aria-pressed={boardDate !== null}
-                onClick={() => {
-                  // The newest playable date, which is today once its set is out.
-                  const [latest] = archiveDates;
-                  if (latest) openDailyBoard(latest);
-                }}
-              >
-                Daily
-              </button>
-            )}
-            {MODES.map((detail) => (
-              <button
-                key={detail.mode}
-                type="button"
-                className={`board-mode${detail.mode === mode && !boardDate ? " is-current" : ""}`}
-                aria-pressed={detail.mode === mode && !boardDate}
-                onClick={() => {
-                  setBoardDate(null);
-                  setMode(detail.mode);
-                  void loadBoard(detail.mode);
-                }}
-              >
-                {detail.title}
-              </button>
-            ))}
-          </div>
+      {activePhase === "survival" && survivalQuestion && (
+        <SurvivalRound
+          question={survivalQuestion}
+          questionNumber={survivalNumber}
+          survived={survivalSurvived}
+          position={position}
+          onPositionChange={setPosition}
+          windowHalfWidth={survivalWindow(survivalNumber)}
+          locked={locked}
+          revealing={revealing}
+          verdict={survivalVerdictState}
+          guess={survivalGuess}
+          onLock={lockSurvivalGuess}
+          onContinue={continueSurvival}
+          headingRef={focusHeadingRef}
+        />
+      )}
 
-          <LeaderboardPanel
-            rows={leaderboard.board}
-            loading={leaderboard.boardLoading}
-            error={leaderboard.boardError}
-            profile={player}
-          />
-
-          <div className="result-actions">
-            {boardDate ? (
-              <button
-                className="primary-button"
-                type="button"
-                onClick={() => startDaily(boardDate)}
-              >
-                Play this daily
-              </button>
-            ) : (
-              <button
-                className="primary-button"
-                type="button"
-                onClick={() => startGame(mode)}
-              >
-                Play {MODE_LABELS[mode]}
-              </button>
-            )}
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={() => setPhase("category")}
-            >
-              Back
-            </button>
-          </div>
-        </section>
+      {activePhase === "survival-over" && (
+        <SurvivalOver
+          survived={survivalSurvived}
+          best={formatRecords.survivalBest}
+          question={
+            survivalVerdictState?.survived
+              ? null
+              : survivalGuesses[survivalGuesses.length - 1]?.question ?? null
+          }
+          guess={survivalGuesses[survivalGuesses.length - 1]?.guess ?? 0}
+          onRunAgain={() => startSurvival()}
+          onHome={() => setPhase("category")}
+          onShare={shareResult}
+          shareStatus={shareStatus}
+          headingRef={focusHeadingRef}
+          boardCallout={
+            leaderboard.enabled && leaderboard.ready ? (
+              <div className="board-callout">
+                {auth.status === "signed-out" ? (
+                  <>
+                    <p className="board-status">
+                      Your run is saved on this device. Sign in to put it on the
+                      survival board.
+                    </p>
+                    <AuthPanel compact />
+                  </>
+                ) : !auth.canUseLeaderboard ? (
+                  <ConfirmEmailNotice email={auth.user?.email ?? null} />
+                ) : !player ? (
+                  <JoinLeaderboardForm onJoin={joinAndPublishSurvival} />
+                ) : (
+                  <div className="board-status" role="status">
+                    {leaderboard.submit.status === "sending" &&
+                      "Saving your run…"}
+                    {leaderboard.submit.status === "sent" && (
+                      <>
+                        Saved as <strong>{player.displayName}</strong>. The
+                        server counted{" "}
+                        <strong>
+                          {formatPoints(leaderboard.submit.totalScore)}
+                        </strong>{" "}
+                        survived.
+                      </>
+                    )}
+                    {leaderboard.submit.status === "failed" && (
+                      <span className="is-error">
+                        {leaderboard.submit.message}
+                      </span>
+                    )}
+                  </div>
+                )}
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => openBoard({ kind: "survival" })}
+                >
+                  See the survival board
+                </button>
+              </div>
+            ) : null
+          }
+        />
       )}
 
       {activePhase === "daily-archive" && (
