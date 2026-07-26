@@ -39,12 +39,15 @@ type Row = {
 
 const supabase = createClient(url, key, { auth: { persistSession: false } });
 
-// Ordered so the generated file only changes when the data does.
+// Ordered so the generated file only changes when the data does. Daily
+// questions are excluded: they are written for the daily and must never be
+// dealt into a category round.
 const { data, error } = await supabase
   .from("questions")
   .select(
     "id, category, measure, subtype, prompt, answer, min, max, scale, unit, reference_year, source_title, source_url, explanation",
   )
+  .eq("is_daily", false)
   .order("category")
   .order("measure")
   .order("subtype")

@@ -335,6 +335,124 @@ h2 {
   margin-top: 24px;
 }
 
+/* ── Daily challenge ────────────────────────────────────────────────────── */
+
+.daily-card {
+  width: min(100%, var(--content));
+  margin: clamp(18px, 2.6vw, 24px) auto 0;
+  padding: clamp(20px, 3.4vw, 28px);
+  border: 1.5px solid var(--accent);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.daily-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+
+.daily-eyebrow {
+  margin: 0;
+  color: var(--accent-ink);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.daily-title {
+  margin: 4px 0 0;
+  font-size: clamp(22px, 3.4vw, 28px);
+  line-height: 1.2;
+}
+
+.streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--sunk);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.streak-badge.is-lit {
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+}
+
+.streak-badge svg {
+  width: 16px;
+  height: 16px;
+}
+
+.streak-badge strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.daily-lede {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.daily-actions {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.daily-footnote {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.daily-archive {
+  width: min(100%, var(--content));
+  margin: 20px auto 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.daily-archive li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.daily-archive-date {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.daily-archive-date span {
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.daily-archive .secondary-button {
+  min-height: 44px;
+  padding-inline: 20px;
+}
+
 .mode-grid-label {
   margin: clamp(30px, 5vw, 46px) 0 0;
   text-align: center;
@@ -1394,7 +1512,8 @@ h2 {
     grid-template-columns: 1fr;
   }
 
-  .hero-demo-actions {
+  .hero-demo-actions,
+  .daily-actions {
     grid-template-columns: 1fr;
   }
 

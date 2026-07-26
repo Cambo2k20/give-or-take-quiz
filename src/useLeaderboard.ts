@@ -3,9 +3,12 @@ import {
   type LeaderboardRow,
   type PlayerProfile,
   type RoundGuess,
+  type SubmittedRound,
   currentProfile,
+  fetchDailyLeaderboard,
   fetchLeaderboard,
   joinLeaderboard,
+  submitDailyRound,
   submitRound,
 } from "../lib/leaderboard";
 import { leaderboardEnabled } from "../lib/supabase";
@@ -66,36 +69,62 @@ export function useLeaderboard(userId: string | null) {
     return joined;
   }, []);
 
+  // Category and daily rounds go to different server calls but share the one
+  // submit state: only a single round can be on the results screen at a time.
+  const record = useCallback(async (send: () => Promise<SubmittedRound>) => {
+    setSubmit({ status: "sending" });
+    try {
+      const result = await send();
+      setSubmit({ status: "sent", totalScore: result.totalScore });
+      return result;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Could not save your score.";
+      setSubmit({ status: "failed", message });
+      return null;
+    }
+  }, []);
+
   const publish = useCallback(
-    async (mode: GameMode, guesses: readonly RoundGuess[]) => {
-      setSubmit({ status: "sending" });
+    (mode: GameMode, guesses: readonly RoundGuess[]) =>
+      record(() => submitRound(mode, guesses)),
+    [record],
+  );
+
+  const publishDaily = useCallback(
+    (date: string, guesses: readonly RoundGuess[]) =>
+      record(() => submitDailyRound(date, guesses)),
+    [record],
+  );
+
+  // The board state is shared the same way: the leaderboard screen shows one
+  // board at a time, whether it belongs to a category or to a calendar day.
+  const showBoard = useCallback(
+    async (fetchRows: () => Promise<LeaderboardRow[]>) => {
+      setBoardLoading(true);
+      setBoardError(null);
       try {
-        const result = await submitRound(mode, guesses);
-        setSubmit({ status: "sent", totalScore: result.totalScore });
-        return result;
+        setBoard(await fetchRows());
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Could not save your score.";
-        setSubmit({ status: "failed", message });
-        return null;
+        setBoardError(
+          error instanceof Error ? error.message : "Could not load the board.",
+        );
+      } finally {
+        setBoardLoading(false);
       }
     },
     [],
   );
 
-  const loadBoard = useCallback(async (mode: GameMode) => {
-    setBoardLoading(true);
-    setBoardError(null);
-    try {
-      setBoard(await fetchLeaderboard(mode));
-    } catch (error) {
-      setBoardError(
-        error instanceof Error ? error.message : "Could not load the board.",
-      );
-    } finally {
-      setBoardLoading(false);
-    }
-  }, []);
+  const loadBoard = useCallback(
+    (mode: GameMode) => showBoard(() => fetchLeaderboard(mode)),
+    [showBoard],
+  );
+
+  const loadDailyBoard = useCallback(
+    (date: string) => showBoard(() => fetchDailyLeaderboard(date)),
+    [showBoard],
+  );
 
   const resetSubmit = useCallback(() => setSubmit({ status: "idle" }), []);
 
@@ -105,11 +134,13 @@ export function useLeaderboard(userId: string | null) {
     profile,
     join,
     publish,
+    publishDaily,
     submit,
     resetSubmit,
     board,
     boardLoading,
     boardError,
     loadBoard,
+    loadDailyBoard,
   };
 }

@@ -1,0 +1,1814 @@
+{
+  "version": 1,
+  "sets": [
+    {
+      "date": "2026-07-26",
+      "questions": [
+        {
+          "id": "daily-share-of-earths-water-that-is-groundwater",
+          "category": "geography",
+          "measure": "quantity",
+          "subtype": "percentage",
+          "prompt": "What share of the world's fresh water is held underground as groundwater?",
+          "answer": 30,
+          "min": 0,
+          "max": 100,
+          "scale": "linear",
+          "unit": "percent",
+          "source": {
+            "title": "USGS Water Science School",
+            "url": "https://www.usgs.gov/special-topics/water-science-school"
+          },
+          "explanation": "Roughly 30 per cent of fresh water is groundwater; most of the rest is locked in ice."
+        },
+        {
+          "id": "daily-human-body-cell-count",
+          "category": "science",
+          "measure": "quantity",
+          "subtype": "count",
+          "prompt": "About how many human cells are in an adult body?",
+          "answer": 30000000000000,
+          "min": 15000000000000,
+          "max": 1000000000000000,
+          "scale": "log",
+          "unit": "count",
+          "source": {
+            "title": "National Institute of General Medical Sciences - Cells by the Numbers",
+            "url": "https://nigms.nih.gov/biobeat/2024/09/cells-by-the-numbers-2"
+          },
+          "explanation": "NIGMS says adults have about 30 trillion human cells, with typical estimates varying by body size."
+        },
+        {
+          "id": "daily-library-of-alexandria-founded-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In roughly what year was the Library of Alexandria founded?",
+          "answer": -285,
+          "min": -1000,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Encyclopaedia Britannica — Library of Alexandria",
+            "url": "https://www.britannica.com/topic/Library-of-Alexandria"
+          },
+          "explanation": "The library was established under the early Ptolemies in about 285 BCE."
+        },
+        {
+          "id": "daily-titan-diameter",
+          "category": "space",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "What is the diameter of Saturn's largest moon, Titan?",
+          "answer": 5150,
+          "min": 120,
+          "max": 8000,
+          "scale": "log",
+          "unit": "kilometre",
+          "source": {
+            "title": "NASA Science - Titan",
+            "url": "https://science.nasa.gov/asset/webb/titan-cassini/"
+          },
+          "explanation": "Titan is about 5,150 kilometres across, making it wider than the planet Mercury."
+        },
+        {
+          "id": "daily-ostrich-running-speed",
+          "category": "animals",
+          "measure": "physics",
+          "subtype": "speed",
+          "prompt": "How fast can an ostrich sprint?",
+          "answer": 69,
+          "min": 4,
+          "max": 120,
+          "scale": "log",
+          "unit": "kph",
+          "source": {
+            "title": "Smithsonian's National Zoo - How Fast Is an Ostrich?",
+            "url": "https://nationalzoo.si.edu/animals/news/how-fast-ostrich-and-more-fun-facts"
+          },
+          "explanation": "An ostrich can sprint at about 69 kilometres per hour, making it the fastest bird on land."
+        }
+      ]
+    },
+    {
+      "date": "2026-07-27",
+      "questions": [
+        {
+          "id": "daily-dry-ice-sublimation-point",
+          "category": "science",
+          "measure": "physics",
+          "subtype": "temperature",
+          "prompt": "At what temperature does dry ice turn straight from solid to gas?",
+          "answer": -78.5,
+          "min": -273,
+          "max": 500,
+          "scale": "linear",
+          "unit": "celsius",
+          "source": {
+            "title": "Encyclopaedia Britannica — Dry ice",
+            "url": "https://www.britannica.com/science/dry-ice"
+          },
+          "explanation": "Solid carbon dioxide sublimes at about -78.5 degrees Celsius without ever becoming liquid."
+        },
+        {
+          "id": "daily-vatican-city-area",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "area",
+          "prompt": "How large is Vatican City, the world's smallest sovereign state?",
+          "answer": 0.49,
+          "min": 0.1,
+          "max": 1000000,
+          "scale": "log",
+          "unit": "square-kilometre",
+          "source": {
+            "title": "Encyclopaedia Britannica — Vatican City",
+            "url": "https://www.britannica.com/place/Vatican-City"
+          },
+          "explanation": "Vatican City covers about 0.49 square kilometres, smaller than many city parks."
+        },
+        {
+          "id": "daily-western-roman-empire-fell-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year is the Western Roman Empire conventionally said to have fallen?",
+          "answer": 476,
+          "min": -500,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Encyclopaedia Britannica — Fall of Rome",
+            "url": "https://www.britannica.com/place/ancient-Rome"
+          },
+          "explanation": "The deposition of Romulus Augustulus in 476 CE is the traditional marker for the end of the Western empire."
+        },
+        {
+          "id": "daily-mars-day-length",
+          "category": "space",
+          "measure": "physics",
+          "subtype": "duration",
+          "prompt": "How long is one solar day on Mars, measured in Earth hours?",
+          "answer": 24.6,
+          "min": 0.8,
+          "max": 40,
+          "scale": "log",
+          "unit": "hour",
+          "source": {
+            "title": "NASA Science - Mars Facts",
+            "url": "https://science.nasa.gov/mars/facts/"
+          },
+          "explanation": "A Martian solar day lasts about 24.6 Earth hours, only around 39 minutes longer than a day on Earth."
+        },
+        {
+          "id": "daily-red-kangaroo-bound-length",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How far can a red kangaroo travel in a single bound?",
+          "answer": 8,
+          "min": 0.5,
+          "max": 12,
+          "scale": "log",
+          "unit": "metre",
+          "source": {
+            "title": "Australian Museum - Swifter, Higher, Stronger",
+            "url": "https://australian.museum/blog/museullaneous/Swifter-Higher-Stronger/"
+          },
+          "explanation": "A red kangaroo can cover as much as eight metres in a single bound when moving quickly."
+        }
+      ]
+    },
+    {
+      "date": "2026-07-28",
+      "questions": [
+        {
+          "id": "daily-great-pyramid-completed-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In roughly what year was the Great Pyramid of Giza completed?",
+          "answer": -2560,
+          "min": -3000,
+          "max": 500,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Encyclopaedia Britannica — Pyramids of Giza",
+            "url": "https://www.britannica.com/topic/Pyramids-of-Giza"
+          },
+          "explanation": "The Great Pyramid was built for the pharaoh Khufu in about 2560 BCE."
+        },
+        {
+          "id": "daily-bee-hummingbird-mass",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "mass",
+          "prompt": "How much does a bee hummingbird, the world's smallest bird, weigh?",
+          "answer": 0.002,
+          "min": 0.001,
+          "max": 100,
+          "scale": "log",
+          "unit": "kilogram",
+          "source": {
+            "title": "Encyclopaedia Britannica — Hummingbird",
+            "url": "https://www.britannica.com/animal/hummingbird"
+          },
+          "explanation": "The bee hummingbird weighs about two grams, less than a common paperclip."
+        },
+        {
+          "id": "daily-liquid-helium-boiling-point",
+          "category": "science",
+          "measure": "physics",
+          "subtype": "temperature",
+          "prompt": "At what temperature does liquid helium boil at atmospheric pressure?",
+          "answer": -269,
+          "min": -273,
+          "max": 100,
+          "scale": "linear",
+          "unit": "celsius",
+          "source": {
+            "title": "Encyclopaedia Britannica — Helium",
+            "url": "https://www.britannica.com/science/helium-chemical-element"
+          },
+          "explanation": "Helium boils at about -269 degrees Celsius, only four degrees above absolute zero."
+        },
+        {
+          "id": "daily-english-channel-narrowest-width",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How wide is the English Channel at its narrowest point?",
+          "answer": 34,
+          "min": 1,
+          "max": 60,
+          "scale": "log",
+          "unit": "kilometre",
+          "source": {
+            "title": "National Geographic - Channel",
+            "url": "https://education.nationalgeographic.org/resource/channel/"
+          },
+          "explanation": "The English Channel narrows to about 34 kilometres between Dover and Cap Gris-Nez."
+        },
+        {
+          "id": "daily-olympus-mons-height",
+          "category": "space",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "Approximately how high is Olympus Mons on Mars above its surrounding plains?",
+          "answer": 27,
+          "min": 1.2,
+          "max": 60,
+          "scale": "log",
+          "unit": "kilometre",
+          "source": {
+            "title": "NASA Science - Olympus Mons",
+            "url": "https://science.nasa.gov/photojournal/olympus-mons/"
+          },
+          "explanation": "Olympus Mons rises roughly 27 kilometres above the surrounding plains, nearly three times Mount Everest's height."
+        }
+      ]
+    },
+    {
+      "date": "2026-07-29",
+      "questions": [
+        {
+          "id": "daily-intel-4004-transistor-count",
+          "category": "technology",
+          "measure": "quantity",
+          "subtype": "count",
+          "prompt": "How many transistors did Intel's 4004 microprocessor contain?",
+          "answer": 2300,
+          "min": 1000,
+          "max": 80000,
+          "scale": "log",
+          "unit": "count",
+          "source": {
+            "title": "Intel - 30th Anniversary of the Microprocessor",
+            "url": "https://www.intel.com/pressroom/archive/releases/2001/20011115corp_a.htm"
+          },
+          "explanation": "Intel's 4004 microprocessor contained just 2,300 transistors when it was introduced in 1971."
+        },
+        {
+          "id": "daily-pluto-surface-temperature",
+          "category": "space",
+          "measure": "physics",
+          "subtype": "temperature",
+          "prompt": "What is the average surface temperature on Pluto?",
+          "answer": -229,
+          "min": -273,
+          "max": 100,
+          "scale": "linear",
+          "unit": "celsius",
+          "source": {
+            "title": "NASA Science — Pluto",
+            "url": "https://science.nasa.gov/dwarf-planets/pluto/"
+          },
+          "explanation": "Pluto sits at about -229 degrees Celsius, cold enough for nitrogen to freeze onto the surface."
+        },
+        {
+          "id": "daily-opossum-gestation-period",
+          "category": "animals",
+          "measure": "physics",
+          "subtype": "duration",
+          "prompt": "How long is a Virginia opossum's pregnancy, the shortest of any mammal?",
+          "answer": 12,
+          "min": 1,
+          "max": 2000,
+          "scale": "log",
+          "unit": "day",
+          "source": {
+            "title": "Encyclopaedia Britannica — Opossum",
+            "url": "https://www.britannica.com/animal/opossum-mammal-family-Didelphidae"
+          },
+          "explanation": "Opossums are born after about twelve days and finish developing in the pouch."
+        },
+        {
+          "id": "daily-berlin-wall-opening-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was the Berlin Wall opened after nearly three decades of division?",
+          "answer": 1989,
+          "min": 1800,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Berlin.de - Opening and Fall of the Berlin Wall",
+            "url": "https://www.berlin.de/en/history/8482274-8619314-opening-and-fall-of-the-berlin-wall.en.html"
+          },
+          "explanation": "The Berlin Wall was opened on 9 November 1989 after mounting public pressure and political upheaval."
+        },
+        {
+          "id": "daily-victoria-falls-width",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How wide is Victoria Falls from one side of its curtain of water to the other?",
+          "answer": 1708,
+          "min": 30,
+          "max": 4000,
+          "scale": "log",
+          "unit": "metre",
+          "source": {
+            "title": "UNESCO World Heritage Centre - Mosi-oa-Tunya / Victoria Falls",
+            "url": "https://whc.unesco.org/en/list/509/"
+          },
+          "explanation": "Victoria Falls forms a curtain of water about 1,708 metres wide on the border of Zambia and Zimbabwe."
+        }
+      ]
+    },
+    {
+      "date": "2026-07-30",
+      "questions": [
+        {
+          "id": "daily-human-genome-base-pairs",
+          "category": "science",
+          "measure": "quantity",
+          "subtype": "count",
+          "prompt": "About how many DNA base pairs are in one copy of the human genome?",
+          "answer": 3000000000,
+          "min": 1500000000,
+          "max": 100000000000,
+          "scale": "log",
+          "unit": "count",
+          "source": {
+            "title": "National Human Genome Research Institute - Base Pair",
+            "url": "https://www.genome.gov/genetics-glossary/Base-Pair"
+          },
+          "explanation": "One copy of the human genome contains about 3 billion DNA base pairs spread across 23 chromosomes."
+        },
+        {
+          "id": "daily-uranus-average-temperature",
+          "category": "space",
+          "measure": "physics",
+          "subtype": "temperature",
+          "prompt": "What is the average temperature of Uranus' upper atmosphere?",
+          "answer": -224,
+          "min": -273,
+          "max": 100,
+          "scale": "linear",
+          "unit": "celsius",
+          "source": {
+            "title": "NASA Science — Uranus",
+            "url": "https://science.nasa.gov/uranus/"
+          },
+          "explanation": "Uranus is the coldest planet in the Solar System, averaging about -224 degrees Celsius."
+        },
+        {
+          "id": "daily-elephant-trunk-muscle-count",
+          "category": "animals",
+          "measure": "quantity",
+          "subtype": "count",
+          "prompt": "Roughly how many muscle units make up an elephant's trunk?",
+          "answer": 40000,
+          "min": 1000,
+          "max": 10000000,
+          "scale": "log",
+          "unit": "count",
+          "source": {
+            "title": "Encyclopaedia Britannica — Elephant",
+            "url": "https://www.britannica.com/animal/elephant-mammal"
+          },
+          "explanation": "The trunk has on the order of 40,000 muscle units and no bones at all."
+        },
+        {
+          "id": "daily-bell-telephone-patent-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was Alexander Graham Bell granted his first US telephone patent?",
+          "answer": 1876,
+          "min": 1000,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "United States Patent and Trademark Office - Bringing Light for All",
+            "url": "https://www.uspto.gov/learning-and-resources/journeys-innovation/historical-stories/bringing-light-all"
+          },
+          "explanation": "Alexander Graham Bell received his foundational US telephone patent in 1876."
+        },
+        {
+          "id": "daily-northern-ireland-census-population-2021",
+          "category": "population",
+          "measure": "population",
+          "subtype": "country",
+          "prompt": "What was Northern Ireland's population in the 2021 census?",
+          "answer": 1903175,
+          "min": 40000,
+          "max": 3000000,
+          "scale": "log",
+          "unit": "people",
+          "referenceYear": "2021",
+          "source": {
+            "title": "Northern Ireland Statistics and Research Agency - Census 2021",
+            "url": "https://www.nisra.gov.uk/statistics/census/census-2021"
+          },
+          "explanation": "Northern Ireland's 2021 census recorded a population of 1,903,175 people."
+        }
+      ]
+    },
+    {
+      "date": "2026-07-31",
+      "questions": [
+        {
+          "id": "daily-share-of-body-weight-that-is-brain",
+          "category": "science",
+          "measure": "quantity",
+          "subtype": "percentage",
+          "prompt": "What share of an adult's body weight is their brain?",
+          "answer": 2,
+          "min": 0,
+          "max": 100,
+          "scale": "linear",
+          "unit": "percent",
+          "source": {
+            "title": "Encyclopaedia Britannica — Human brain",
+            "url": "https://www.britannica.com/science/human-brain"
+          },
+          "explanation": "The brain is about 2 per cent of body weight but uses roughly a fifth of the body's energy."
+        },
+        {
+          "id": "daily-housefly-adult-lifespan",
+          "category": "animals",
+          "measure": "physics",
+          "subtype": "duration",
+          "prompt": "How long does an adult housefly typically live?",
+          "answer": 28,
+          "min": 1,
+          "max": 10000,
+          "scale": "log",
+          "unit": "day",
+          "source": {
+            "title": "Encyclopaedia Britannica — Housefly",
+            "url": "https://www.britannica.com/animal/housefly"
+          },
+          "explanation": "Adult houseflies live about four weeks, long enough to lay several batches of eggs."
+        },
+        {
+          "id": "daily-first-modern-olympics-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did the first modern Olympic Games begin in Athens?",
+          "answer": 1896,
+          "min": 1850,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Australian Olympic Committee - Athens 1896",
+            "url": "https://www.olympics.com.au/games/athens-1896/"
+          },
+          "explanation": "The first modern Olympic Games began in Athens on 6 April 1896."
+        },
+        {
+          "id": "daily-channel-tunnel-length",
+          "category": "technology",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How long is the Channel Tunnel between England and France?",
+          "answer": 50.5,
+          "min": 1.5,
+          "max": 80,
+          "scale": "log",
+          "unit": "kilometre",
+          "source": {
+            "title": "Eurostar - The Channel Tunnel",
+            "url": "https://www.eurostar.com/uk-en/travel-info/eurostar-experience/the-channel-tunnel"
+          },
+          "explanation": "Eurostar gives the Channel Tunnel's length as 50.45 kilometres, with 37.9 kilometres under the sea."
+        },
+        {
+          "id": "daily-jupiter-equatorial-diameter",
+          "category": "space",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "Roughly how wide is Jupiter at its equator?",
+          "answer": 143000,
+          "min": 4000,
+          "max": 300000,
+          "scale": "log",
+          "unit": "kilometre",
+          "source": {
+            "title": "NASA Science - Juno Redefines Jupiter's Size",
+            "url": "https://science.nasa.gov/blogs/science-news/2026/02/04/nasas-juno-mission-redefines-size-shape-of-jupiter/"
+          },
+          "explanation": "Jupiter is roughly 143,000 kilometres wide at its equator, more than eleven times Earth's diameter."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-01",
+      "questions": [
+        {
+          "id": "daily-share-of-dry-air-that-is-oxygen",
+          "category": "science",
+          "measure": "quantity",
+          "subtype": "percentage",
+          "prompt": "What share of dry air at sea level is oxygen, by volume?",
+          "answer": 20.9,
+          "min": 0,
+          "max": 100,
+          "scale": "linear",
+          "unit": "percent",
+          "source": {
+            "title": "Encyclopaedia Britannica — Atmosphere",
+            "url": "https://www.britannica.com/science/atmosphere"
+          },
+          "explanation": "Oxygen makes up about 20.9 per cent of dry air, with nitrogen taking most of the rest."
+        },
+        {
+          "id": "daily-share-of-world-land-that-is-russia",
+          "category": "geography",
+          "measure": "quantity",
+          "subtype": "percentage",
+          "prompt": "What share of the world's land area does Russia cover?",
+          "answer": 11,
+          "min": 0,
+          "max": 100,
+          "scale": "linear",
+          "unit": "percent",
+          "source": {
+            "title": "Encyclopaedia Britannica — Russia",
+            "url": "https://www.britannica.com/place/Russia"
+          },
+          "explanation": "At about 17 million square kilometres Russia covers roughly a ninth of the world's land."
+        },
+        {
+          "id": "daily-moons-of-saturn-confirmed",
+          "category": "space",
+          "measure": "quantity",
+          "subtype": "count",
+          "prompt": "Roughly how many moons of Saturn had been confirmed by 2024?",
+          "answer": 146,
+          "min": 10,
+          "max": 100000,
+          "scale": "log",
+          "unit": "count",
+          "source": {
+            "title": "NASA Science — Saturn Moons",
+            "url": "https://science.nasa.gov/saturn/moons/"
+          },
+          "explanation": "Saturn's confirmed moon count reached 146 in 2023, overtaking Jupiter."
+        },
+        {
+          "id": "daily-scotland-census-population-2022",
+          "category": "population",
+          "measure": "population",
+          "subtype": "country",
+          "prompt": "What was Scotland's population in the 2022 census?",
+          "answer": 5439842,
+          "min": 150000,
+          "max": 12000000,
+          "scale": "log",
+          "unit": "people",
+          "referenceYear": "2022",
+          "source": {
+            "title": "Scotland's Census - Unrounded Population Estimates",
+            "url": "https://www.scotlandscensus.gov.uk/2022-reports/scotlands-census-2022-quality-assurance-reports/quality-assurance-report-unrounded-population-estimates-and-ethnic-group-national-identity-language-and-religion-topic-data/"
+          },
+          "explanation": "Scotland's 2022 census recorded a population of 5,439,842 people, its largest census total on record."
+        },
+        {
+          "id": "daily-chernobyl-disaster-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did the Chernobyl nuclear disaster occur?",
+          "answer": 1986,
+          "min": 1800,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "International Atomic Energy Agency - Twenty Years After the Chernobyl Accident",
+            "url": "https://www.iaea.org/newscenter/news/twenty-years-after-the-chernobyl-accident"
+          },
+          "explanation": "Reactor 4 at the Chernobyl nuclear power plant exploded on 26 April 1986."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-02",
+      "questions": [
+        {
+          "id": "daily-tutankhamun-death-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In roughly what year did the pharaoh Tutankhamun die?",
+          "answer": -1323,
+          "min": -2500,
+          "max": 500,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Encyclopaedia Britannica — Tutankhamun",
+            "url": "https://www.britannica.com/biography/Tutankhamen"
+          },
+          "explanation": "Tutankhamun died around 1323 BCE, still a teenager, and his tomb went undisturbed until 1922."
+        },
+        {
+          "id": "daily-human-blood-vessel-length",
+          "category": "science",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "Roughly how long would all the blood vessels in a human body be if laid end to end?",
+          "answer": 96560,
+          "min": 60000,
+          "max": 4000000,
+          "scale": "log",
+          "unit": "kilometre",
+          "source": {
+            "title": "PubMed Central - Building Blood Vessel Chips with Enhanced Physiological Relevance",
+            "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10489284/"
+          },
+          "explanation": "The body's blood vessels total more than 96,000 kilometres, enough to circle Earth more than twice."
+        },
+        {
+          "id": "daily-neptune-fastest-winds",
+          "category": "space",
+          "measure": "physics",
+          "subtype": "speed",
+          "prompt": "How fast can the strongest winds on Neptune blow?",
+          "answer": 2000,
+          "min": 30,
+          "max": 5000,
+          "scale": "log",
+          "unit": "kph",
+          "source": {
+            "title": "NASA Science - Neptune Facts",
+            "url": "https://science.nasa.gov/neptune/neptune-facts/"
+          },
+          "explanation": "Neptune's winds can exceed 2,000 kilometres per hour, the fastest measured anywhere in the solar system."
+        },
+        {
+          "id": "daily-eniac-vacuum-tube-count",
+          "category": "technology",
+          "measure": "quantity",
+          "subtype": "count",
+          "prompt": "About how many vacuum tubes did the ENIAC computer use?",
+          "answer": 18000,
+          "min": 200,
+          "max": 40000,
+          "scale": "log",
+          "unit": "count",
+          "source": {
+            "title": "National Museum of American History - ENIAC Accumulator",
+            "url": "https://americanhistory.si.edu/collections/nmah_334742"
+          },
+          "explanation": "ENIAC used roughly 18,000 vacuum tubes and filled an entire room while performing electronic calculations."
+        },
+        {
+          "id": "daily-mount-fuji-height",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How high is the summit of Mount Fuji above sea level?",
+          "answer": 3776,
+          "min": 80,
+          "max": 6000,
+          "scale": "log",
+          "unit": "metre",
+          "source": {
+            "title": "Japan National Tourism Organization - Mt. Fuji",
+            "url": "https://www.japan.travel/en/fuji-guide/mt-fuji-more-than-a-mountain/"
+          },
+          "explanation": "Mount Fuji reaches 3,776 metres above sea level, making it the highest mountain in Japan."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-03",
+      "questions": [
+        {
+          "id": "daily-great-wall-first-unified-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In roughly what year did Qin Shi Huang first link the walls that became the Great Wall of China?",
+          "answer": -221,
+          "min": -1000,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Encyclopaedia Britannica — Great Wall of China",
+            "url": "https://www.britannica.com/topic/Great-Wall-of-China"
+          },
+          "explanation": "China's first emperor joined existing frontier walls from about 221 BCE."
+        },
+        {
+          "id": "daily-known-asteroids-count",
+          "category": "space",
+          "measure": "quantity",
+          "subtype": "count",
+          "prompt": "Roughly how many asteroids had been catalogued in the Solar System by 2023?",
+          "answer": 1300000,
+          "min": 500000,
+          "max": 25000000,
+          "scale": "log",
+          "unit": "count",
+          "source": {
+            "title": "NASA Jet Propulsion Laboratory — Small-Body Database",
+            "url": "https://ssd.jpl.nasa.gov/"
+          },
+          "explanation": "Just over 1.3 million asteroids had been catalogued, most of them in the main belt."
+        },
+        {
+          "id": "daily-sound-speed-seawater",
+          "category": "science",
+          "measure": "physics",
+          "subtype": "speed",
+          "prompt": "Approximately how fast does sound travel through seawater?",
+          "answer": 5400,
+          "min": 120,
+          "max": 10000,
+          "scale": "log",
+          "unit": "kph",
+          "source": {
+            "title": "NOAA Ocean Service - How Far Does Sound Travel in the Ocean?",
+            "url": "https://oceanservice.noaa.gov/facts/sound.html"
+          },
+          "explanation": "Sound travels through seawater at about 5,400 kilometres per hour, more than four times its speed in air."
+        },
+        {
+          "id": "daily-horseshoe-falls-width",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How wide is the crest of Horseshoe Falls at Niagara Falls?",
+          "answer": 670,
+          "min": 15,
+          "max": 1200,
+          "scale": "log",
+          "unit": "metre",
+          "source": {
+            "title": "Niagara Parks - Niagara Falls Facts",
+            "url": "https://www.niagaraparks.com/visit-niagara-parks/plan-your-visit/niagara-falls-geology-facts-figures/"
+          },
+          "explanation": "The curved crest of Horseshoe Falls is about 670 metres wide on the Canadian side of Niagara Falls."
+        },
+        {
+          "id": "daily-whale-shark-maximum-length",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "About how long can a whale shark grow?",
+          "answer": 12.2,
+          "min": 0.6,
+          "max": 25,
+          "scale": "log",
+          "unit": "metre",
+          "source": {
+            "title": "NOAA Fisheries - Shark Identification",
+            "url": "https://www.fisheries.noaa.gov/new-england-mid-atlantic/atlantic-highly-migratory-species/shark-identification-cooperative-shark-0"
+          },
+          "explanation": "Whale sharks can grow to about 12.2 metres long, making them the largest living fish."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-04",
+      "questions": [
+        {
+          "id": "daily-share-of-ocean-floor-mapped",
+          "category": "geography",
+          "measure": "quantity",
+          "subtype": "percentage",
+          "prompt": "What share of the ocean floor had been mapped to modern standards by 2023?",
+          "answer": 25,
+          "min": 0,
+          "max": 100,
+          "scale": "linear",
+          "unit": "percent",
+          "source": {
+            "title": "Nippon Foundation–GEBCO Seabed 2030",
+            "url": "https://seabed2030.org/"
+          },
+          "explanation": "About a quarter of the seabed had been mapped at modern resolution, up from six per cent in 2017."
+        },
+        {
+          "id": "daily-bones-a-baby-is-born-with",
+          "category": "science",
+          "measure": "quantity",
+          "subtype": "count",
+          "prompt": "How many bones is a human baby born with?",
+          "answer": 270,
+          "min": 20,
+          "max": 20000,
+          "scale": "log",
+          "unit": "count",
+          "source": {
+            "title": "Encyclopaedia Britannica — Human skeletal system",
+            "url": "https://www.britannica.com/science/human-skeleton"
+          },
+          "explanation": "Babies start with about 270 bones; many fuse together, leaving 206 in an adult."
+        },
+        {
+          "id": "daily-james-webb-primary-mirror-diameter",
+          "category": "space",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "What is the diameter of the James Webb Space Telescope's primary mirror?",
+          "answer": 6.5,
+          "min": 0.2,
+          "max": 10,
+          "scale": "log",
+          "unit": "metre",
+          "source": {
+            "title": "NASA Science - Webb Fact Sheet",
+            "url": "https://science.nasa.gov/mission/webb/fact-sheet/"
+          },
+          "explanation": "NASA lists Webb's primary mirror as approximately 6.5 metres across, made from 18 gold-coated segments."
+        },
+        {
+          "id": "daily-large-hadron-collider-circumference",
+          "category": "technology",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "What is the circumference of the Large Hadron Collider?",
+          "answer": 27,
+          "min": 0.8,
+          "max": 50,
+          "scale": "log",
+          "unit": "kilometre",
+          "source": {
+            "title": "CERN - The Large Hadron Collider",
+            "url": "https://home.cern/science/accelerators/large-hadron-collider/"
+          },
+          "explanation": "CERN describes the Large Hadron Collider as a 27-kilometre ring of superconducting magnets."
+        },
+        {
+          "id": "daily-monarch-butterfly-migration-distance",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How far can a monarch butterfly migrate to reach its wintering grounds?",
+          "answer": 4828,
+          "min": 60,
+          "max": 10000,
+          "scale": "log",
+          "unit": "kilometre",
+          "source": {
+            "title": "National Park Service - Around the Country with the Monarch Butterfly",
+            "url": "https://www.nps.gov/articles/monarch-cross-country.htm"
+          },
+          "explanation": "Some monarch butterflies migrate up to about 4,828 kilometres to reach wintering forests in central Mexico."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-05",
+      "questions": [
+        {
+          "id": "daily-pompeii-eruption-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was Pompeii buried by the eruption of Mount Vesuvius?",
+          "answer": 79,
+          "min": -500,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Encyclopaedia Britannica - Pompeii",
+            "url": "https://www.britannica.com/place/Pompeii"
+          },
+          "explanation": "Mount Vesuvius buried Pompeii in volcanic debris in 79 CE, preserving much of the Roman city."
+        },
+        {
+          "id": "daily-hairs-on-a-human-head",
+          "category": "science",
+          "measure": "quantity",
+          "subtype": "count",
+          "prompt": "Roughly how many hairs are on an average human head?",
+          "answer": 100000,
+          "min": 5000,
+          "max": 50000000,
+          "scale": "log",
+          "unit": "count",
+          "source": {
+            "title": "Encyclopaedia Britannica — Hair",
+            "url": "https://www.britannica.com/science/hair"
+          },
+          "explanation": "An average scalp carries around 100,000 hairs, shedding perhaps a hundred a day."
+        },
+        {
+          "id": "daily-valles-marineris-length",
+          "category": "space",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How long is the Valles Marineris canyon system on Mars?",
+          "answer": 3870,
+          "min": 60,
+          "max": 8000,
+          "scale": "log",
+          "unit": "kilometre",
+          "source": {
+            "title": "NASA Science - Valles Marineris: The Grand Canyon of Mars",
+            "url": "https://science.nasa.gov/resource/valles-marineris-the-grand-canyon-of-mars/"
+          },
+          "explanation": "Valles Marineris stretches roughly 3,870 kilometres across Mars, nearly the width of the continental United States."
+        },
+        {
+          "id": "daily-hoover-dam-height",
+          "category": "technology",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How tall is Hoover Dam from its foundation to its crest?",
+          "answer": 221.3,
+          "min": 5,
+          "max": 400,
+          "scale": "log",
+          "unit": "metre",
+          "source": {
+            "title": "Bureau of Reclamation - Hoover Dam",
+            "url": "https://www.usbr.gov/projects/index.php?id=122"
+          },
+          "explanation": "Hoover Dam rises 221.3 metres from its foundation to its crest, about the height of a 70-storey building."
+        },
+        {
+          "id": "daily-hummingbird-wingbeats",
+          "category": "animals",
+          "measure": "quantity",
+          "subtype": "count",
+          "prompt": "About how many times per second do a ruby-throated hummingbird's wings beat in direct flight?",
+          "answer": 70,
+          "min": 2,
+          "max": 120,
+          "scale": "log",
+          "unit": "count",
+          "source": {
+            "title": "Smithsonian National Zoo - Hummingbirds",
+            "url": "https://nationalzoo.si.edu/migratory-birds/hummingbirds"
+          },
+          "explanation": "The Smithsonian says a ruby-throated hummingbird's wings beat about 70 times per second in direct flight."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-06",
+      "questions": [
+        {
+          "id": "daily-light-from-moon-travel-time",
+          "category": "space",
+          "measure": "physics",
+          "subtype": "duration",
+          "prompt": "How long does light from the Moon take to reach the Earth?",
+          "answer": 1.3,
+          "min": 1,
+          "max": 100000,
+          "scale": "log",
+          "unit": "second",
+          "source": {
+            "title": "NASA Science — Earth's Moon",
+            "url": "https://science.nasa.gov/moon/"
+          },
+          "explanation": "Light crosses the 384,400 km to the Moon in about 1.3 seconds."
+        },
+        {
+          "id": "daily-hadrians-wall-begun-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In roughly what year did work begin on Hadrian's Wall?",
+          "answer": 122,
+          "min": -1000,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Encyclopaedia Britannica — Hadrian's Wall",
+            "url": "https://www.britannica.com/topic/Hadrians-Wall"
+          },
+          "explanation": "Construction started in about 122 CE, on the orders of the emperor Hadrian."
+        },
+        {
+          "id": "daily-lake-victoria-area",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "area",
+          "prompt": "Approximately how large is Lake Victoria's surface area?",
+          "answer": 68870,
+          "min": 1200,
+          "max": 150000,
+          "scale": "log",
+          "unit": "square-kilometre",
+          "source": {
+            "title": "UN Environment Programme - Lake Victoria Basin Environment Outlook",
+            "url": "https://wedocs.unep.org/bitstream/handle/20.500.11822/8613/LakeVictoria-Basin-Environment-Outlook.pdf"
+          },
+          "explanation": "Lake Victoria covers about 68,870 square kilometres, making it Africa's largest lake by surface area."
+        },
+        {
+          "id": "daily-original-iphone-release-year",
+          "category": "technology",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did the original iPhone first go on sale?",
+          "answer": 2007,
+          "min": 1930,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Apple Newsroom - iPhone Premieres This Friday Night",
+            "url": "https://www.apple.com/newsroom/2007/06/28iPhone-Premieres-This-Friday-Night-at-Apple-Retail-Stores/"
+          },
+          "explanation": "The original iPhone went on sale in the United States on 29 June 2007."
+        },
+        {
+          "id": "daily-wandering-albatross-wingspan",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How wide can a wandering albatross's wingspan reach?",
+          "answer": 3.5,
+          "min": 0.15,
+          "max": 8,
+          "scale": "log",
+          "unit": "metre",
+          "source": {
+            "title": "Smithsonian Ocean - Wandering Albatross",
+            "url": "https://ocean.si.edu/ocean-life/seabirds/wandering-albatross"
+          },
+          "explanation": "A wandering albatross can have a wingspan of about 3.5 metres, the widest of any living bird."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-07",
+      "questions": [
+        {
+          "id": "daily-human-brain-neuron-count",
+          "category": "science",
+          "measure": "quantity",
+          "subtype": "count",
+          "prompt": "Roughly how many neurons are in the human brain?",
+          "answer": 86000000000,
+          "min": 50000000000,
+          "max": 4000000000000,
+          "scale": "log",
+          "unit": "count",
+          "source": {
+            "title": "National Institutes of Health - Scientists Build Largest Maps to Date of Cells in Human Brain",
+            "url": "https://www.nih.gov/news-events/nih-research-matters/scientists-build-largest-maps-date-cells-human-brain"
+          },
+          "explanation": "The human brain contains roughly 86 billion neurons linked through an immense network of connections."
+        },
+        {
+          "id": "daily-titan-surface-temperature",
+          "category": "space",
+          "measure": "physics",
+          "subtype": "temperature",
+          "prompt": "What is the surface temperature of Saturn's moon Titan?",
+          "answer": -179,
+          "min": -273,
+          "max": 100,
+          "scale": "linear",
+          "unit": "celsius",
+          "source": {
+            "title": "NASA Science — Titan",
+            "url": "https://science.nasa.gov/saturn/moons/titan/"
+          },
+          "explanation": "At about -179 degrees Celsius, Titan is cold enough for methane to fall as rain."
+        },
+        {
+          "id": "daily-gobi-desert-area",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "area",
+          "prompt": "Approximately how large is the Gobi Desert?",
+          "answer": 1295000,
+          "min": 40000,
+          "max": 3000000,
+          "scale": "log",
+          "unit": "square-kilometre",
+          "source": {
+            "title": "Encyclopaedia Britannica - Gobi",
+            "url": "https://www.britannica.com/place/Gobi"
+          },
+          "explanation": "The Gobi covers about 1.3 million square kilometres across northern China and southern Mongolia."
+        },
+        {
+          "id": "daily-frozen-two-worldwide-box-office",
+          "category": "movies",
+          "measure": "quantity",
+          "subtype": "money",
+          "prompt": "How much did Frozen II gross worldwide across its theatrical release, in nominal US dollars?",
+          "answer": 1453683476,
+          "min": 12000000,
+          "max": 5000000000,
+          "scale": "log",
+          "unit": "usd",
+          "referenceYear": "2019",
+          "source": {
+            "title": "Box Office Mojo - Frozen II",
+            "url": "https://www.boxofficemojo.com/title/tt4520988/"
+          },
+          "explanation": "Frozen II grossed about 1.45 billion US dollars worldwide during its theatrical release."
+        },
+        {
+          "id": "daily-ireland-census-population-2022",
+          "category": "population",
+          "measure": "population",
+          "subtype": "country",
+          "prompt": "What was the population of Ireland in the 2022 census?",
+          "answer": 5149139,
+          "min": 80000,
+          "max": 15000000,
+          "scale": "log",
+          "unit": "people",
+          "referenceYear": "2022",
+          "source": {
+            "title": "Central Statistics Office Ireland - Census 2022 Summary Results",
+            "url": "https://www.cso.ie/en/csolatestnews/pressreleases/2023pressreleases/pressstatementcensusofpopulation2022-summaryresults/"
+          },
+          "explanation": "Ireland's 2022 census recorded a population of 5,149,139 people."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-08",
+      "questions": [
+        {
+          "id": "daily-share-world-population-in-india",
+          "category": "population",
+          "measure": "quantity",
+          "subtype": "percentage",
+          "prompt": "What share of the world's people lived in India in 2023?",
+          "answer": 17.8,
+          "min": 0,
+          "max": 100,
+          "scale": "linear",
+          "unit": "percent",
+          "source": {
+            "title": "United Nations World Population Prospects 2024",
+            "url": "https://population.un.org/wpp/"
+          },
+          "explanation": "India passed China in 2023 and is home to roughly 17.8 per cent of everyone alive."
+        },
+        {
+          "id": "daily-confirmed-exoplanets-count",
+          "category": "space",
+          "measure": "quantity",
+          "subtype": "count",
+          "prompt": "Roughly how many exoplanets had been confirmed by the end of 2023?",
+          "answer": 5500,
+          "min": 100,
+          "max": 5000000,
+          "scale": "log",
+          "unit": "count",
+          "source": {
+            "title": "NASA Exoplanet Archive",
+            "url": "https://exoplanetarchive.ipac.caltech.edu/"
+          },
+          "explanation": "About 5,500 planets beyond the Solar System had been confirmed, the first only in the 1990s."
+        },
+        {
+          "id": "daily-suez-canal-length",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How long is the Suez Canal?",
+          "answer": 193.3,
+          "min": 4,
+          "max": 300,
+          "scale": "log",
+          "unit": "kilometre",
+          "source": {
+            "title": "Suez Canal Authority - FAQ",
+            "url": "https://www.suezcanal.gov.eg/English/Pages/FAQ.aspx"
+          },
+          "explanation": "The Suez Canal Authority gives the canal's length as 193.30 kilometres."
+        },
+        {
+          "id": "daily-king-cobra-maximum-length",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How long can the largest king cobras grow?",
+          "answer": 5.4,
+          "min": 0.15,
+          "max": 10,
+          "scale": "log",
+          "unit": "metre",
+          "source": {
+            "title": "Smithsonian's National Zoo - King Cobra",
+            "url": "https://nationalzoo.si.edu/animals/king-cobra"
+          },
+          "explanation": "The king cobra can reach about 5.4 metres, making it the world's longest venomous snake."
+        },
+        {
+          "id": "daily-first-transatlantic-telegraph-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was the first official transatlantic telegraph message sent?",
+          "answer": 1858,
+          "min": 1200,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Library of Congress - First Transatlantic Telegraph Cable Sent",
+            "url": "https://guides.loc.gov/this-month-in-business-history/august/first-transatlantic-telegraph-cable"
+          },
+          "explanation": "The first official message crossed the Atlantic telegraph cable in August 1858."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-09",
+      "questions": [
+        {
+          "id": "daily-statue-of-liberty-cost",
+          "category": "history",
+          "measure": "quantity",
+          "subtype": "money",
+          "prompt": "What did the Statue of Liberty cost to build and install in 1886?",
+          "answer": 500000,
+          "min": 100000,
+          "max": 5000000000,
+          "scale": "log",
+          "unit": "usd",
+          "referenceYear": "1886",
+          "source": {
+            "title": "U.S. National Park Service — Statue of Liberty",
+            "url": "https://www.nps.gov/stli/learn/historyculture/index.htm"
+          },
+          "explanation": "The statue and its pedestal cost roughly half a million dollars of the day, raised on both sides of the Atlantic."
+        },
+        {
+          "id": "daily-keys-on-a-standard-piano",
+          "category": "technology",
+          "measure": "quantity",
+          "subtype": "count",
+          "prompt": "How many keys does a standard modern piano have?",
+          "answer": 88,
+          "min": 10,
+          "max": 20000,
+          "scale": "log",
+          "unit": "count",
+          "source": {
+            "title": "Encyclopaedia Britannica — Piano",
+            "url": "https://www.britannica.com/art/piano"
+          },
+          "explanation": "A full-size piano has 88 keys, spanning a little over seven octaves."
+        },
+        {
+          "id": "daily-tyrannosaurus-weight",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "mass",
+          "prompt": "What was the typical weight of a Tyrannosaurus rex?",
+          "answer": 7000,
+          "min": 200,
+          "max": 15000,
+          "scale": "log",
+          "unit": "kilogram",
+          "source": {
+            "title": "Natural History Museum - Tyrannosaurus",
+            "url": "https://www.nhm.ac.uk/discover/dino-directory/tyrannosaurus.html"
+          },
+          "explanation": "The Natural History Museum lists Tyrannosaurus at about 7,000 kilograms, with the largest specimens heavier still."
+        },
+        {
+          "id": "daily-human-heartbeats-per-day",
+          "category": "science",
+          "measure": "quantity",
+          "subtype": "count",
+          "prompt": "About how many times does a human heart beat in one day?",
+          "answer": 100000,
+          "min": 1500,
+          "max": 250000,
+          "scale": "log",
+          "unit": "count",
+          "source": {
+            "title": "National Heart, Lung, and Blood Institute - With Every Heartbeat Is Life",
+            "url": "https://www.nhlbi.nih.gov/files/docs/resources/heart/aa_manual.pdf"
+          },
+          "explanation": "A human heart beats about 100,000 times each day while pumping blood around the body."
+        },
+        {
+          "id": "daily-super-mario-bros-movie-worldwide-box-office",
+          "category": "movies",
+          "measure": "quantity",
+          "subtype": "money",
+          "prompt": "How much did The Super Mario Bros. Movie gross worldwide, in nominal US dollars?",
+          "answer": 1360783214,
+          "min": 40000000,
+          "max": 3000000000,
+          "scale": "log",
+          "unit": "usd",
+          "referenceYear": "2023",
+          "source": {
+            "title": "Box Office Mojo - The Super Mario Bros. Movie",
+            "url": "https://www.boxofficemojo.com/title/tt6718170/"
+          },
+          "explanation": "The Super Mario Bros. Movie grossed about 1.36 billion US dollars worldwide during its theatrical release."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-10",
+      "questions": [
+        {
+          "id": "daily-three-toed-sloth-ground-speed",
+          "category": "animals",
+          "measure": "physics",
+          "subtype": "speed",
+          "prompt": "How fast does a three-toed sloth move across the ground?",
+          "answer": 0.24,
+          "min": 0.1,
+          "max": 500,
+          "scale": "log",
+          "unit": "kph",
+          "source": {
+            "title": "Encyclopaedia Britannica — Sloth",
+            "url": "https://www.britannica.com/animal/sloth"
+          },
+          "explanation": "On the ground a sloth manages about 0.24 km/h, though it climbs rather faster."
+        },
+        {
+          "id": "daily-iss-orbital-period",
+          "category": "space",
+          "measure": "physics",
+          "subtype": "duration",
+          "prompt": "How long does the International Space Station take to circle the Earth once?",
+          "answer": 93,
+          "min": 5,
+          "max": 50000,
+          "scale": "log",
+          "unit": "minute",
+          "source": {
+            "title": "NASA — International Space Station",
+            "url": "https://www.nasa.gov/international-space-station/"
+          },
+          "explanation": "The station orbits every 93 minutes, giving its crew sixteen sunrises a day."
+        },
+        {
+          "id": "daily-rosetta-stone-discovery-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was the Rosetta Stone discovered in Egypt?",
+          "answer": 1799,
+          "min": 1000,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "British Museum - Explore the Rosetta Stone",
+            "url": "https://www.britishmuseum.org/collection/egypt/explore-rosetta-stone"
+          },
+          "explanation": "French soldiers discovered the Rosetta Stone near the Egyptian town of Rashid in 1799."
+        },
+        {
+          "id": "daily-earth-equatorial-rotation-speed",
+          "category": "science",
+          "measure": "physics",
+          "subtype": "speed",
+          "prompt": "How fast does Earth's surface move at the equator because of the planet's rotation?",
+          "answer": 1700,
+          "min": 30,
+          "max": 4000,
+          "scale": "log",
+          "unit": "kph",
+          "source": {
+            "title": "NASA Science — Facts About Earth",
+            "url": "https://science.nasa.gov/earth/facts/"
+          },
+          "explanation": "Earth's surface moves at about 1,700 kilometres per hour at the equator as the planet rotates."
+        },
+        {
+          "id": "daily-eurostar-top-speed",
+          "category": "technology",
+          "measure": "physics",
+          "subtype": "speed",
+          "prompt": "What is the top operating speed of a Eurostar train?",
+          "answer": 300,
+          "min": 6,
+          "max": 600,
+          "scale": "log",
+          "unit": "kph",
+          "source": {
+            "title": "Eurostar - Our Company",
+            "url": "https://www.eurostar.com/uk-en/about-eurostar/our-company"
+          },
+          "explanation": "Eurostar trains can operate at up to 300 kilometres per hour on high-speed lines."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-11",
+      "questions": [
+        {
+          "id": "daily-code-of-hammurabi-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In roughly what year was the Code of Hammurabi set down in Babylon?",
+          "answer": -1754,
+          "min": -3000,
+          "max": 500,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Encyclopaedia Britannica — Code of Hammurabi",
+            "url": "https://www.britannica.com/topic/Code-of-Hammurabi"
+          },
+          "explanation": "Hammurabi's laws were carved onto a stele in about 1754 BCE, among the earliest written codes."
+        },
+        {
+          "id": "daily-share-of-plastic-waste-recycled",
+          "category": "science",
+          "measure": "quantity",
+          "subtype": "percentage",
+          "prompt": "What share of the world's plastic waste is recycled?",
+          "answer": 9,
+          "min": 0,
+          "max": 100,
+          "scale": "linear",
+          "unit": "percent",
+          "source": {
+            "title": "OECD Global Plastics Outlook",
+            "url": "https://www.oecd.org/environment/plastics/"
+          },
+          "explanation": "Only about 9 per cent of plastic waste is recycled; most is landfilled, burned or mismanaged."
+        },
+        {
+          "id": "daily-wales-census-population-2021",
+          "category": "population",
+          "measure": "population",
+          "subtype": "country",
+          "prompt": "What was the population of Wales in the 2021 census?",
+          "answer": 3107494,
+          "min": 30000,
+          "max": 10000000,
+          "scale": "log",
+          "unit": "people",
+          "referenceYear": "2021",
+          "source": {
+            "title": "Office for National Statistics - Census 2021 in Wales",
+            "url": "https://www.ons.gov.uk/census/aboutcensus/census2021generalreport/census2021inwales"
+          },
+          "explanation": "The 2021 census counted 3,107,494 people living in Wales."
+        },
+        {
+          "id": "daily-bald-eagle-nest-mass",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "mass",
+          "prompt": "How much can a very large bald eagle nest weigh?",
+          "answer": 907,
+          "min": 15,
+          "max": 2500,
+          "scale": "log",
+          "unit": "kilogram",
+          "source": {
+            "title": "U.S. Fish and Wildlife Service - Eagle Fun Facts for Educators",
+            "url": "https://www.fws.gov/eagle-fun-facts-for-educators"
+          },
+          "explanation": "A very large bald eagle nest can weigh about 907 kilograms after years of reuse and added material."
+        },
+        {
+          "id": "daily-amazon-river-length",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "Approximately how long is the Amazon River?",
+          "answer": 6400,
+          "min": 150,
+          "max": 10000,
+          "scale": "log",
+          "unit": "kilometre",
+          "source": {
+            "title": "Encyclopaedia Britannica - Amazon River",
+            "url": "https://www.britannica.com/place/Amazon-River"
+          },
+          "explanation": "The Amazon River is approximately 6,400 kilometres long, although its precise length remains debated."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-12",
+      "questions": [
+        {
+          "id": "daily-share-of-mammal-species-that-are-bats",
+          "category": "animals",
+          "measure": "quantity",
+          "subtype": "percentage",
+          "prompt": "What share of all mammal species are bats?",
+          "answer": 20,
+          "min": 0,
+          "max": 100,
+          "scale": "linear",
+          "unit": "percent",
+          "source": {
+            "title": "Encyclopaedia Britannica — Bat",
+            "url": "https://www.britannica.com/animal/bat-mammal"
+          },
+          "explanation": "With over 1,400 species, bats account for about a fifth of all known mammals."
+        },
+        {
+          "id": "daily-first-olympic-games-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year were the first recorded Olympic Games held at Olympia?",
+          "answer": -776,
+          "min": -1500,
+          "max": 1500,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Encyclopaedia Britannica — Ancient Olympic Games",
+            "url": "https://www.britannica.com/sports/Olympic-Games"
+          },
+          "explanation": "The traditional date for the first Olympiad is 776 BCE, and the games ran for over a millennium."
+        },
+        {
+          "id": "daily-human-taste-buds-at-birth",
+          "category": "science",
+          "measure": "quantity",
+          "subtype": "count",
+          "prompt": "About how many taste buds does a person have at birth?",
+          "answer": 10000,
+          "min": 150,
+          "max": 25000,
+          "scale": "log",
+          "unit": "count",
+          "source": {
+            "title": "National Institute on Deafness and Other Communication Disorders - Taste Disorders",
+            "url": "https://www.nidcd.nih.gov/health/taste-disorders"
+          },
+          "explanation": "A person has about 10,000 taste buds at birth, although the number can begin to decline after age 50."
+        },
+        {
+          "id": "daily-saturn-ring-system-extent",
+          "category": "space",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How far from Saturn does its ring system extend?",
+          "answer": 282000,
+          "min": 5000,
+          "max": 600000,
+          "scale": "log",
+          "unit": "kilometre",
+          "source": {
+            "title": "NASA Science - Saturn Facts",
+            "url": "https://science.nasa.gov/saturn/facts/"
+          },
+          "explanation": "Saturn's ring system extends up to about 282,000 kilometres from the planet while remaining remarkably thin."
+        },
+        {
+          "id": "daily-grand-canyon-length",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How long is the Grand Canyon from Lees Ferry to Grand Wash Cliffs?",
+          "answer": 446,
+          "min": 4,
+          "max": 1500,
+          "scale": "log",
+          "unit": "kilometre",
+          "source": {
+            "title": "National Park Service - Grand Canyon FAQ",
+            "url": "https://www.nps.gov/grca/faqs.htm"
+          },
+          "explanation": "The Grand Canyon stretches about 446 kilometres along the Colorado River from Lees Ferry to Grand Wash Cliffs."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-13",
+      "questions": [
+        {
+          "id": "daily-share-of-australia-that-is-desert",
+          "category": "geography",
+          "measure": "quantity",
+          "subtype": "percentage",
+          "prompt": "What share of Australia's land area is classified as desert?",
+          "answer": 18,
+          "min": 0,
+          "max": 100,
+          "scale": "linear",
+          "unit": "percent",
+          "source": {
+            "title": "Geoscience Australia — Deserts",
+            "url": "https://www.ga.gov.au/scientific-topics/national-location-information/landforms/deserts"
+          },
+          "explanation": "About 18 per cent of Australia is true desert, though far more of it is arid or semi-arid."
+        },
+        {
+          "id": "daily-julius-caesar-assassination-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was Julius Caesar assassinated?",
+          "answer": -44,
+          "min": -500,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Encyclopaedia Britannica — Julius Caesar",
+            "url": "https://www.britannica.com/biography/Julius-Caesar-Roman-ruler"
+          },
+          "explanation": "Caesar was killed in the Senate on the Ides of March, 44 BCE."
+        },
+        {
+          "id": "daily-leatherback-turtle-dive-depth",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How deep was the deepest recorded leatherback turtle dive?",
+          "answer": 1200,
+          "min": 12,
+          "max": 4000,
+          "scale": "log",
+          "unit": "metre",
+          "source": {
+            "title": "NOAA Fisheries - Leatherback Turtle",
+            "url": "https://www.fisheries.noaa.gov/species/leatherback-turtle"
+          },
+          "explanation": "NOAA says the deepest recorded leatherback turtle dive reached nearly 4,000 feet, or about 1,200 metres."
+        },
+        {
+          "id": "daily-mercury-orbital-period",
+          "category": "space",
+          "measure": "physics",
+          "subtype": "duration",
+          "prompt": "How many Earth days does Mercury take to orbit the Sun?",
+          "answer": 88,
+          "min": 4,
+          "max": 200,
+          "scale": "log",
+          "unit": "day",
+          "source": {
+            "title": "NASA Science - Mercury Facts",
+            "url": "https://science.nasa.gov/mercury/facts/"
+          },
+          "explanation": "Mercury completes one orbit of the Sun in just 88 Earth days, the shortest year of any planet."
+        },
+        {
+          "id": "daily-top-gun-maverick-worldwide-box-office",
+          "category": "movies",
+          "measure": "quantity",
+          "subtype": "money",
+          "prompt": "How much had Top Gun: Maverick grossed worldwide across all theatrical releases by 2026, in nominal US dollars?",
+          "answer": 1503260455,
+          "min": 15000000,
+          "max": 5000000000,
+          "scale": "log",
+          "unit": "usd",
+          "referenceYear": "2026",
+          "source": {
+            "title": "Box Office Mojo - Top Gun: Maverick",
+            "url": "https://www.boxofficemojo.com/title/tt1745960/"
+          },
+          "explanation": "Top Gun: Maverick had grossed about 1.50 billion US dollars worldwide across its theatrical releases by 2026."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-14",
+      "questions": [
+        {
+          "id": "daily-oxygen-boiling-point",
+          "category": "science",
+          "measure": "physics",
+          "subtype": "temperature",
+          "prompt": "At what temperature does oxygen boil at atmospheric pressure?",
+          "answer": -183,
+          "min": -273,
+          "max": 100,
+          "scale": "linear",
+          "unit": "celsius",
+          "source": {
+            "title": "Encyclopaedia Britannica — Oxygen",
+            "url": "https://www.britannica.com/science/oxygen"
+          },
+          "explanation": "Oxygen condenses to a pale blue liquid at about -183 degrees Celsius."
+        },
+        {
+          "id": "daily-terracotta-army-buried-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In roughly what year was the Terracotta Army buried near Xi'an?",
+          "answer": -210,
+          "min": -1000,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "UNESCO World Heritage Centre — Mausoleum of the First Qin Emperor",
+            "url": "https://whc.unesco.org/en/list/441/"
+          },
+          "explanation": "The figures were interred with China's first emperor at his death in about 210 BCE."
+        },
+        {
+          "id": "daily-first-sms-year",
+          "category": "technology",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was the world's first SMS text message sent?",
+          "answer": 1992,
+          "min": 1840,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Vodafone - Anniversary of the First Text Message",
+            "url": "https://www.vodafone.com/news/newsroom/technology/25-anniversary-text-message"
+          },
+          "explanation": "The first SMS text message, reading Merry Christmas, was sent over Vodafone's network in 1992."
+        },
+        {
+          "id": "daily-giant-panda-daily-bamboo",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "mass",
+          "prompt": "About how much bamboo can a giant panda eat in one day?",
+          "answer": 41,
+          "min": 1.2,
+          "max": 80,
+          "scale": "log",
+          "unit": "kilogram",
+          "source": {
+            "title": "Smithsonian's National Zoo - An Endless Supply of Bamboo",
+            "url": "https://nationalzoo.si.edu/animals/news/keep-national-zoos-pandas-satisfied-staff-prepare-endless-supply-bamboo"
+          },
+          "explanation": "A giant panda can eat roughly 36 to 45 kilograms of bamboo in a single day."
+        },
+        {
+          "id": "daily-barbie-worldwide-box-office",
+          "category": "movies",
+          "measure": "quantity",
+          "subtype": "money",
+          "prompt": "How much did Barbie gross worldwide across its theatrical release, in nominal US dollars?",
+          "answer": 1447138421,
+          "min": 30000000,
+          "max": 2500000000,
+          "scale": "log",
+          "unit": "usd",
+          "referenceYear": "2023",
+          "source": {
+            "title": "Box Office Mojo - Barbie",
+            "url": "https://www.boxofficemojo.com/title/tt1517268/"
+          },
+          "explanation": "Barbie grossed about 1.45 billion US dollars worldwide during its theatrical release."
+        }
+      ]
+    }
+  ]
+}

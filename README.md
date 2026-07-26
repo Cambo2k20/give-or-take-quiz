@@ -86,6 +86,51 @@ URLs, population definitions, and category coverage. This validation also
 runs automatically before every production build and makes no network
 requests.
 
+## The daily challenge
+
+Everyone who opens the app on a given day gets the same **five** questions, in
+the same order, which is what makes a daily score worth comparing. Daily
+questions are written for the daily and never appear in category play.
+
+The schedule is authored by hand in
+[`data/daily-sets.json`](data/daily-sets.json), which is the source of truth for
+the daily — unlike the category bank, where Postgres is.
+[`data/daily-sets.example.json`](data/daily-sets.example.json) is a worked
+two-day template to copy from.
+
+```json
+{
+  "version": 1,
+  "sets": [
+    { "date": "2026-08-01", "questions": [ /* exactly 5 question records */ ] }
+  ]
+}
+```
+
+A question record has the same shape and obeys the same rules as one in the
+category bank: bounds with `min < max`, an answer inside them, a positive `min`
+for a logarithmic slider, a real source title and URL, and a `referenceYear` for
+population and money questions. `npm run validate:data` additionally checks that
+
+- every set is dated `YYYY-MM-DD`, and no two sets share a date;
+- every set holds exactly five questions;
+- no question id is reused across dates; and
+- no daily question shares an id or a prompt with the category bank.
+
+A set dated in the future stays hidden until its day arrives, so the schedule can
+be committed well ahead of time. Streaks and per-date scores live in the
+browser's `localStorage` under `give-or-take:daily:v1`; only today's puzzle moves
+a streak, so replaying the archive cannot be used to top one up.
+
+| Command | Purpose |
+| --- | --- |
+| `npm run validate:data` | Check the category bank and the daily schedule |
+| `npm run build:daily-sql` | Regenerate `supabase/seed-daily.sql` from the JSON |
+
+Playing the daily works offline with no database. The per-day leaderboard needs
+the two daily migrations applied and `supabase/seed-daily.sql` run, so the server
+can rescore a daily round against that date's questions.
+
 ## Privacy
 
 The application has no account requirement, analytics, or gameplay backend.

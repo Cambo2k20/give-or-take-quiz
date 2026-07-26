@@ -1,0 +1,186 @@
+{
+  "version": 1,
+  "sets": [
+    {
+      "date": "2026-08-01",
+      "questions": [
+        {
+          "id": "daily-danube-length",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How long is the River Danube from its source to the Black Sea?",
+          "answer": 2850,
+          "min": 200,
+          "max": 10000,
+          "scale": "log",
+          "unit": "kilometre",
+          "source": {
+            "title": "Encyclopaedia Britannica — Danube River",
+            "url": "https://www.britannica.com/place/Danube-River"
+          },
+          "explanation": "The Danube runs about 2,850 km from the Black Forest to the Black Sea, passing through more countries than any other river."
+        },
+        {
+          "id": "daily-berlin-wall-fell",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did the Berlin Wall fall?",
+          "answer": 1989,
+          "min": 1900,
+          "max": 2010,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Encyclopaedia Britannica — Berlin Wall",
+            "url": "https://www.britannica.com/topic/Berlin-Wall"
+          },
+          "explanation": "East Germany opened its border crossings on 9 November 1989, and the wall was dismantled over the months that followed."
+        },
+        {
+          "id": "daily-peregrine-dive-speed",
+          "category": "animals",
+          "measure": "physics",
+          "subtype": "speed",
+          "prompt": "How fast can a peregrine falcon travel in a full stoop?",
+          "answer": 320,
+          "min": 20,
+          "max": 500,
+          "scale": "log",
+          "unit": "kph",
+          "source": {
+            "title": "Encyclopaedia Britannica — Peregrine falcon",
+            "url": "https://www.britannica.com/animal/peregrine-falcon"
+          },
+          "explanation": "In a hunting dive the peregrine falcon exceeds 300 km/h, making it the fastest animal on record."
+        },
+        {
+          "id": "daily-liquid-nitrogen-boiling-point",
+          "category": "science",
+          "measure": "physics",
+          "subtype": "temperature",
+          "prompt": "At what temperature does liquid nitrogen boil at sea-level pressure?",
+          "answer": -196,
+          "min": -273,
+          "max": 100,
+          "scale": "linear",
+          "unit": "celsius",
+          "source": {
+            "title": "Encyclopaedia Britannica — Nitrogen",
+            "url": "https://www.britannica.com/science/nitrogen"
+          },
+          "explanation": "Nitrogen boils at about -196 degrees Celsius, which is why liquid nitrogen steams furiously in open air."
+        },
+        {
+          "id": "daily-moon-diameter",
+          "category": "space",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "What is the diameter of the Moon at its equator?",
+          "answer": 3475,
+          "min": 500,
+          "max": 50000,
+          "scale": "log",
+          "unit": "kilometre",
+          "source": {
+            "title": "NASA Science — Earth's Moon Facts",
+            "url": "https://science.nasa.gov/moon/facts/"
+          },
+          "explanation": "The Moon is about 3,475 km across, roughly a quarter of Earth's diameter."
+        }
+      ]
+    },
+    {
+      "date": "2026-08-02",
+      "questions": [
+        {
+          "id": "daily-eiffel-tower-height",
+          "category": "technology",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How tall is the Eiffel Tower, measured to the tip of its antenna?",
+          "answer": 330,
+          "min": 50,
+          "max": 1000,
+          "scale": "log",
+          "unit": "metre",
+          "source": {
+            "title": "La Tour Eiffel — Key figures",
+            "url": "https://www.toureiffel.paris/en/the-monument/key-figures"
+          },
+          "explanation": "The tower stands about 330 m to the tip, having grown over the years as new antennas were fitted."
+        },
+        {
+          "id": "daily-jurassic-park-release",
+          "category": "movies",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was Steven Spielberg's Jurassic Park first released?",
+          "answer": 1993,
+          "min": 1960,
+          "max": 2010,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Encyclopaedia Britannica — Jurassic Park",
+            "url": "https://www.britannica.com/topic/Jurassic-Park-film-by-Spielberg"
+          },
+          "explanation": "Jurassic Park opened in June 1993 and became the highest-grossing film released to that point."
+        },
+        {
+          "id": "daily-lake-victoria-area",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "area",
+          "prompt": "What is the surface area of Lake Victoria?",
+          "answer": 68800,
+          "min": 1000,
+          "max": 400000,
+          "scale": "log",
+          "unit": "square-kilometre",
+          "source": {
+            "title": "Encyclopaedia Britannica — Lake Victoria",
+            "url": "https://www.britannica.com/place/Lake-Victoria"
+          },
+          "explanation": "At roughly 68,800 square kilometres it is the largest lake in Africa by area."
+        },
+        {
+          "id": "daily-louisiana-purchase-cost",
+          "category": "history",
+          "measure": "quantity",
+          "subtype": "money",
+          "prompt": "What did the United States agree to pay France for the Louisiana Purchase in 1803?",
+          "answer": 15000000,
+          "min": 100000,
+          "max": 500000000,
+          "scale": "log",
+          "unit": "usd",
+          "referenceYear": "1803",
+          "source": {
+            "title": "U.S. National Archives — Louisiana Purchase Treaty",
+            "url": "https://www.archives.gov/milestone-documents/louisiana-purchase-treaty"
+          },
+          "explanation": "The 1803 treaty transferred roughly 2 million square kilometres of territory for 15 million dollars of the day."
+        },
+        {
+          "id": "daily-blue-whale-mass",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "mass",
+          "prompt": "How much does a large adult blue whale weigh?",
+          "answer": 150,
+          "min": 1,
+          "max": 500,
+          "scale": "log",
+          "unit": "tonne",
+          "source": {
+            "title": "Encyclopaedia Britannica — Blue whale",
+            "url": "https://www.britannica.com/animal/blue-whale"
+          },
+          "explanation": "A large blue whale reaches about 150 tonnes, making it the heaviest animal known to have lived."
+        }
+      ]
+    }
+  ]
+}
