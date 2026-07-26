@@ -44,6 +44,11 @@ import {
   ConfirmEmailNotice,
   NewPasswordForm,
 } from "./AuthPanel";
+import {
+  applyBackgroundTheme,
+  readEquippedBackgroundTheme,
+} from "../lib/backgroundTheme";
+import { CosmicLayer } from "./CosmicLayer";
 import { DailyArchive, DailyStrip } from "./Daily";
 import {
   AchievementPanel,
@@ -268,6 +273,11 @@ export default function Game() {
   // Read straight from the browser during the first render. The app is fully
   // client-rendered, so there is no server pass to mismatch against.
   const [theme, setTheme] = useState<Theme>(readTheme);
+  // Which unlocked background is applied everywhere, or none. Orthogonal to
+  // `theme` above on purpose — see lib/backgroundTheme.ts.
+  const [bgTheme, setBgTheme] = useState<string | null>(
+    readEquippedBackgroundTheme,
+  );
   const [bestScores, setBestScores] = useState<BestScores>(readBestScores);
   const [questionHistory, setQuestionHistory] = useState(readQuestionHistory);
   const [dailyProgress, setDailyProgress] = useState(readDailyProgress);
@@ -490,6 +500,15 @@ export default function Game() {
     applyTheme(next);
   }
 
+  /** Equips a background, or clears it if it was already equipped — a toggle
+   * rather than a one-way switch, so a player can always get back to plain
+   * light/dark with nothing behind it. */
+  function toggleBackgroundTheme(themeId: string) {
+    const next = bgTheme === themeId ? null : themeId;
+    setBgTheme(next);
+    applyBackgroundTheme(next);
+  }
+
   /** Everything a round needs reset, whichever way it was started. */
   function beginRound(roundQuestions: Question[]) {
     setGameQuestions(roundQuestions);
@@ -654,6 +673,7 @@ export default function Game() {
 
   return (
     <main className="site-shell">
+      <CosmicLayer />
       <header className="site-header">
         <button
           className="wordmark"
@@ -710,8 +730,18 @@ export default function Game() {
             className="theme-toggle"
             type="button"
             onClick={toggleTheme}
+            disabled={bgTheme !== null}
+            title={
+              bgTheme
+                ? "Remove the custom theme to change light or dark mode"
+                : undefined
+            }
             aria-label={
-              theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+              bgTheme
+                ? "Light and dark mode unavailable while a custom theme is applied"
+                : theme === "dark"
+                  ? "Switch to light mode"
+                  : "Switch to dark mode"
             }
           >
             {theme === "dark" ? (
@@ -1312,7 +1342,7 @@ export default function Game() {
                     onClick={() => setPhase("unlocks")}
                   >
                     <strong>Unlocks</strong>
-                    <span>Themes, coming soon</span>
+                    <span>Background themes</span>
                   </button>
                 </div>
               )}
@@ -1368,7 +1398,12 @@ export default function Game() {
             ) : activePhase === "achievements" ? (
               <AchievementPanel progress={progress.progress} />
             ) : (
-              <UnlocksPanel progress={progress.progress} />
+              <UnlocksPanel
+                progress={progress.progress}
+                labels={categoryLabels}
+                equippedId={bgTheme}
+                onEquip={toggleBackgroundTheme}
+              />
             )
           ) : (
             <p className="board-empty" role="status">

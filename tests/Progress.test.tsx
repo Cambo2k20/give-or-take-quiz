@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PlayerProgress } from "@/lib/progress";
 
 // A player mid-ladder: two subjects titled, the rest still Newcomer, and a
@@ -78,17 +78,24 @@ vi.mock("@/src/useLeaderboard", () => ({
   }),
 }));
 
-vi.mock("@/src/useProgress", () => ({
-  useProgress: () => ({
+function defaultProgress() {
+  return {
     enabled: true,
     progress: fixture,
     change: null,
     refresh: vi.fn().mockResolvedValue(null),
     clearChange: vi.fn(),
-  }),
-}));
+  };
+}
+
+vi.mock("@/src/useProgress", () => ({ useProgress: vi.fn() }));
 
 import Game from "@/src/Game";
+import { useProgress } from "@/src/useProgress";
+
+beforeEach(() => {
+  vi.mocked(useProgress).mockImplementation(defaultProgress);
+});
 
 async function openAccount(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: "Ada" }));
@@ -153,7 +160,7 @@ describe("progression screens", () => {
     expect(screen.queryByText("Crowd Counter")).not.toBeInTheDocument();
   });
 
-  it("is honest that there is nothing to unlock yet", async () => {
+  it("shows Deep Space locked while Space is below its gate", async () => {
     const user = userEvent.setup();
     render(<Game />);
     await openAccount(user);
@@ -163,9 +170,84 @@ describe("progression screens", () => {
     expect(
       await screen.findByRole("heading", { name: /^unlocks$/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/nothing to unlock yet/i)).toBeInTheDocument();
-    // It still credits the two titles already held toward whatever comes.
-    expect(screen.getByText(/2 subject titles/i)).toBeInTheDocument();
+    expect(screen.getByText("Deep Space")).toBeInTheDocument();
+    // The fixture's Space rank is 1; the gate is rank 5 (Stargazer).
+    expect(screen.getByText(/Space rank 1 \/ 5 for Stargazer/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Unlocked/)).not.toBeInTheDocument();
+  });
+
+  it("shows Deep Space unlocked once Space reaches its gate", async () => {
+    vi.mocked(useProgress).mockReturnValue({
+      enabled: true,
+      progress: {
+        ...fixture,
+        categories: fixture.categories.map((entry) =>
+          entry.category === "space"
+            ? { ...entry, rank: 6, title: "Orbit Scout" }
+            : entry,
+        ),
+      },
+      change: null,
+      refresh: vi.fn().mockResolvedValue(null),
+      clearChange: vi.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<Game />);
+    await openAccount(user);
+
+    await user.click(screen.getByRole("button", { name: /unlocks/i }));
+
+    expect(
+      await screen.findByText(/Unlocked · Space rank 5 · Stargazer/),
+    ).toBeInTheDocument();
+  });
+
+  it("applies and removes an unlocked background from its card", async () => {
+    vi.mocked(useProgress).mockReturnValue({
+      enabled: true,
+      progress: {
+        ...fixture,
+        categories: fixture.categories.map((entry) =>
+          entry.category === "space"
+            ? { ...entry, rank: 5, title: "Stargazer" }
+            : entry,
+        ),
+      },
+      change: null,
+      refresh: vi.fn().mockResolvedValue(null),
+      clearChange: vi.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<Game />);
+    await openAccount(user);
+    await user.click(screen.getByRole("button", { name: /unlocks/i }));
+
+    const card = await screen.findByRole("button", { name: /Deep Space/i });
+    const modeToggle = screen.getByRole("button", {
+      name: /Switch to dark mode/i,
+    });
+    expect(card).toHaveAttribute("aria-pressed", "false");
+    expect(modeToggle).toBeEnabled();
+
+    await user.click(card);
+    expect(card).toHaveAttribute("aria-pressed", "true");
+    expect(document.documentElement.dataset.bgTheme).toBe("deep-space");
+    expect(screen.getByText("Applied")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: /Light and dark mode unavailable while a custom theme is applied/i,
+      }),
+    ).toBeDisabled();
+
+    await user.click(card);
+    expect(card).toHaveAttribute("aria-pressed", "false");
+    expect(document.documentElement.dataset.bgTheme).toBeUndefined();
+    expect(screen.queryByText("Applied")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Switch to dark mode/i }),
+    ).toBeEnabled();
   });
 
   it("shows earned titles on the home cards but never Newcomer", async () => {
