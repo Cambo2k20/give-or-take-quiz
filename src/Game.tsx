@@ -48,7 +48,8 @@ import {
   applyBackgroundTheme,
   readEquippedBackgroundTheme,
 } from "../lib/backgroundTheme";
-import { CosmicLayer } from "./CosmicLayer";
+import type { BackgroundThemeId } from "../lib/themes";
+import { ThemeArtwork } from "./themes/ThemeArtwork";
 import { DailyArchive, DailyStrip } from "./Daily";
 import {
   AchievementPanel,
@@ -273,9 +274,9 @@ export default function Game() {
   // Read straight from the browser during the first render. The app is fully
   // client-rendered, so there is no server pass to mismatch against.
   const [theme, setTheme] = useState<Theme>(readTheme);
-  // Which unlocked background is applied everywhere, or none. Orthogonal to
-  // `theme` above on purpose — see lib/backgroundTheme.ts.
-  const [bgTheme, setBgTheme] = useState<string | null>(
+  // The active custom skin, if any. The light/dark preference remains stored
+  // underneath and resumes when the custom theme is removed.
+  const [bgTheme, setBgTheme] = useState<BackgroundThemeId | null>(
     readEquippedBackgroundTheme,
   );
   const [bestScores, setBestScores] = useState<BestScores>(readBestScores);
@@ -503,7 +504,7 @@ export default function Game() {
   /** Equips a background, or clears it if it was already equipped — a toggle
    * rather than a one-way switch, so a player can always get back to plain
    * light/dark with nothing behind it. */
-  function toggleBackgroundTheme(themeId: string) {
+  function toggleBackgroundTheme(themeId: BackgroundThemeId) {
     const next = bgTheme === themeId ? null : themeId;
     setBgTheme(next);
     applyBackgroundTheme(next);
@@ -673,7 +674,7 @@ export default function Game() {
 
   return (
     <main className="site-shell">
-      <CosmicLayer />
+      <ThemeArtwork themeId={bgTheme} variant="backdrop" />
       <header className="site-header">
         <button
           className="wordmark"

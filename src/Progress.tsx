@@ -8,41 +8,13 @@ import {
 import {
   BACKGROUND_THEMES,
   type BackgroundTheme,
+  type BackgroundThemeId,
   isThemeTemporarilyUnlocked,
   isThemeUnlocked,
 } from "../lib/themes";
 import type { QuestionCategory } from "../lib/types";
 import { formatPoints } from "./questionText";
-
-/**
- * A theme's artwork, live and animated, scoped to a small card rather than
- * the full viewport. Every theme is background-only by contract (see
- * lib/themes.ts), so this is the entire visual — there is no matching
- * ink/surface variant to author alongside it.
- */
-function ThemePreview({ locked }: { locked: boolean }) {
-  return (
-    <div
-      className={`theme-preview${locked ? " is-locked" : ""}`}
-      aria-hidden="true"
-    >
-      <span className="theme-preview-glow" />
-      <span className="theme-preview-stars" />
-      <span className="theme-preview-stars theme-preview-stars-b" />
-      <span className="theme-preview-shooting-star" />
-      <span className="theme-preview-vignette" />
-      <span className="theme-preview-orbit" />
-      {locked && (
-        <span className="theme-preview-lock">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="5" y="11" width="14" height="9" rx="2" />
-            <path d="M8 11V7a4 4 0 0 1 8 0v4" strokeLinecap="round" />
-          </svg>
-        </span>
-      )}
-    </div>
-  );
-}
+import { ThemeArtwork } from "./themes/ThemeArtwork";
 
 function ThemeCard({
   theme,
@@ -56,7 +28,7 @@ function ThemeCard({
   categoryLabel: string;
   equipped: boolean;
   /** Absent for a locked theme: there is nothing a click could do yet. */
-  onEquip?: (themeId: string) => void;
+  onEquip?: (themeId: BackgroundThemeId) => void;
 }) {
   const unlocked = isThemeUnlocked(progress, theme);
   const temporarilyUnlocked = isThemeTemporarilyUnlocked(theme);
@@ -66,7 +38,11 @@ function ThemeCard({
 
   const body = (
     <>
-      <ThemePreview locked={!unlocked} />
+      <ThemeArtwork
+        themeId={theme.id}
+        variant="preview"
+        locked={!unlocked}
+      />
       <div className="theme-card-body">
         <div className="achievement-head">
           <strong>{theme.name}</strong>
@@ -248,8 +224,8 @@ export function UnlocksPanel({
   progress: PlayerProgress;
   labels: Record<QuestionCategory, { title: string }>;
   /** The theme id currently applied everywhere, or null for none. */
-  equippedId: string | null;
-  onEquip: (themeId: string) => void;
+  equippedId: BackgroundThemeId | null;
+  onEquip: (themeId: BackgroundThemeId) => void;
 }) {
   const unlockedCount = BACKGROUND_THEMES.filter((theme) =>
     isThemeUnlocked(progress, theme),

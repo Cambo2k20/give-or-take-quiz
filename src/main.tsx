@@ -4,6 +4,7 @@ import "@fontsource-variable/fraunces";
 import "@fontsource-variable/nunito";
 import Game from "./Game";
 import "./globals.css";
+import "./themes/theme-styles.css";
 
 const container = document.getElementById("root");
 

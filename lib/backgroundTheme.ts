@@ -1,10 +1,13 @@
-import { BACKGROUND_THEMES } from "./themes";
+import {
+  BACKGROUND_THEMES,
+  type BackgroundThemeId,
+} from "./themes";
 
 /**
  * Which unlocked background is currently applied behind the whole app, if
- * any. Mirrors theme.ts's read/apply pair on purpose: same storage pattern,
- * same DOM-attribute mechanism, so the two axes stay obviously parallel and
- * orthogonal — this only ever sets `data-bg-theme`, never `data-theme`.
+ * any. Mirrors theme.ts's read/apply pair: same storage pattern and the same
+ * DOM-attribute mechanism. A custom theme owns its canonical UI while active,
+ * but never overwrites the saved light/dark preference underneath it.
  *
  * Deliberately a local device preference, not a server one. Whether a theme
  * is *unlocked* is derived from rank (see lib/themes.ts) and lives on the
@@ -17,11 +20,13 @@ const KNOWN_THEME_IDS: ReadonlySet<string> = new Set(
   BACKGROUND_THEMES.map((theme) => theme.id),
 );
 
-function normaliseThemeId(themeId: string | null): string | null {
-  return themeId && KNOWN_THEME_IDS.has(themeId) ? themeId : null;
+function normaliseThemeId(themeId: string | null): BackgroundThemeId | null {
+  return themeId && KNOWN_THEME_IDS.has(themeId)
+    ? (themeId as BackgroundThemeId)
+    : null;
 }
 
-export function readEquippedBackgroundTheme(): string | null {
+export function readEquippedBackgroundTheme(): BackgroundThemeId | null {
   if (typeof document !== "undefined") {
     const applied = normaliseThemeId(
       document.documentElement.dataset.bgTheme ?? null,

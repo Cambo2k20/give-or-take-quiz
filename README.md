@@ -226,6 +226,11 @@ leaderboard calls, and full playthroughs of Classic, Daily and Survival
 rounds including publish behaviour. CI runs `npm ci`, `npm run lint`,
 `npm test`, and `npm run build` for every push and pull request.
 
+To create another unlockable visual treatment, follow
+[Adding a custom theme](docs/ADDING_THEMES.md). The guide covers theme
+metadata, preview and backdrop artwork, semantic UI tokens, unlock gates and
+the required verification.
+
 ## Deploying to GitHub Pages
 
 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) tests, builds,
