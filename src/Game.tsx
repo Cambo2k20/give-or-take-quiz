@@ -44,7 +44,7 @@ import {
   ConfirmEmailNotice,
   NewPasswordForm,
 } from "./AuthPanel";
-import { DailyArchive, DailyCard } from "./Daily";
+import { DailyArchive, DailyStrip } from "./Daily";
 import { EstimatePanel } from "./EstimatePanel";
 import { HeroDemo } from "./HeroDemo";
 import { JoinLeaderboardForm } from "./Leaderboard";
@@ -681,6 +681,23 @@ export default function Game() {
 
       {activePhase === "category" && (
         <section className="category-screen">
+          {/*
+            Today's puzzle sits above the fold as a banner: it is the one thing
+            with a deadline on this page, and it reads as a standing invitation
+            rather than competing with the subject grid for a card slot.
+          */}
+          {todaysDaily && (
+            <DailyStrip
+              set={todaysDaily}
+              streak={streak}
+              playedToday={playedToday}
+              score={dailyProgress.scores[today] ?? null}
+              archiveCount={archiveDates.length}
+              onPlay={() => startDaily(todaysDaily.date)}
+              onOpenArchive={() => setPhase("daily-archive")}
+            />
+          )}
+
           <div className="hero-copy">
             <p className="eyebrow">A game of informed guesses</p>
             <h1>How close can you get?</h1>
@@ -738,19 +755,7 @@ export default function Game() {
             </div>
           )}
 
-          {todaysDaily && (
-            <DailyCard
-              set={todaysDaily}
-              streak={streak}
-              playedToday={playedToday}
-              score={dailyProgress.scores[today] ?? null}
-              archiveCount={archiveDates.length}
-              onPlay={() => startDaily(todaysDaily.date)}
-              onOpenArchive={() => setPhase("daily-archive")}
-            />
-          )}
-
-          <p className="mode-grid-label">Or pick a category</p>
+          <h2 className="mode-grid-label">All categories</h2>
           <div className="mode-grid" aria-label="Choose a category">
             {MODES.map((detail) => (
               <button

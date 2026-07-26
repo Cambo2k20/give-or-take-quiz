@@ -39,7 +39,7 @@ function StreakBadge({ streak }: { streak: number }) {
   );
 }
 
-type DailyCardProps = {
+type DailyStripProps = {
   set: DailySet;
   streak: number;
   playedToday: boolean;
@@ -50,10 +50,15 @@ type DailyCardProps = {
 };
 
 /**
- * The home-page daily. Everyone gets the same ten questions on a given day,
- * which is what makes the score worth comparing.
+ * The home-page daily, as a banner above everything else: today's puzzle is a
+ * standing invitation rather than one card among many. Everyone gets the same
+ * five questions on a given day, which is what makes the score worth comparing.
+ *
+ * Each button's visible word opens its accessible name rather than replacing
+ * it, so "Play" and "Past" stay short in the strip without leaving a
+ * screen reader to guess what they play or what is past.
  */
-export function DailyCard({
+export function DailyStrip({
   set,
   streak,
   playedToday,
@@ -61,40 +66,47 @@ export function DailyCard({
   archiveCount,
   onPlay,
   onOpenArchive,
-}: DailyCardProps) {
+}: DailyStripProps) {
   return (
-    <div className="daily-card">
-      <div className="daily-head">
-        <div>
-          <p className="daily-eyebrow">Daily challenge</p>
-          <h2 className="daily-title">{readableDate(set.date)}</h2>
-        </div>
-        <StreakBadge streak={streak} />
-      </div>
+    <div className="daily-strip-wrap">
+      <div className="daily-strip">
+        <span className="daily-strip-flag">
+          <span className="daily-strip-dot" aria-hidden="true" />
+          Daily
+        </span>
+        <span className="daily-strip-date">{readableDate(set.date)}</span>
+        <span className="daily-strip-meta">
+          {playedToday
+            ? `${formatPoints(score ?? 0)} / ${formatPoints(DAILY_MAX_SCORE)}`
+            : `${DAILY_QUESTIONS_PER_SET} questions`}
+        </span>
 
-      <p className="daily-lede">
-        {playedToday
-          ? `You scored ${formatPoints(score ?? 0)} out of ${formatPoints(DAILY_MAX_SCORE)} today.`
-          : `${DAILY_QUESTIONS_PER_SET} questions, the same for everyone, until midnight.`}
-      </p>
-
-      <div className="daily-actions">
-        <button className="primary-button" type="button" onClick={onPlay}>
-          {playedToday ? "Play today again" : "Play today's daily"}
+        <button
+          className="daily-strip-play"
+          type="button"
+          onClick={onPlay}
+          aria-label={
+            playedToday ? "Replay today's daily" : "Play today's daily"
+          }
+        >
+          {playedToday ? "Replay" : "Play"}
         </button>
         {archiveCount > 0 && (
           <button
-            className="secondary-button"
+            className="daily-strip-past"
             type="button"
             onClick={onOpenArchive}
+            aria-label="Past dailies"
           >
-            Past dailies ({archiveCount})
+            Past
           </button>
         )}
+
+        <StreakBadge streak={streak} />
       </div>
 
       {playedToday && (
-        <p className="daily-footnote">
+        <p className="daily-strip-note">
           Replaying will not extend your streak, but a better score still
           counts.
         </p>
