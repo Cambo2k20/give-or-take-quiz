@@ -235,18 +235,21 @@ describe("progression screens", () => {
     expect(card).toHaveAttribute("aria-pressed", "true");
     expect(document.documentElement.dataset.bgTheme).toBe("deep-space");
     expect(screen.getByText("Applied")).toBeInTheDocument();
+    expect(modeToggle).toBeEnabled();
+
+    await user.click(modeToggle);
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(document.documentElement.dataset.bgTheme).toBe("deep-space");
     expect(
-      screen.getByRole("button", {
-        name: /Light and dark mode unavailable while a custom theme is applied/i,
-      }),
-    ).toBeDisabled();
+      screen.getByRole("button", { name: /Switch to light mode/i }),
+    ).toBeEnabled();
 
     await user.click(card);
     expect(card).toHaveAttribute("aria-pressed", "false");
     expect(document.documentElement.dataset.bgTheme).toBeUndefined();
     expect(screen.queryByText("Applied")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Switch to dark mode/i }),
+      screen.getByRole("button", { name: /Switch to light mode/i }),
     ).toBeEnabled();
   });
 

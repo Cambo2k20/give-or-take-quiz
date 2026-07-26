@@ -14,18 +14,21 @@ import {
 } from "../lib/themes";
 import type { QuestionCategory } from "../lib/types";
 import { formatPoints } from "./questionText";
+import type { Theme } from "./theme";
 import { ThemeArtwork } from "./themes/ThemeArtwork";
 
 function ThemeCard({
   theme,
   progress,
   categoryLabel,
+  mode,
   equipped,
   onEquip,
 }: {
   theme: BackgroundTheme;
   progress: PlayerProgress;
   categoryLabel: string;
+  mode: Theme;
   equipped: boolean;
   /** Absent for a locked theme: there is nothing a click could do yet. */
   onEquip?: (themeId: BackgroundThemeId) => void;
@@ -40,6 +43,7 @@ function ThemeCard({
     <>
       <ThemeArtwork
         themeId={theme.id}
+        mode={mode}
         variant="preview"
         locked={!unlocked}
       />
@@ -218,11 +222,13 @@ export function AchievementPanel({ progress }: { progress: PlayerProgress }) {
 export function UnlocksPanel({
   progress,
   labels,
+  themeMode,
   equippedId,
   onEquip,
 }: {
   progress: PlayerProgress;
   labels: Record<QuestionCategory, { title: string }>;
+  themeMode: Theme;
   /** The theme id currently applied everywhere, or null for none. */
   equippedId: BackgroundThemeId | null;
   onEquip: (themeId: BackgroundThemeId) => void;
@@ -254,6 +260,7 @@ export function UnlocksPanel({
             theme={theme}
             progress={progress}
             categoryLabel={labels[theme.gate.category].title}
+            mode={themeMode}
             equipped={equippedId === theme.id}
             onEquip={isThemeUnlocked(progress, theme) ? onEquip : undefined}
           />

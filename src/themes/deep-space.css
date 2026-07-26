@@ -1,44 +1,4 @@
 /*
- * Deep Space's semantic UI tokens.
- *
- * A custom theme owns one canonical appearance. The global light/dark toggle
- * is disabled while it is equipped, and the saved preference resumes when
- * the custom theme is removed.
- */
-:root[data-bg-theme="deep-space"] {
-  --bg: #050611;
-  --surface: rgba(12, 14, 35, 0.86);
-  --sunk: rgba(20, 22, 49, 0.82);
-  --rail: rgba(147, 233, 255, 0.16);
-
-  --ink: #f8f5ff;
-  --ink-soft: #ddd7f4;
-  --muted: #aaa3c8;
-
-  --line: rgba(178, 142, 255, 0.24);
-  --line-strong: rgba(147, 233, 255, 0.36);
-
-  --accent: #9b7cff;
-  --accent-hover: #b49cff;
-  --accent-shadow: #5236b2;
-  --accent-ink: #c4b3ff;
-  --accent-wash: rgba(112, 73, 255, 0.18);
-  --on-accent: #0a0b1c;
-
-  --good: #72dbb7;
-  --good-wash: rgba(67, 201, 156, 0.14);
-  --warn: #f0bf67;
-  --warn-wash: rgba(224, 161, 55, 0.14);
-  --bad: #f18aaa;
-  --bad-wash: rgba(225, 88, 133, 0.14);
-
-  --shadow-card:
-    0 18px 54px rgba(0, 0, 12, 0.38),
-    0 1px 0 rgba(255, 255, 255, 0.04);
-  --shadow-press: 0 3px 0 var(--accent-shadow);
-}
-
-/*
  * The live gallery preview. Its smaller blur and near-square canvas are tuned
  * separately from the viewport artwork so it reads as the same theme rather
  * than a tiny crop of it.
@@ -49,7 +9,7 @@
   max-width: 560px;
   aspect-ratio: 1;
   overflow: hidden;
-  background: #050611;
+  background: var(--artwork-bg);
 }
 
 .theme-preview-glow {
@@ -58,33 +18,35 @@
   background:
     radial-gradient(
       ellipse at 20% 32%,
-      rgba(112, 73, 255, 0.5),
+      var(--artwork-glow-primary),
       transparent 42%
     ),
     radial-gradient(
       ellipse at 78% 22%,
-      rgba(0, 204, 255, 0.32),
+      var(--artwork-glow-cool),
       transparent 40%
     ),
     radial-gradient(
       ellipse at 62% 76%,
-      rgba(255, 70, 178, 0.28),
+      var(--artwork-glow-warm),
       transparent 46%
     ),
     radial-gradient(
       ellipse at 34% 84%,
-      rgba(71, 255, 204, 0.16),
+      var(--artwork-glow-mint),
       transparent 36%
     ),
     conic-gradient(
       from 120deg at 52% 48%,
       transparent 0 18%,
-      rgba(0, 204, 255, 0.32) 25%,
+      var(--artwork-glow-cool) 25%,
       transparent 38% 58%,
-      rgba(112, 73, 255, 0.5) 68%,
+      var(--artwork-glow-primary) 68%,
       transparent 82%
     );
   filter: blur(34px) saturate(135%);
+  -webkit-mask-image: var(--artwork-flow-mask);
+  mask-image: var(--artwork-flow-mask);
   animation: deep-space-flow 20s ease-in-out infinite alternate;
 }
 
@@ -100,72 +62,72 @@
   background-image:
     radial-gradient(
       circle at 18.4% 19%,
-      rgba(255, 255, 255, 0.85) 0 1.01px,
+      var(--artwork-star) 0 1.01px,
       transparent 1.71px
     ),
     radial-gradient(
       circle at 81% 64.4%,
-      rgba(255, 255, 255, 0.85) 0 0.95px,
+      var(--artwork-star) 0 0.95px,
       transparent 1.43px
     ),
     radial-gradient(
       circle at 43.1% 38.1%,
-      rgba(255, 255, 255, 0.85) 0 1.02px,
+      var(--artwork-star) 0 1.02px,
       transparent 1.65px
     ),
     radial-gradient(
       circle at 66.1% 19.1%,
-      rgba(255, 255, 255, 0.85) 0 0.84px,
+      var(--artwork-star) 0 0.84px,
       transparent 1.46px
     ),
     radial-gradient(
       circle at 20.3% 79.8%,
-      rgba(255, 255, 255, 0.85) 0 1.13px,
+      var(--artwork-star) 0 1.13px,
       transparent 1.59px
     ),
     radial-gradient(
       circle at 56.5% 92.8%,
-      rgba(255, 255, 255, 0.85) 0 0.73px,
+      var(--artwork-star) 0 0.73px,
       transparent 1.35px
     ),
     radial-gradient(
       circle at 63.1% 8.5%,
-      rgba(255, 255, 255, 0.85) 0 1.02px,
+      var(--artwork-star) 0 1.02px,
       transparent 1.86px
     ),
     radial-gradient(
       circle at 41.2% 73.2%,
-      rgba(255, 255, 255, 0.85) 0 0.82px,
+      var(--artwork-star) 0 0.82px,
       transparent 1.41px
     ),
     radial-gradient(
       circle at 72.7% 19.1%,
-      rgba(255, 255, 255, 0.85) 0 1.14px,
+      var(--artwork-star) 0 1.14px,
       transparent 1.94px
     ),
     radial-gradient(
       circle at 3.4% 56.4%,
-      rgba(255, 255, 255, 0.85) 0 0.78px,
+      var(--artwork-star) 0 0.78px,
       transparent 1.52px
     ),
     radial-gradient(
       circle at 85.9% 95.7%,
-      rgba(255, 255, 255, 0.85) 0 1.06px,
+      var(--artwork-star) 0 1.06px,
       transparent 1.61px
     ),
     radial-gradient(
       circle at 26% 32.9%,
-      rgba(255, 255, 255, 0.85) 0 0.98px,
+      var(--artwork-star) 0 0.98px,
       transparent 1.56px
     ),
     radial-gradient(
       circle at 59.9% 57%,
-      rgba(255, 255, 255, 0.85) 0 1.1px,
+      var(--artwork-star) 0 1.1px,
       transparent 1.92px
     ),
     radial-gradient(
       circle at 85.4% 14%,
-      rgba(255, 255, 255, 0.85) 0 1.15px,
+      var(--artwork-star) 0 1.15px,
       transparent 1.63px
     );
 }
@@ -176,23 +138,27 @@
   background-image:
     radial-gradient(
       circle at 58.3% 48.5%,
-      rgba(178, 142, 255, 0.95) 0 1.65px,
+      var(--artwork-star-bright) 0 1.65px,
       transparent 2.06px
     ),
-    radial-gradient(circle at 34.6% 1.5%, #fff 0 1.98px, transparent 2.48px),
+    radial-gradient(
+      circle at 34.6% 1.5%,
+      var(--artwork-star) 0 1.98px,
+      transparent 2.48px
+    ),
     radial-gradient(
       circle at 90% 33.9%,
-      rgba(178, 142, 255, 0.95) 0 1.78px,
+      var(--artwork-star-bright) 0 1.78px,
       transparent 2.21px
     ),
     radial-gradient(
       circle at 82% 91.9%,
-      rgba(178, 142, 255, 0.95) 0 2.05px,
+      var(--artwork-star-bright) 0 2.05px,
       transparent 2.67px
     ),
     radial-gradient(
       circle at 12.3% 41.7%,
-      rgba(178, 142, 255, 0.95) 0 1.64px,
+      var(--artwork-star-bright) 0 1.64px,
       transparent 2.46px
     );
 }
@@ -206,10 +172,10 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.75),
+    var(--artwork-shooting-star),
     transparent
   );
-  box-shadow: 0 0 8px rgba(130, 198, 255, 0.72);
+  box-shadow: 0 0 8px var(--artwork-shooting-shadow);
   opacity: 0;
   transform: rotate(-34deg) translateX(-120%);
   animation: deep-space-shoot 9s ease-in-out infinite 2s;
@@ -220,9 +186,9 @@
   inset: 0;
   background: radial-gradient(
     ellipse at center,
-    rgba(5, 6, 17, 0.02) 8%,
-    rgba(5, 6, 17, 0.42) 62%,
-    rgba(5, 6, 17, 0.9) 100%
+    var(--artwork-vignette-inner) 8%,
+    var(--artwork-vignette-middle) 62%,
+    var(--artwork-vignette-outer) 100%
   );
 }
 
@@ -232,7 +198,7 @@
   aspect-ratio: 1;
   left: 50%;
   top: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid var(--artwork-orbit);
   border-radius: 50%;
   transform: translate(-50%, -50%) rotate(-18deg);
   animation: deep-space-orbit-turn 38s linear infinite;
@@ -246,15 +212,15 @@
   top: 9%;
   left: 23%;
   border-radius: 50%;
-  background: #93e9ff;
-  box-shadow: 0 0 18px 5px rgba(91, 216, 255, 0.55);
+  background: var(--artwork-orb);
+  box-shadow: 0 0 18px 5px var(--artwork-orb-shadow);
 }
 
 .theme-preview-orbit::after {
   content: "";
   position: absolute;
   inset: 15%;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--artwork-orbit-inner);
   border-radius: 50%;
 }
 
@@ -271,8 +237,8 @@
   inset: 0;
   display: grid;
   place-items: center;
-  color: rgba(255, 255, 255, 0.85);
-  background: rgba(5, 6, 17, 0.35);
+  color: var(--artwork-lock-ink);
+  background: var(--artwork-lock-bg);
 }
 
 .theme-preview-lock svg {
@@ -290,7 +256,7 @@
   z-index: -1;
   overflow: hidden;
   pointer-events: none;
-  background: #050611;
+  background: var(--artwork-bg);
 }
 
 .cosmic-glow {
@@ -299,33 +265,39 @@
   background:
     radial-gradient(
       ellipse at 20% 32%,
-      rgba(112, 73, 255, 0.5),
+      var(--artwork-glow-primary),
       transparent 42%
     ),
     radial-gradient(
       ellipse at 78% 22%,
-      rgba(0, 204, 255, 0.32),
+      var(--artwork-glow-cool),
       transparent 40%
     ),
     radial-gradient(
       ellipse at 62% 76%,
-      rgba(255, 70, 178, 0.28),
+      var(--artwork-glow-warm),
       transparent 46%
     ),
     radial-gradient(
       ellipse at 34% 84%,
-      rgba(71, 255, 204, 0.16),
+      var(--artwork-glow-mint),
       transparent 36%
     ),
     conic-gradient(
       from 120deg at 52% 48%,
       transparent 0 18%,
-      rgba(0, 204, 255, 0.32) 25%,
+      var(--artwork-glow-cool) 25%,
       transparent 38% 58%,
-      rgba(112, 73, 255, 0.5) 68%,
+      var(--artwork-glow-primary) 68%,
       transparent 82%
     );
   filter: blur(clamp(54px, 8vw, 112px)) saturate(140%);
+  /*
+   * Light mode punches a quiet centre out of the same nebula geometry instead
+   * of covering it with a readability vignette. Dark mode supplies `none`.
+   */
+  -webkit-mask-image: var(--artwork-flow-mask);
+  mask-image: var(--artwork-flow-mask);
   animation: deep-space-flow 24s ease-in-out infinite alternate;
 }
 
@@ -337,72 +309,72 @@
   background-image:
     radial-gradient(
       circle at 18.4% 19%,
-      rgba(255, 255, 255, 0.85) 0 1.01px,
+      var(--artwork-star) 0 1.01px,
       transparent 1.71px
     ),
     radial-gradient(
       circle at 81% 64.4%,
-      rgba(255, 255, 255, 0.85) 0 0.95px,
+      var(--artwork-star) 0 0.95px,
       transparent 1.43px
     ),
     radial-gradient(
       circle at 43.1% 38.1%,
-      rgba(255, 255, 255, 0.85) 0 1.02px,
+      var(--artwork-star) 0 1.02px,
       transparent 1.65px
     ),
     radial-gradient(
       circle at 66.1% 19.1%,
-      rgba(255, 255, 255, 0.85) 0 0.84px,
+      var(--artwork-star) 0 0.84px,
       transparent 1.46px
     ),
     radial-gradient(
       circle at 20.3% 79.8%,
-      rgba(255, 255, 255, 0.85) 0 1.13px,
+      var(--artwork-star) 0 1.13px,
       transparent 1.59px
     ),
     radial-gradient(
       circle at 56.5% 92.8%,
-      rgba(255, 255, 255, 0.85) 0 0.73px,
+      var(--artwork-star) 0 0.73px,
       transparent 1.35px
     ),
     radial-gradient(
       circle at 63.1% 8.5%,
-      rgba(255, 255, 255, 0.85) 0 1.02px,
+      var(--artwork-star) 0 1.02px,
       transparent 1.86px
     ),
     radial-gradient(
       circle at 41.2% 73.2%,
-      rgba(255, 255, 255, 0.85) 0 0.82px,
+      var(--artwork-star) 0 0.82px,
       transparent 1.41px
     ),
     radial-gradient(
       circle at 72.7% 19.1%,
-      rgba(255, 255, 255, 0.85) 0 1.14px,
+      var(--artwork-star) 0 1.14px,
       transparent 1.94px
     ),
     radial-gradient(
       circle at 3.4% 56.4%,
-      rgba(255, 255, 255, 0.85) 0 0.78px,
+      var(--artwork-star) 0 0.78px,
       transparent 1.52px
     ),
     radial-gradient(
       circle at 85.9% 95.7%,
-      rgba(255, 255, 255, 0.85) 0 1.06px,
+      var(--artwork-star) 0 1.06px,
       transparent 1.61px
     ),
     radial-gradient(
       circle at 26% 32.9%,
-      rgba(255, 255, 255, 0.85) 0 0.98px,
+      var(--artwork-star) 0 0.98px,
       transparent 1.56px
     ),
     radial-gradient(
       circle at 59.9% 57%,
-      rgba(255, 255, 255, 0.85) 0 1.1px,
+      var(--artwork-star) 0 1.1px,
       transparent 1.92px
     ),
     radial-gradient(
       circle at 85.4% 14%,
-      rgba(255, 255, 255, 0.85) 0 1.15px,
+      var(--artwork-star) 0 1.15px,
       transparent 1.63px
     );
 }
@@ -413,23 +385,27 @@
   background-image:
     radial-gradient(
       circle at 58.3% 48.5%,
-      rgba(178, 142, 255, 0.95) 0 1.65px,
+      var(--artwork-star-bright) 0 1.65px,
       transparent 2.06px
     ),
-    radial-gradient(circle at 34.6% 1.5%, #fff 0 1.98px, transparent 2.48px),
+    radial-gradient(
+      circle at 34.6% 1.5%,
+      var(--artwork-star) 0 1.98px,
+      transparent 2.48px
+    ),
     radial-gradient(
       circle at 90% 33.9%,
-      rgba(178, 142, 255, 0.95) 0 1.78px,
+      var(--artwork-star-bright) 0 1.78px,
       transparent 2.21px
     ),
     radial-gradient(
       circle at 82% 91.9%,
-      rgba(178, 142, 255, 0.95) 0 2.05px,
+      var(--artwork-star-bright) 0 2.05px,
       transparent 2.67px
     ),
     radial-gradient(
       circle at 12.3% 41.7%,
-      rgba(178, 142, 255, 0.95) 0 1.64px,
+      var(--artwork-star-bright) 0 1.64px,
       transparent 2.46px
     );
 }
@@ -443,10 +419,10 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.75),
+    var(--artwork-shooting-star),
     transparent
   );
-  box-shadow: 0 0 10px rgba(130, 198, 255, 0.72);
+  box-shadow: 0 0 10px var(--artwork-shooting-shadow);
   opacity: 0;
   transform: rotate(-34deg) translateX(-120%);
   animation: deep-space-shoot 9s ease-in-out infinite 2s;
@@ -457,9 +433,9 @@
   inset: 0;
   background: radial-gradient(
     ellipse at center,
-    rgba(5, 6, 17, 0.02) 8%,
-    rgba(5, 6, 17, 0.4) 64%,
-    rgba(5, 6, 17, 0.88) 100%
+    var(--artwork-vignette-inner) 8%,
+    var(--artwork-vignette-middle) 64%,
+    var(--artwork-vignette-outer) 100%
   );
 }
 
@@ -469,7 +445,7 @@
   aspect-ratio: 1;
   left: 57%;
   top: 51%;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid var(--artwork-orbit);
   border-radius: 50%;
   transform: translate(-50%, -50%) rotate(-18deg);
   animation: deep-space-orbit-turn 44s linear infinite;
@@ -483,15 +459,15 @@
   top: 9%;
   left: 23%;
   border-radius: 50%;
-  background: #93e9ff;
-  box-shadow: 0 0 22px 7px rgba(91, 216, 255, 0.55);
+  background: var(--artwork-orb);
+  box-shadow: 0 0 22px 7px var(--artwork-orb-shadow);
 }
 
 .cosmic-orbit::after {
   content: "";
   position: absolute;
   inset: 15%;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--artwork-orbit-inner);
   border-radius: 50%;
 }
 
@@ -499,7 +475,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: rgba(5, 6, 17, 0.2);
+  background: var(--artwork-veil);
 }
 
 /*

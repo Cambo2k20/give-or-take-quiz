@@ -241,17 +241,6 @@ h2 {
   border-color: var(--line-strong);
 }
 
-.theme-toggle:disabled {
-  border-color: var(--line);
-  color: var(--muted);
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.theme-toggle:disabled:hover {
-  border-color: var(--line);
-}
-
 .theme-toggle svg {
   width: 18px;
   height: 18px;

@@ -1,5 +1,181 @@
 /*
- * Theme styles load after globals.css so their semantic tokens win cleanly.
- * Add each future theme's dedicated stylesheet here.
+ * Custom-theme artwork and structural treatments. Semantic colour values live
+ * in the typed registry; these files only consume them.
  */
 @import "./deep-space.css";
+
+.svg-theme-artwork {
+  overflow: hidden;
+  isolation: isolate;
+  pointer-events: none;
+  background: var(--artwork-bg);
+}
+
+.svg-theme-artwork--preview {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 1;
+}
+
+.svg-theme-artwork--backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+}
+
+.svg-theme-artwork__wash,
+.svg-theme-artwork__vignette,
+.svg-theme-artwork__scene {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.svg-theme-artwork__wash {
+  z-index: -2;
+  inset: -18%;
+  will-change: transform;
+}
+
+.svg-theme-artwork__wash--one {
+  background: radial-gradient(
+    ellipse 42% 48% at 8% 76%,
+    var(--artwork-glow-cool),
+    transparent 72%
+  );
+  filter: blur(72px);
+  animation: svg-artwork-wash-one 37s ease-in-out infinite alternate;
+}
+
+.svg-theme-artwork__wash--two {
+  background: radial-gradient(
+    ellipse 38% 42% at 93% 72%,
+    var(--artwork-glow-warm),
+    transparent 74%
+  );
+  filter: blur(84px);
+  animation: svg-artwork-wash-two 43s ease-in-out infinite alternate;
+}
+
+.svg-theme-artwork__wash--three {
+  background: radial-gradient(
+    ellipse 48% 34% at 50% 103%,
+    var(--artwork-glow-primary),
+    transparent 76%
+  );
+  filter: blur(62px);
+  animation: svg-artwork-wash-three 31s ease-in-out infinite alternate;
+}
+
+.svg-theme-artwork__scene {
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+}
+
+.svg-theme-artwork__vignette {
+  z-index: 1;
+  background:
+    radial-gradient(
+      ellipse at center,
+      var(--artwork-vignette-inner) 0 44%,
+      var(--artwork-vignette-middle) 76%,
+      var(--artwork-vignette-outer) 100%
+    ),
+    var(--artwork-veil);
+}
+
+.svg-theme-artwork__lock {
+  position: absolute;
+  z-index: 2;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  padding: 0.34rem 0.56rem;
+  border-radius: 999px;
+  color: var(--artwork-lock-ink);
+  background: var(--artwork-lock-bg);
+  font: 800 0.7rem/1 var(--font-sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@keyframes svg-artwork-wash-one {
+  from {
+    transform: translate3d(-1.5%, -1%, 0) scale(1.08);
+  }
+  to {
+    transform: translate3d(2%, 1.6%, 0) scale(1.12);
+  }
+}
+
+@keyframes svg-artwork-wash-two {
+  from {
+    transform: translate3d(1.4%, -0.8%, 0) scale(1.06);
+  }
+  to {
+    transform: translate3d(-1.8%, 1.2%, 0) scale(1.1);
+  }
+}
+
+@keyframes svg-artwork-wash-three {
+  from {
+    transform: translate3d(-0.6%, 1%, 0) scale(1.04);
+  }
+  to {
+    transform: translate3d(1%, -0.7%, 0) scale(1.08);
+  }
+}
+
+/*
+ * Gallery previews stay still until the selector itself is being explored.
+ * The full-screen equipped artwork is deliberately outside this scope.
+ */
+.theme-card
+  :where(
+    .theme-preview *,
+    .theme-preview *::before,
+    .theme-preview *::after,
+    .svg-theme-artwork--preview *,
+    .svg-theme-artwork--preview *::before,
+    .svg-theme-artwork--preview *::after
+  ) {
+  animation-play-state: paused !important;
+}
+
+.theme-card .city-pulse__traffic-point {
+  display: none;
+}
+
+.theme-card-button:is(:hover, :focus-visible, :active)
+  :where(
+    .theme-preview *,
+    .theme-preview *::before,
+    .theme-preview *::after,
+    .svg-theme-artwork--preview *,
+    .svg-theme-artwork--preview *::before,
+    .svg-theme-artwork--preview *::after
+  ) {
+  animation-play-state: running !important;
+}
+
+.theme-card-button:is(:hover, :focus-visible, :active)
+  .city-pulse__traffic-point {
+  display: inline;
+}
+
+@media (max-width: 600px) {
+  .svg-theme-artwork__wash--one,
+  .svg-theme-artwork__wash--two,
+  .svg-theme-artwork__wash--three {
+    filter: blur(42px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .svg-theme-artwork *,
+  .svg-theme-artwork::before,
+  .svg-theme-artwork::after {
+    animation: none !important;
+  }
+}

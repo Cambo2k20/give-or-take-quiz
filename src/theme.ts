@@ -1,3 +1,5 @@
+import { syncBackgroundThemePalette } from "../lib/backgroundTheme";
+
 export type Theme = "light" | "dark";
 
 // Kept in sync with the pre-paint script in index.html, which applies a saved
@@ -31,6 +33,9 @@ export function readTheme(): Theme {
 export function applyTheme(theme: Theme) {
   if (typeof document !== "undefined") {
     document.documentElement.dataset.theme = theme;
+    // Keep an equipped custom theme on the same mode in this synchronous
+    // update, before the browser can paint a frame with its previous tokens.
+    syncBackgroundThemePalette(theme);
   }
 
   try {

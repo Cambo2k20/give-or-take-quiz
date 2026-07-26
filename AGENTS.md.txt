@@ -1,0 +1,28 @@
+## Commands
+- `npm run dev` / `npm test` / `npm run lint`
+- `npm run build` — runs validate:data, tsc --noEmit, then vite build
+- `npm run generate:questions` — regenerates lib/questions.generated.ts from Postgres
+
+## Data rules
+- Postgres is the source of truth for the category bank; questions.generated.ts
+  is a committed snapshot — never hand-edit it
+- data/daily-sets.json is the source of truth for the daily — the opposite direction
+- Money questions carry referenceYear and are never re-priced to today
+- Temperature questions must use a linear scale (log can't represent negatives)
+
+## Do not
+- Reintroduce a hardcoded 10,000 score ceiling — derive as questions.length * 1000
+- Make `daily` a client-side GameMode; it stays `dailyDate: string | null`
+- Edit BASE_PATH handling without checking the Pages path
+
+## Done when
+- `npm run lint`, `npm test`, and `npm run build` all pass
+
+## Background theme performance
+- Animate only `transform` and `opacity` — never `filter`,
+  `background-position`, or geometry
+- Max 2–3 animating layers per theme; zero animating a filter
+- No `backdrop-filter` over animated background
+- `will-change` on animated parents only, never children
+- Cut blur radius and drop a layer below 600px
+- Must hold 60fps at 390×844 on mid-range mobile

@@ -1,13 +1,16 @@
 import {
+  BACKGROUND_THEME_TOKEN_NAMES,
   BACKGROUND_THEMES,
+  type BackgroundTheme,
   type BackgroundThemeId,
+  type BackgroundThemePalettes,
 } from "./themes";
 
 /**
  * Which unlocked background is currently applied behind the whole app, if
  * any. Mirrors theme.ts's read/apply pair: same storage pattern and the same
- * DOM-attribute mechanism. A custom theme owns its canonical UI while active,
- * but never overwrites the saved light/dark preference underneath it.
+ * DOM-attribute mechanism. A custom theme supplies a palette for both modes,
+ * so `data-theme` and `data-bg-theme` remain independent, live axes.
  *
  * Deliberately a local device preference, not a server one. Whether a theme
  * is *unlocked* is derived from rank (see lib/themes.ts) and lives on the
@@ -20,10 +23,60 @@ const KNOWN_THEME_IDS: ReadonlySet<string> = new Set(
   BACKGROUND_THEMES.map((theme) => theme.id),
 );
 
+export type BackgroundThemeMode = keyof BackgroundThemePalettes;
+
 function normaliseThemeId(themeId: string | null): BackgroundThemeId | null {
   return themeId && KNOWN_THEME_IDS.has(themeId)
     ? (themeId as BackgroundThemeId)
     : null;
+}
+
+function themeById(themeId: BackgroundThemeId): BackgroundTheme {
+  return BACKGROUND_THEMES.find((theme) => theme.id === themeId)!;
+}
+
+function currentMode(): BackgroundThemeMode {
+  if (typeof document !== "undefined") {
+    const applied = document.documentElement.dataset.theme;
+    if (applied === "light" || applied === "dark") return applied;
+  }
+
+  return typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
+function clearTokenPalette() {
+  if (typeof document === "undefined") return;
+
+  for (const name of BACKGROUND_THEME_TOKEN_NAMES) {
+    document.documentElement.style.removeProperty(name);
+  }
+}
+
+/**
+ * Replaces the complete inline palette in one synchronous task. Clearing first
+ * prevents a removed or future theme with different values leaving stale
+ * custom properties behind; the registry type ensures the next palette is
+ * complete before it can compile.
+ */
+export function syncBackgroundThemePalette(
+  mode: BackgroundThemeMode = currentMode(),
+) {
+  if (typeof document === "undefined") return;
+
+  clearTokenPalette();
+  const themeId = normaliseThemeId(
+    document.documentElement.dataset.bgTheme ?? null,
+  );
+  if (!themeId) return;
+
+  const palette = themeById(themeId).tokens[mode];
+  for (const name of BACKGROUND_THEME_TOKEN_NAMES) {
+    document.documentElement.style.setProperty(name, palette[name]);
+  }
 }
 
 export function readEquippedBackgroundTheme(): BackgroundThemeId | null {
@@ -31,11 +84,15 @@ export function readEquippedBackgroundTheme(): BackgroundThemeId | null {
     const applied = normaliseThemeId(
       document.documentElement.dataset.bgTheme ?? null,
     );
-    if (applied) return applied;
+    if (applied) {
+      syncBackgroundThemePalette();
+      return applied;
+    }
 
     // Do not leave an unknown value on the root if markup or another script
     // supplied one. CSS ignores it, but the DOM should still reflect reality.
     delete document.documentElement.dataset.bgTheme;
+    clearTokenPalette();
   }
 
   try {
@@ -47,6 +104,7 @@ export function readEquippedBackgroundTheme(): BackgroundThemeId | null {
       // reloads showed "Applied" on the card while the artwork stayed hidden.
       if (typeof document !== "undefined") {
         document.documentElement.dataset.bgTheme = saved;
+        syncBackgroundThemePalette();
       }
       return saved;
     }
@@ -59,7 +117,10 @@ export function readEquippedBackgroundTheme(): BackgroundThemeId | null {
   return null;
 }
 
-export function applyBackgroundTheme(themeId: string | null) {
+export function applyBackgroundTheme(
+  themeId: string | null,
+  mode: BackgroundThemeMode = currentMode(),
+) {
   const next = normaliseThemeId(themeId);
 
   if (typeof document !== "undefined") {
@@ -68,6 +129,7 @@ export function applyBackgroundTheme(themeId: string | null) {
     } else {
       delete document.documentElement.dataset.bgTheme;
     }
+    syncBackgroundThemePalette(mode);
   }
 
   try {
