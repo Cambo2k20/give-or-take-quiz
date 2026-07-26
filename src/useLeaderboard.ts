@@ -7,9 +7,11 @@ import {
   currentProfile,
   fetchDailyLeaderboard,
   fetchLeaderboard,
+  fetchSurvivalLeaderboard,
   joinLeaderboard,
   submitDailyRound,
   submitRound,
+  submitSurvivalRun,
 } from "../lib/leaderboard";
 import { leaderboardEnabled } from "../lib/supabase";
 import type { GameMode } from "../lib/types";
@@ -97,6 +99,17 @@ export function useLeaderboard(userId: string | null) {
     [record],
   );
 
+  // The run's own count of questions survived is discarded in favour of the
+  // server's, which re-judged every guess against its own window schedule.
+  const publishSurvival = useCallback(
+    (guesses: readonly RoundGuess[]) =>
+      record(async () => {
+        const run = await submitSurvivalRun(guesses);
+        return { roundId: run.runId, totalScore: run.survived };
+      }),
+    [record],
+  );
+
   // The board state is shared the same way: the leaderboard screen shows one
   // board at a time, whether it belongs to a category or to a calendar day.
   const showBoard = useCallback(
@@ -126,6 +139,11 @@ export function useLeaderboard(userId: string | null) {
     [showBoard],
   );
 
+  const loadSurvivalBoard = useCallback(
+    () => showBoard(() => fetchSurvivalLeaderboard()),
+    [showBoard],
+  );
+
   const resetSubmit = useCallback(() => setSubmit({ status: "idle" }), []);
 
   return {
@@ -135,6 +153,7 @@ export function useLeaderboard(userId: string | null) {
     join,
     publish,
     publishDaily,
+    publishSurvival,
     submit,
     resetSubmit,
     board,
@@ -142,5 +161,6 @@ export function useLeaderboard(userId: string | null) {
     boardError,
     loadBoard,
     loadDailyBoard,
+    loadSurvivalBoard,
   };
 }

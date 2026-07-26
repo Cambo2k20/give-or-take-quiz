@@ -681,6 +681,45 @@ h2 {
     width 620ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/*
+ * Survival's window, drawn as goalposts above the rail rather than a band
+ * behind it. The thumb sits on the rail and would cover a band almost
+ * entirely, hiding the tightening that is the whole tension of the mode.
+ * Above the rail the posts stay visible, and you watch them close in.
+ */
+.survival-window {
+  position: absolute;
+  left: var(--post-left);
+  width: var(--post-span);
+  top: 4px;
+  height: 12px;
+  border-top: 2px solid var(--accent);
+  transition: left 120ms linear, width 120ms linear;
+}
+
+.survival-post {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 12px;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.survival-post.is-left {
+  left: 0;
+}
+
+.survival-post.is-right {
+  right: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .survival-window {
+    transition: none;
+  }
+}
+
 .answer-dot {
   position: absolute;
   top: 12px;
@@ -1187,6 +1226,294 @@ h2 {
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
+}
+
+.board-unit {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ── Board screen: format first, then scope ─────────────────────────────── */
+
+.board-blurb {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.board-formats {
+  display: flex;
+  gap: 6px;
+  padding: 5px;
+  margin: 20px 0 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.board-format {
+  flex: 1;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.board-format.is-current {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.board-scope {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.board-scope-button,
+.board-scope-static,
+.board-scope-chip {
+  padding: 11px 16px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.board-scope-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  text-align: start;
+}
+
+.board-scope-static {
+  flex: 1;
+  color: var(--muted);
+}
+
+.board-scope-chip {
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/*
+ * The picker doubles as a status screen: every row carries the player's rank
+ * on that board, so it is worth opening even when not switching.
+ */
+.board-picker {
+  margin-bottom: 18px;
+  border: 1.5px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.board-picker-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px 10px;
+}
+
+.board-picker-head strong {
+  font-family: var(--font-display);
+  font-size: 20px;
+}
+
+.board-picker-head span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.board-picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.board-picker-list button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: start;
+}
+
+.board-picker-rank {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.board-standing {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  border-radius: 20px;
+  background: var(--accent-wash);
+}
+
+.board-standing-label {
+  display: block;
+  color: var(--accent-ink);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.board-standing p {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.board-standing-rank {
+  font-family: var(--font-display);
+  font-size: 30px;
+  color: var(--accent-ink);
+  white-space: nowrap;
+}
+
+.board-footnote {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ── Formats on the hero, and the survival run ──────────────────────────── */
+
+.hero-formats {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 22px 0 14px;
+}
+
+.hero-format {
+  padding: 9px 16px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hero-format.is-current {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+
+.hero-survival {
+  padding: 24px;
+  border: 1.5px solid var(--accent);
+  border-radius: 24px;
+  background: var(--surface);
+  text-align: center;
+}
+
+.hero-survival-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hero-survival-best {
+  color: var(--accent-ink);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.hero-survival-lede {
+  margin: 14px auto 20px;
+  max-width: 44ch;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.hero-survival-note {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.survival-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.survival-count {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.survival-window-note {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.survival-rule {
+  margin: 18px 0;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.survival-epitaph {
+  margin: 14px auto 0;
+  max-width: 52ch;
+  color: var(--muted);
+  font-size: 15px;
 }
 
 .board-score {
