@@ -1,6 +1,10 @@
+import { readFileSync } from "node:fs";
+import { DAILY_QUESTIONS_PER_SET } from "../lib/daily";
 import { CATEGORIES, QUESTIONS_PER_GAME } from "../lib/game";
 import { questions } from "../lib/questions";
 import type {
+  DailySchedule,
+  Question,
   QuestionMeasure,
   QuestionSubtype,
   QuestionUnit,
@@ -51,16 +55,74 @@ const report = (id: string, message: string) => {
   errors.push(`${id}: ${message}`);
 };
 
-for (const question of questions) {
+/**
+ * Field types, checked before anything reads them.
+ *
+ * The category bank arrives from Postgres through a typed generator, but the
+ * daily schedule is hand-authored JSON: every field here could be any shape, or
+ * missing. Without this pass a single mistyped value throws and hides every
+ * other problem in the file.
+ */
+function shapeErrors(question: Question): string[] {
+  const problems: string[] = [];
+  const text = (name: keyof Question) => {
+    if (typeof question[name] !== "string" || !question[name]) {
+      problems.push(`${name} must be a non-empty string`);
+    }
+  };
+  const finite = (name: "answer" | "min" | "max") => {
+    if (typeof question[name] !== "number" || !Number.isFinite(question[name])) {
+      problems.push(`${name} must be a number`);
+    }
+  };
+
+  text("id");
+  text("category");
+  text("measure");
+  text("subtype");
+  text("prompt");
+  text("unit");
+  text("explanation");
+  finite("answer");
+  finite("min");
+  finite("max");
+
+  if (question.scale !== "linear" && question.scale !== "log") {
+    problems.push('scale must be "linear" or "log"');
+  }
+
+  // Optional, but a year written as 2022 rather than "2022" is the easy slip.
+  if (question.referenceYear !== undefined) {
+    if (typeof question.referenceYear !== "string") {
+      problems.push(
+        `referenceYear must be a quoted string, got ${typeof question.referenceYear}`,
+      );
+    }
+  }
+
+  const source = question.source as unknown;
+  if (!source || typeof source !== "object") {
+    problems.push("source must be an object with a title and url");
+  } else {
+    const { title, url } = source as { title?: unknown; url?: unknown };
+    if (typeof title !== "string") problems.push("source.title must be a string");
+    if (typeof url !== "string") problems.push("source.url must be a string");
+  }
+
+  return problems;
+}
+
+/**
+ * Every rule that applies to a single record, wherever it is banked. The daily
+ * bank is held to exactly the same standard as the category bank.
+ */
+function validateQuestion(
+  question: Question,
+  report: (id: string, message: string) => void,
+) {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(question.id)) {
     report(question.id, "id must be non-empty kebab-case");
   }
-
-  if (ids.has(question.id)) {
-    report(question.id, "id is duplicated");
-  }
-  ids.add(question.id);
-  counts[question.subtype] += 1;
 
   if (
     !Number.isFinite(question.min) ||
@@ -130,12 +192,22 @@ for (const question of questions) {
       );
     }
 
-    const requiredDefinition =
-      question.subtype === "country" ? "country-total" : "city proper";
-    if (!question.prompt.toLowerCase().includes(requiredDefinition)) {
+    // A population prompt has to pin down what is being counted. The UN series
+    // needs the "country-total" wording to rule out a city or metro reading. A
+    // named census already carries its own scope and its own published figure,
+    // so it states the definition just as firmly.
+    const prompt = question.prompt.toLowerCase();
+    const statesDefinition =
+      question.subtype === "country"
+        ? prompt.includes("country-total") || /\bcensus\b/.test(prompt)
+        : prompt.includes("city proper");
+
+    if (!statesDefinition) {
       report(
         question.id,
-        `population prompt must state the ${requiredDefinition} definition`,
+        question.subtype === "country"
+          ? "population prompt must say country-total, or name the census it counts"
+          : "population prompt must state the city proper definition",
       );
     }
   }
@@ -181,6 +253,15 @@ for (const question of questions) {
   }
 }
 
+for (const question of questions) {
+  if (ids.has(question.id)) {
+    report(question.id, "id is duplicated");
+  }
+  ids.add(question.id);
+  counts[question.subtype] += 1;
+  validateQuestion(question, report);
+}
+
 if (counts.country < 15) {
   errors.push(`question bank has ${counts.country} countries; expected at least 15`);
 }
@@ -209,6 +290,110 @@ for (const [subtype, total] of Object.entries(counts)) {
   }
 }
 
+// ── Daily sets ──────────────────────────────────────────────────────────────
+//
+// Read off disk rather than imported, so the validator checks the file the app
+// will actually bundle.
+
+const DAILY_PATH = new URL("../data/daily-sets.json", import.meta.url);
+const bankIds = new Set(questions.map((question) => question.id));
+const bankPrompts = new Set(
+  questions.map((question) => question.prompt.trim().toLowerCase()),
+);
+
+let daily: DailySchedule | null = null;
+try {
+  daily = JSON.parse(readFileSync(DAILY_PATH, "utf8")) as DailySchedule;
+} catch (cause) {
+  errors.push(
+    `data/daily-sets.json could not be read: ${(cause as Error).message}`,
+  );
+}
+
+let dailyQuestionCount = 0;
+
+if (daily) {
+  if (daily.version !== 1) {
+    errors.push("data/daily-sets.json must declare version 1");
+  }
+  if (!Array.isArray(daily.sets)) {
+    errors.push("data/daily-sets.json must have a sets array");
+    daily = null;
+  }
+}
+
+if (daily) {
+  const seenDates = new Set<string>();
+  const seenDailyIds = new Set<string>();
+
+  for (const set of daily.sets) {
+    const where = `daily ${set.date ?? "(undated)"}`;
+
+    if (typeof set.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(set.date)) {
+      errors.push(`${where}: date must be an ISO YYYY-MM-DD string`);
+    } else if (Number.isNaN(Date.parse(`${set.date}T00:00:00Z`))) {
+      errors.push(`${where}: date is not a real calendar day`);
+    }
+
+    if (seenDates.has(set.date)) {
+      errors.push(`${where}: two sets share this date`);
+    }
+    seenDates.add(set.date);
+
+    if (!Array.isArray(set.questions)) {
+      errors.push(`${where}: questions must be an array`);
+      continue;
+    }
+
+    // A fixed length is what makes daily scores comparable between players.
+    if (set.questions.length !== DAILY_QUESTIONS_PER_SET) {
+      errors.push(
+        `${where}: has ${set.questions.length} questions; every set needs exactly ${DAILY_QUESTIONS_PER_SET}`,
+      );
+    }
+
+    const withinSet = new Set<string>();
+    for (const question of set.questions) {
+      dailyQuestionCount += 1;
+
+      if (withinSet.has(question.id)) {
+        errors.push(`${where}: ${question.id} appears twice in the same set`);
+      }
+      withinSet.add(question.id);
+
+      if (seenDailyIds.has(question.id)) {
+        errors.push(`${where}: ${question.id} is already used by another date`);
+      }
+      seenDailyIds.add(question.id);
+
+      // Daily questions are written for the daily; a shared record would leak
+      // the answer to anyone who had met it in category play.
+      if (bankIds.has(question.id)) {
+        errors.push(`${where}: ${question.id} also exists in the category bank`);
+      }
+      if (bankPrompts.has(question.prompt?.trim().toLowerCase())) {
+        errors.push(
+          `${where}: ${question.id} repeats a prompt from the category bank`,
+        );
+      }
+
+      // A mistyped field would throw inside the semantic checks, so report the
+      // shape and move on rather than taking the whole run down with it.
+      const malformed = shapeErrors(question);
+      if (malformed.length > 0) {
+        for (const problem of malformed) {
+          errors.push(`${where} / ${question.id ?? "(unnamed)"}: ${problem}`);
+        }
+        continue;
+      }
+
+      validateQuestion(question, (id, message) =>
+        errors.push(`${where} / ${id}: ${message}`),
+      );
+    }
+  }
+}
+
 if (errors.length > 0) {
   console.error(`Question data validation failed with ${errors.length} error(s):`);
   for (const error of errors) {
@@ -219,5 +404,9 @@ if (errors.length > 0) {
   const breakdown = Object.entries(counts)
     .map(([subtype, total]) => `${total} ${subtype}`)
     .join(", ");
+  const dailyTotal = daily?.sets.length ?? 0;
   console.log(`Validated ${questions.length} questions: ${breakdown}.`);
+  console.log(
+    `Validated ${dailyTotal} daily set(s) holding ${dailyQuestionCount} daily-only questions.`,
+  );
 }

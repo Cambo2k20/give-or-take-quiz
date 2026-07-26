@@ -1,30 +1,81 @@
-import {
-  type CSSProperties,
-  type KeyboardEvent,
-  type ReactNode,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import {
   type BestScores,
+  QUESTIONS_PER_GAME,
   accuracyTier,
   formatQuestionValue,
   positionToValue,
+  questionCount,
   readBestScores,
+  readQuestionHistory,
   scoreGuess,
-  selectQuestions,
-  valueToPosition,
+  selectQuestionsWithHistory,
+  startPosition,
   writeBestScores,
+  writeQuestionHistory,
 } from "../lib/game";
+import { signOut } from "../lib/auth";
+import {
+  buildSurvivalDeck,
+  readFormatRecords,
+  recordSurvivalRun,
+  survivalVerdict,
+  survivalWindow,
+  writeFormatRecords,
+  type SurvivalVerdict,
+} from "../lib/formats";
+import type { BoardScope } from "../lib/leaderboard";
+import { fetchMyStandings } from "../lib/leaderboard";
+import { BoardScreen, type Standings } from "./BoardScreen";
+import { SurvivalOver, SurvivalRound } from "./Survival";
+import {
+  activeStreak,
+  dailySetFor,
+  playableDailyDates,
+  readDailyProgress,
+  recordDailyResult,
+  todayIso,
+  todaysDailySet,
+  writeDailyProgress,
+} from "../lib/daily";
 import type { GameMode, Question } from "../lib/types";
-import { JoinLeaderboardForm, LeaderboardPanel } from "./Leaderboard";
+import {
+  AuthPanel,
+  ConfirmEmailNotice,
+  NewPasswordForm,
+} from "./AuthPanel";
+import { DailyArchive, DailyCard } from "./Daily";
+import { EstimatePanel } from "./EstimatePanel";
+import { HeroDemo } from "./HeroDemo";
+import { JoinLeaderboardForm } from "./Leaderboard";
+import {
+  formatPoints,
+  subtypeLabel,
+  unitSuffix,
+  useCountUp,
+  verdictDetail,
+} from "./questionText";
 import { type Theme, applyTheme, readTheme } from "./theme";
+import { useAuth } from "./useAuth";
 import { useLeaderboard } from "./useLeaderboard";
 
-type Phase = "category" | "playing" | "results" | "leaderboard";
+type Phase =
+  | "category"
+  | "playing"
+  | "results"
+  | "leaderboard"
+  | "account"
+  | "daily-archive"
+  | "survival"
+  | "survival-over";
 type RoundResult = { question: Question; guess: number; points: number };
+
+/**
+ * How a round is played, as opposed to what it is about. Deliberately not a
+ * GameMode: subjects, best scores and question history are a separate axis,
+ * and conflating them is what made the old board row unmanageable.
+ */
+type PlayFormat = "classic" | "survival";
 
 const GlobeIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -65,6 +116,31 @@ const StackIcon = () => (
   </svg>
 );
 
+const PeopleIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <circle cx="9" cy="8" r="3.2" />
+    <path d="M3.5 19.5a5.5 5.5 0 0 1 11 0" strokeLinecap="round" />
+    <path d="M16 5.6a3.2 3.2 0 0 1 0 6M17.5 14.6a5.5 5.5 0 0 1 3 4.9" strokeLinecap="round" />
+  </svg>
+);
+
+const PawIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <ellipse cx="8" cy="7.5" rx="1.9" ry="2.5" />
+    <ellipse cx="16" cy="7.5" rx="1.9" ry="2.5" />
+    <ellipse cx="4.6" cy="12.6" rx="1.7" ry="2.2" />
+    <ellipse cx="19.4" cy="12.6" rx="1.7" ry="2.2" />
+    <path d="M12 12.5c2.8 0 5 2.2 5 4.6 0 1.7-1.4 2.9-3.1 2.9h-3.8c-1.7 0-3.1-1.2-3.1-2.9 0-2.4 2.2-4.6 5-4.6Z" strokeLinejoin="round" />
+  </svg>
+);
+
+const FilmIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <rect x="2.5" y="5" width="19" height="14" rx="2" />
+    <path d="M7 5v14M17 5v14M2.5 12h19M2.5 8.5h4.5M2.5 15.5h4.5M17 8.5h4.5M17 15.5h4.5" strokeLinecap="round" />
+  </svg>
+);
+
 const BoltIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
     <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" strokeLinejoin="round" />
@@ -75,152 +151,82 @@ const MODES: Array<{
   mode: GameMode;
   title: string;
   description: string;
-  note: string;
   icon: ReactNode;
 }> = [
   {
-    mode: "geography",
-    title: "Geography",
-    description: "Countries, cities, oceans, deserts and the shape of the land.",
-    note: "10 questions · 54 in the bank",
-    icon: <GlobeIcon />,
+    mode: "population",
+    title: "Population",
+    description: "How many people live in a country, a city, or online.",
+    icon: <PeopleIcon />,
   },
   {
     mode: "history",
     title: "History",
     description: "Place turning points on the timeline, and price the past.",
-    note: "10 questions · 42 in the bank",
     icon: <ClockIcon />,
+  },
+  {
+    mode: "geography",
+    title: "Geography",
+    description: "Oceans, deserts, mountains and the shape of the land.",
+    icon: <GlobeIcon />,
   },
   {
     mode: "science",
     title: "Science",
-    description: "Physics, chemistry and the animal kingdom, by the numbers.",
-    note: "10 questions · 22 in the bank",
+    description: "Physics, chemistry and the workings of the human body.",
     icon: <BoltIcon />,
+  },
+  {
+    mode: "animals",
+    title: "Animals",
+    description: "What they weigh, how fast they run, how long they carry.",
+    icon: <PawIcon />,
   },
   {
     mode: "space",
     title: "Space",
     description: "Orbits, planets and the machines we have sent up there.",
-    note: "10 questions · 15 in the bank",
     icon: <RocketIcon />,
   },
   {
-    mode: "human-world",
-    title: "Human World",
-    description: "What we have built, how we live, and how fast we can go.",
-    note: "10 questions · 17 in the bank",
+    mode: "technology",
+    title: "Technology",
+    description: "The tallest, heaviest and fastest things we have built.",
     icon: <StackIcon />,
+  },
+  {
+    mode: "movies",
+    title: "Movies",
+    description: "When films landed, and what they took at the box office.",
+    icon: <FilmIcon />,
   },
   {
     mode: "mixed",
     title: "Mixed",
-    description: "Two questions drawn from every category.",
-    note: "10 questions · a bit of everything",
+    description: "A draw from every category at once.",
     icon: <ShuffleIcon />,
   },
 ];
 
 const MODE_LABELS: Record<GameMode, string> = {
-  geography: "Geography",
+  population: "Population",
   history: "History",
+  geography: "Geography",
   science: "Science",
+  animals: "Animals",
   space: "Space",
-  "human-world": "Human World",
+  technology: "Technology",
+  movies: "Movies",
   mixed: "Mixed",
 };
 
-const SUBTYPE_LABELS: Record<Question["subtype"], string> = {
-  country: "Country population",
-  city: "City population",
-  event: "Historic event",
-  length: "Length and distance",
-  area: "Area",
-  mass: "Mass",
-  count: "How many",
-  percentage: "Share of the whole",
-  money: "Historic cost",
-  duration: "How long",
-  speed: "Speed",
-  temperature: "Temperature",
-};
-
-function formatPoints(points: number) {
-  return new Intl.NumberFormat("en-GB").format(points);
-}
-
-function subtypeLabel(question: Question) {
-  return SUBTYPE_LABELS[question.subtype];
-}
-
-function unitSuffix(question: Question) {
-  return question.unit === "people" ? " people" : "";
-}
-
-function differenceLabel(question: Question, guess: number) {
-  const difference = Math.abs(question.answer - guess);
-  if (question.unit === "year") {
-    return `${formatPoints(difference)} ${difference === 1 ? "year" : "years"}`;
-  }
-  if (question.unit === "people") {
-    return `${formatPoints(difference)} ${difference === 1 ? "person" : "people"}`;
-  }
-  // Every other unit already carries its own wording out of the formatter.
-  return formatQuestionValue(question, difference);
-}
-
-function verdictDetail(question: Question, guess: number) {
-  if (guess === question.answer) return "Exactly right.";
-  const behind = guess < question.answer;
-  const direction =
-    question.unit === "year"
-      ? behind
-        ? "too early"
-        : "too late"
-      : question.unit === "people"
-        ? behind
-          ? "under"
-          : "over"
-        : behind
-          ? "too low"
-          : "too high";
-  return `You were ${differenceLabel(question, guess)} ${direction}.`;
-}
-
-function prefersReducedMotion() {
-  return (
-    typeof window.matchMedia !== "function" ||
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
-}
-
-/** Counts up to `target` once `enabled`, so the points land rather than appear. */
-function useCountUp(target: number, enabled: boolean) {
-  const [value, setValue] = useState(0);
-
-  useEffect(() => {
-    if (!enabled) {
-      setValue(0);
-      return;
-    }
-    if (target === 0 || prefersReducedMotion()) {
-      setValue(target);
-      return;
-    }
-
-    const duration = 550;
-    const start = performance.now();
-    let frame = requestAnimationFrame(function step(now) {
-      const progress = Math.min(1, (now - start) / duration);
-      setValue(Math.round(target * (1 - (1 - progress) ** 3)));
-      if (progress < 1) frame = requestAnimationFrame(step);
-    });
-
-    return () => cancelAnimationFrame(frame);
-  }, [target, enabled]);
-
-  return value;
+/** Read off the bank, so adding questions updates the chooser by itself. */
+function modeNote(mode: GameMode) {
+  const perRound = `${QUESTIONS_PER_GAME} questions`;
+  return mode === "mixed"
+    ? `${perRound} · a bit of everything`
+    : `${perRound} · ${formatPoints(questionCount(mode))} in the bank`;
 }
 
 async function copyText(text: string) {
@@ -252,15 +258,40 @@ export default function Game() {
   // client-rendered, so there is no server pass to mismatch against.
   const [theme, setTheme] = useState<Theme>(readTheme);
   const [bestScores, setBestScores] = useState<BestScores>(readBestScores);
+  const [questionHistory, setQuestionHistory] = useState(readQuestionHistory);
+  const [dailyProgress, setDailyProgress] = useState(readDailyProgress);
+  // Non-null while the round in play is a daily, and holds which day's it is.
+  const [dailyDate, setDailyDate] = useState<string | null>(null);
+  // Which board the leaderboard screen shows, along both axes at once.
+  const [boardScope, setBoardScope] = useState<BoardScope>({
+    kind: "category",
+    mode: "mixed",
+  });
+  const [standings, setStandings] = useState<Standings | null>(null);
+  // Which format the hero is offering. Classic keeps the consequence-free
+  // warm-up; picking Survival is the act of intent that starts a real run.
+  const [heroFormat, setHeroFormat] = useState<PlayFormat>("classic");
+  const [formatRecords, setFormatRecords] = useState(readFormatRecords);
+  const [survivalDeck, setSurvivalDeck] = useState<Question[]>([]);
+  const [survivalIndex, setSurvivalIndex] = useState(0);
+  const [survivalGuesses, setSurvivalGuesses] = useState<RoundResult[]>([]);
+  const [survivalVerdictState, setSurvivalVerdictState] =
+    useState<SurvivalVerdict | null>(null);
   const [shareStatus, setShareStatus] = useState("");
   const focusHeadingRef = useRef<HTMLHeadingElement>(null);
-  const leaderboard = useLeaderboard();
+  const auth = useAuth();
+  const leaderboard = useLeaderboard(auth.user?.id ?? null);
   // One publish per finished round, whatever React does with effects.
   const publishedRef = useRef(false);
 
+  // Following a reset link drops the player back on the app with a recovery
+  // session, so the account screen takes over until the new password is set.
+  // Derived rather than pushed into state, so it cannot fight with navigation.
+  const activePhase: Phase = auth.recovering ? "account" : phase;
+
   useEffect(() => {
-    if (phase !== "category") focusHeadingRef.current?.focus();
-  }, [phase, questionIndex]);
+    if (activePhase !== "category") focusHeadingRef.current?.focus();
+  }, [activePhase, questionIndex]);
 
   // Hold the pre-reveal frame long enough for the marker transition to run.
   useEffect(() => {
@@ -288,44 +319,114 @@ export default function Game() {
     Boolean(currentResult),
   );
 
-  const answerPosition = question
-    ? valueToPosition(question, question.answer)
-    : 0;
-  const bandLeft = Math.min(position, answerPosition);
-  const bandWidth = Math.abs(answerPosition - position);
+  // A daily is five questions and a category round ten, so the ceiling is read
+  // off the round rather than assumed.
+  const maxScore = gameQuestions.length * 1000;
+  const todaysDaily = useMemo(() => todaysDailySet(), []);
+  const archiveDates = useMemo(() => playableDailyDates(), []);
+  const streak = activeStreak(dailyProgress);
+  const today = todayIso();
+  const playedToday = dailyProgress.lastPlayedDate === today;
 
-  const { profile: player, publish, resetSubmit, loadBoard } = leaderboard;
+  const {
+    profile: player,
+    publish,
+    publishDaily,
+    publishSurvival,
+    resetSubmit,
+    loadBoard,
+    loadDailyBoard,
+    loadSurvivalBoard,
+  } = leaderboard;
+  const canPublish = auth.canUseLeaderboard;
+
+  const survivalQuestion = survivalDeck[survivalIndex];
+  const survivalNumber = survivalIndex + 1;
+  const survivalGuess = survivalQuestion
+    ? positionToValue(survivalQuestion, position)
+    : 0;
+  const survivalSurvived = survivalVerdictState?.survived
+    ? survivalGuesses.length
+    : Math.max(0, survivalGuesses.length - 1);
 
   // Publish the moment a round ends, but only for a player who already has a
   // name. Everyone else is offered the join form on the results screen.
+  //
+  // A daily goes to its own per-day board, never a category one: two days are
+  // two different puzzles, so their scores must not rank together.
   useEffect(() => {
     if (phase !== "results" || publishedRef.current) return;
-    if (!player || results.length === 0) return;
+    if (!player || !canPublish || results.length === 0) return;
     publishedRef.current = true;
-    void publish(
-      mode,
-      results.map((result) => ({
+    const guesses = results.map((result) => ({
+      question_id: result.question.id,
+      guess: result.guess,
+    }));
+    void (dailyDate ? publishDaily(dailyDate, guesses) : publish(mode, guesses));
+  }, [phase, mode, results, player, canPublish, publish, publishDaily, dailyDate]);
+
+  // A finished run posts the whole sequence, fatal guess included: the server
+  // re-judges every one and refuses a run that did not actually end in a miss.
+  useEffect(() => {
+    if (phase !== "survival-over" || publishedRef.current) return;
+    if (!player || !canPublish || survivalGuesses.length === 0) return;
+    publishedRef.current = true;
+    void publishSurvival(
+      survivalGuesses.map((result) => ({
         question_id: result.question.id,
         guess: result.guess,
       })),
     );
-  }, [phase, mode, results, player, publish]);
+  }, [phase, survivalGuesses, player, canPublish, publishSurvival]);
 
-  async function joinAndPublish(name: string) {
+  async function joinAndPublishSurvival(name: string) {
     await leaderboard.join(name);
     publishedRef.current = true;
-    await publish(
-      mode,
-      results.map((result) => ({
+    await publishSurvival(
+      survivalGuesses.map((result) => ({
         question_id: result.question.id,
         guess: result.guess,
       })),
     );
   }
 
-  function openLeaderboard() {
+  async function joinAndPublish(name: string) {
+    await leaderboard.join(name);
+    publishedRef.current = true;
+    const guesses = results.map((result) => ({
+      question_id: result.question.id,
+      guess: result.guess,
+    }));
+    if (dailyDate) {
+      await publishDaily(dailyDate, guesses);
+    } else {
+      await publish(mode, guesses);
+    }
+  }
+
+  /** Loads whichever board a scope names, and shows the board screen. */
+  function openBoard(scope: BoardScope) {
+    setBoardScope(scope);
     setPhase("leaderboard");
-    void loadBoard(mode);
+    if (scope.kind === "survival") void loadSurvivalBoard();
+    else if (scope.kind === "daily") void loadDailyBoard(scope.date);
+    else void loadBoard(scope.mode);
+
+    // The picker shows a rank per board, so it is fetched once per visit
+    // rather than per switch. A failure just leaves the ranks blank.
+    if (player) {
+      fetchMyStandings(player.id, todayIso())
+        .then(setStandings)
+        .catch(() => setStandings(null));
+    }
+  }
+
+  function openLeaderboard() {
+    openBoard({ kind: "category", mode });
+  }
+
+  function openDailyBoard(date: string) {
+    openBoard({ kind: "daily", date });
   }
 
   function toggleTheme() {
@@ -334,11 +435,11 @@ export default function Game() {
     applyTheme(next);
   }
 
-  function startGame(selectedMode: GameMode) {
-    setMode(selectedMode);
-    setGameQuestions(selectQuestions(selectedMode));
+  /** Everything a round needs reset, whichever way it was started. */
+  function beginRound(roundQuestions: Question[]) {
+    setGameQuestions(roundQuestions);
     setQuestionIndex(0);
-    setPosition(0.5);
+    setPosition(roundQuestions[0] ? startPosition(roundQuestions[0]) : 0.5);
     setLocked(false);
     setRevealing(false);
     setResults([]);
@@ -346,6 +447,89 @@ export default function Game() {
     publishedRef.current = false;
     resetSubmit();
     setPhase("playing");
+  }
+
+  function startGame(selectedMode: GameMode) {
+    const draw = selectQuestionsWithHistory(selectedMode, questionHistory);
+    setMode(selectedMode);
+    setDailyDate(null);
+    setQuestionHistory(draw.history);
+    writeQuestionHistory(draw.history);
+    beginRound(draw.questions);
+  }
+
+  /**
+   * A run draws from the whole bank in its own shuffle. Question history is
+   * untouched, as in the daily: a run is not a round, and letting it eat the
+   * category rotation would starve normal play.
+   */
+  function startSurvival(deck: Question[] = buildSurvivalDeck()) {
+    setSurvivalDeck(deck);
+    setSurvivalIndex(0);
+    setSurvivalGuesses([]);
+    setSurvivalVerdictState(null);
+    setPosition(deck[0] ? startPosition(deck[0]) : 0.5);
+    setLocked(false);
+    setRevealing(false);
+    setShareStatus("");
+    setDailyDate(null);
+    publishedRef.current = false;
+    resetSubmit();
+    setPhase("survival");
+  }
+
+  function lockSurvivalGuess() {
+    if (!survivalQuestion || locked) return;
+    const verdict = survivalVerdict(
+      survivalQuestion,
+      survivalGuess,
+      survivalNumber,
+    );
+    setSurvivalGuesses((current) => [
+      ...current,
+      {
+        question: survivalQuestion,
+        guess: survivalGuess,
+        points: scoreGuess(survivalQuestion, survivalGuess),
+      },
+    ]);
+    setSurvivalVerdictState(verdict);
+    setLocked(true);
+    setRevealing(true);
+  }
+
+  function continueSurvival() {
+    if (!locked) return;
+    const alive = survivalVerdictState?.survived ?? false;
+    const next = survivalDeck[survivalIndex + 1];
+
+    // Out of questions with the run still alive means the bank was cleared,
+    // which the server accepts as a completed run.
+    if (!alive || !next) {
+      const survived = alive ? survivalGuesses.length : survivalGuesses.length - 1;
+      const updated = recordSurvivalRun(formatRecords, Math.max(0, survived));
+      setFormatRecords(updated);
+      writeFormatRecords(updated);
+      setPhase("survival-over");
+      return;
+    }
+
+    setSurvivalIndex((current) => current + 1);
+    setSurvivalVerdictState(null);
+    setPosition(startPosition(next));
+    setLocked(false);
+    setRevealing(false);
+  }
+
+  /**
+   * The daily is a fixed set, so it neither draws from the shared bank nor
+   * touches question history — everyone must get the same ten in the same order.
+   */
+  function startDaily(date: string) {
+    const set = dailySetFor(date);
+    if (!set) return;
+    setDailyDate(date);
+    beginRound([...set.questions]);
   }
 
   function lockGuess() {
@@ -361,45 +545,39 @@ export default function Game() {
   function goToNextQuestion() {
     if (!locked) return;
     if (questionIndex === gameQuestions.length - 1) {
-      const updated = {
-        ...bestScores,
-        [mode]: Math.max(bestScores[mode], totalScore),
-      };
-      setBestScores(updated);
-      writeBestScores(updated);
+      // A daily is scored per day rather than as a personal best, so the two
+      // records never mix.
+      if (dailyDate) {
+        const updated = recordDailyResult(dailyProgress, dailyDate, totalScore);
+        setDailyProgress(updated);
+        writeDailyProgress(updated);
+      } else {
+        const updated = {
+          ...bestScores,
+          [mode]: Math.max(bestScores[mode], totalScore),
+        };
+        setBestScores(updated);
+        writeBestScores(updated);
+      }
       setPhase("results");
       return;
     }
+    const next = gameQuestions[questionIndex + 1];
     setQuestionIndex((current) => current + 1);
-    setPosition(0.5);
+    setPosition(next ? startPosition(next) : 0.5);
     setLocked(false);
     setRevealing(false);
   }
 
-  function handleSliderKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (!question || locked) return;
-    const yearSpan = question.max - question.min;
-    const fine =
-      question.scale === "linear" ? Math.max(1 / yearSpan, 0.0001) : 0.005;
-    const large =
-      question.scale === "linear" ? Math.max(10 / yearSpan, 0.02) : 0.05;
-    let next: number | null = null;
-    if (event.key === "ArrowLeft" || event.key === "ArrowDown")
-      next = position - fine;
-    if (event.key === "ArrowRight" || event.key === "ArrowUp")
-      next = position + fine;
-    if (event.key === "PageDown") next = position - large;
-    if (event.key === "PageUp") next = position + large;
-    if (event.key === "Home") next = 0;
-    if (event.key === "End") next = 1;
-    if (next !== null) {
-      event.preventDefault();
-      setPosition(Math.min(1, Math.max(0, next)));
-    }
-  }
-
   async function shareResult() {
-    const text = `I scored ${formatPoints(totalScore)}/10,000 in Give or Take — ${MODE_LABELS[mode]}. How close can you get?`;
+    // Naming the day is the point of sharing a daily: the reader can play the
+    // same ten questions and compare directly. A run shares its length, which
+    // is the number the survival board ranks.
+    const label = dailyDate ? `the ${dailyDate} daily` : MODE_LABELS[mode];
+    const text =
+      phase === "survival-over"
+        ? `I survived ${formatPoints(survivalSurvived)} questions in Give or Take. How far can you get?`
+        : `I scored ${formatPoints(totalScore)}/${formatPoints(maxScore)} in Give or Take — ${label}. How close can you get?`;
     const url = window.location.href;
     try {
       if (navigator.share) {
@@ -432,19 +610,46 @@ export default function Game() {
           <span>Give or Take</span>
         </button>
         <div className="header-side">
-          {phase === "playing" && (
+          {activePhase === "playing" && (
             <p className="score-chip">
-              {MODE_LABELS[mode]} · <strong>{formatPoints(totalScore)}</strong>
+              {dailyDate ? "Daily" : MODE_LABELS[mode]} ·{" "}
+              <strong>{formatPoints(totalScore)}</strong>
             </p>
           )}
-          {leaderboard.enabled && phase !== "playing" && (
-            <button
-              className="board-button"
-              type="button"
-              onClick={openLeaderboard}
-            >
-              Leaderboard
-            </button>
+          {activePhase === "survival" && (
+            <p className="score-chip">
+              Survival · <strong>{formatPoints(survivalSurvived)} in</strong>
+            </p>
+          )}
+          {leaderboard.enabled &&
+            activePhase !== "playing" &&
+            activePhase !== "survival" && (
+            <>
+              <button
+                className="board-button"
+                type="button"
+                onClick={openLeaderboard}
+              >
+                Leaderboard
+              </button>
+              {auth.status === "signed-in" ? (
+                <button
+                  className="board-button"
+                  type="button"
+                  onClick={() => setPhase("account")}
+                >
+                  {player?.displayName ?? auth.user?.email ?? "Account"}
+                </button>
+              ) : (
+                <button
+                  className="board-button"
+                  type="button"
+                  onClick={() => setPhase("account")}
+                >
+                  Sign in
+                </button>
+              )}
+            </>
           )}
           <button
             className="theme-toggle"
@@ -474,7 +679,7 @@ export default function Game() {
         </div>
       </header>
 
-      {phase === "category" && (
+      {activePhase === "category" && (
         <section className="category-screen">
           <div className="hero-copy">
             <p className="eyebrow">A game of informed guesses</p>
@@ -483,6 +688,69 @@ export default function Game() {
               Ten questions. One slider. Put your instinct somewhere on the line.
             </p>
           </div>
+
+          {/* Format pills: how you play, kept off the subject grid below. */}
+          <div className="hero-formats" role="group" aria-label="Choose a format">
+            <button
+              type="button"
+              className={`hero-format${heroFormat === "classic" ? " is-current" : ""}`}
+              aria-pressed={heroFormat === "classic"}
+              onClick={() => setHeroFormat("classic")}
+            >
+              Classic
+            </button>
+            <button
+              type="button"
+              className={`hero-format${heroFormat === "survival" ? " is-current" : ""}`}
+              aria-pressed={heroFormat === "survival"}
+              onClick={() => setHeroFormat("survival")}
+            >
+              Survival
+            </button>
+          </div>
+
+          {heroFormat === "classic" ? (
+            <HeroDemo onPlay={() => startGame("mixed")} />
+          ) : (
+            <div className="hero-survival">
+              <div className="hero-survival-head">
+                <span className="question-tag">Survival</span>
+                {formatRecords.survivalBest > 0 && (
+                  <span className="hero-survival-best">
+                    Best run {formatPoints(formatRecords.survivalBest)}
+                  </span>
+                )}
+              </div>
+              <p className="hero-survival-lede">
+                Questions keep coming until one gets away from you. The window
+                you have to land in narrows every three questions.
+              </p>
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() => startSurvival()}
+              >
+                Start a run
+              </button>
+              <p className="hero-survival-note">
+                Drawn from all {formatPoints(questionCount("mixed"))} questions.
+              </p>
+            </div>
+          )}
+
+          {todaysDaily && (
+            <DailyCard
+              set={todaysDaily}
+              streak={streak}
+              playedToday={playedToday}
+              score={dailyProgress.scores[today] ?? null}
+              archiveCount={archiveDates.length}
+              onPlay={() => startDaily(todaysDaily.date)}
+              onOpenArchive={() => setPhase("daily-archive")}
+            />
+          )}
+
+          <p className="mode-grid-label">Or pick a category</p>
           <div className="mode-grid" aria-label="Choose a category">
             {MODES.map((detail) => (
               <button
@@ -494,7 +762,7 @@ export default function Game() {
                 <span className="mode-icon">{detail.icon}</span>
                 <strong>{detail.title}</strong>
                 <span className="mode-description">{detail.description}</span>
-                <span className="mode-note">{detail.note}</span>
+                <span className="mode-note">{modeNote(detail.mode)}</span>
                 {bestScores[detail.mode] > 0 && (
                   <span className="mode-best">
                     Best {formatPoints(bestScores[detail.mode])}
@@ -504,13 +772,15 @@ export default function Game() {
             ))}
           </div>
           <div className="category-footer">
-            <span>150 sourced questions, bundled with the app</span>
+            <span>
+              {formatPoints(questionCount("mixed"))} sourced questions, bundled with the app
+            </span>
             <span>Best scores stay on this device</span>
           </div>
         </section>
       )}
 
-      {phase === "playing" && question && (
+      {activePhase === "playing" && question && (
         <section className="game-screen">
           <div
             className="progress-dots"
@@ -540,57 +810,15 @@ export default function Game() {
               {question.prompt}
             </h1>
 
-            <div
-              className={`estimate-panel${revealing ? " is-revealing" : ""}${tier ? ` tier-${tier.id}` : ""}`}
-              style={
-                {
-                  "--guess-position": `${position * 100}%`,
-                  "--answer-position": `${answerPosition * 100}%`,
-                  "--band-left": `${bandLeft * 100}%`,
-                  "--band-width": `${bandWidth * 100}%`,
-                } as CSSProperties
-              }
-            >
-              <output className="estimate-value" htmlFor="estimate-slider">
-                {formatQuestionValue(question, guess)}
-              </output>
-              <span className="estimate-label">
-                {locked ? "Your locked guess" : "Your estimate"}
-              </span>
-
-              <div className="slider-wrap">
-                <span className="slider-rail" aria-hidden="true" />
-                <span className="slider-fill" aria-hidden="true" />
-                {locked && <span className="miss-band" aria-hidden="true" />}
-                {locked && <span className="answer-dot" aria-hidden="true" />}
-                <input
-                  id="estimate-slider"
-                  className="estimate-slider"
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.0001"
-                  value={position}
-                  disabled={locked}
-                  aria-label="Your estimate"
-                  aria-valuetext={`${formatQuestionValue(question, guess)}${unitSuffix(question)}`}
-                  onChange={(event) =>
-                    setPosition(Number.parseFloat(event.target.value))
-                  }
-                  onKeyDown={handleSliderKeyDown}
-                />
-              </div>
-              <div className="range-labels" aria-hidden="true">
-                <span>{formatQuestionValue(question, question.min)}</span>
-                <span>{formatQuestionValue(question, question.max)}</span>
-              </div>
-              {!locked && (
-                <p className="keyboard-help">
-                  Drag, tap, or use arrow keys. Page Up/Down moves faster;
-                  Home/End jumps to the limits.
-                </p>
-              )}
-            </div>
+            <EstimatePanel
+              question={question}
+              position={position}
+              onPositionChange={setPosition}
+              locked={locked}
+              revealing={revealing}
+              tierId={tier?.id}
+              sliderId="estimate-slider"
+            />
 
             {!locked ? (
               <button className="primary-button" type="button" onClick={lockGuess}>
@@ -643,37 +871,56 @@ export default function Game() {
         </section>
       )}
 
-      {phase === "results" && (
+      {activePhase === "results" && (
         <section className="results-screen">
           <div className="results-hero">
-            <p className="eyebrow">{MODE_LABELS[mode]} · Game complete</p>
+            <p className="eyebrow">
+              {dailyDate ? `Daily · ${dailyDate}` : MODE_LABELS[mode]} · Game
+              complete
+            </p>
             <h1 ref={focusHeadingRef} tabIndex={-1}>
               Final score
             </h1>
             <div className="final-score">
               <strong>{formatPoints(totalScore)}</strong>
-              <span>/ 10,000</span>
+              <span>/ {formatPoints(maxScore)}</span>
             </div>
             <div className="result-summary">
               <p>
-                {totalScore === bestScores[mode] && totalScore > 0
-                  ? "That’s your best score in this category."
-                  : `Your best ${MODE_LABELS[mode].toLowerCase()} score is ${formatPoints(bestScores[mode])}.`}
+                {dailyDate
+                  ? streak > 0
+                    ? `That's a ${streak}-day streak. Come back tomorrow to keep it.`
+                    : "Play tomorrow's daily to start a streak."
+                  : totalScore === bestScores[mode] && totalScore > 0
+                    ? "That’s your best score in this category."
+                    : `Your best ${MODE_LABELS[mode].toLowerCase()} score is ${formatPoints(bestScores[mode])}.`}
               </p>
               <div className="result-actions">
-                <button
-                  className="primary-button"
-                  type="button"
-                  onClick={() => startGame(mode)}
-                >
-                  Play again
-                </button>
+                {dailyDate ? (
+                  <button
+                    className="primary-button"
+                    type="button"
+                    onClick={() => setPhase("category")}
+                  >
+                    Back to the game
+                  </button>
+                ) : (
+                  <button
+                    className="primary-button"
+                    type="button"
+                    onClick={() => startGame(mode)}
+                  >
+                    Play again
+                  </button>
+                )}
                 <button
                   className="secondary-button"
                   type="button"
-                  onClick={() => setPhase("category")}
+                  onClick={() =>
+                    setPhase(dailyDate ? "daily-archive" : "category")
+                  }
                 >
-                  Change category
+                  {dailyDate ? "Past dailies" : "Change category"}
                 </button>
                 <button
                   className="secondary-button"
@@ -691,7 +938,17 @@ export default function Game() {
 
           {leaderboard.enabled && leaderboard.ready && (
             <div className="board-callout">
-              {!player ? (
+              {auth.status === "signed-out" ? (
+                <>
+                  <p className="board-status">
+                    Your score is saved on this device. Sign in to put it on{" "}
+                    {dailyDate ? "the day's board" : "the leaderboard"}.
+                  </p>
+                  <AuthPanel compact />
+                </>
+              ) : !auth.canUseLeaderboard ? (
+                <ConfirmEmailNotice email={auth.user?.email ?? null} />
+              ) : !player ? (
                 <JoinLeaderboardForm onJoin={joinAndPublish} />
               ) : (
                 <div className="board-status" role="status">
@@ -717,9 +974,11 @@ export default function Game() {
               <button
                 className="secondary-button"
                 type="button"
-                onClick={openLeaderboard}
+                onClick={() =>
+                  dailyDate ? openDailyBoard(dailyDate) : openLeaderboard()
+                }
               >
-                See the leaderboard
+                {dailyDate ? "See the day's board" : "See the leaderboard"}
               </button>
             </div>
           )}
@@ -755,53 +1014,208 @@ export default function Game() {
         </section>
       )}
 
-      {phase === "leaderboard" && (
+      {activePhase === "leaderboard" && (
+        <BoardScreen
+          scope={boardScope}
+          onScopeChange={(next) => {
+            if (next.kind === "category") setMode(next.mode);
+            openBoard(next);
+          }}
+          modes={MODES}
+          modeLabels={MODE_LABELS}
+          rows={leaderboard.board}
+          loading={leaderboard.boardLoading}
+          error={leaderboard.boardError}
+          profile={player}
+          standings={standings}
+          todaysDailyDate={archiveDates[0] ?? null}
+          onPlay={() => {
+            if (boardScope.kind === "survival") startSurvival();
+            else if (boardScope.kind === "daily") startDaily(boardScope.date);
+            else startGame(boardScope.mode);
+          }}
+          onBack={() => setPhase("category")}
+          headingRef={focusHeadingRef}
+        />
+      )}
+
+      {activePhase === "survival" && survivalQuestion && (
+        <SurvivalRound
+          question={survivalQuestion}
+          questionNumber={survivalNumber}
+          survived={survivalSurvived}
+          position={position}
+          onPositionChange={setPosition}
+          windowHalfWidth={survivalWindow(survivalNumber)}
+          locked={locked}
+          revealing={revealing}
+          verdict={survivalVerdictState}
+          guess={survivalGuess}
+          onLock={lockSurvivalGuess}
+          onContinue={continueSurvival}
+          headingRef={focusHeadingRef}
+        />
+      )}
+
+      {activePhase === "survival-over" && (
+        <SurvivalOver
+          survived={survivalSurvived}
+          best={formatRecords.survivalBest}
+          question={
+            survivalVerdictState?.survived
+              ? null
+              : survivalGuesses[survivalGuesses.length - 1]?.question ?? null
+          }
+          guess={survivalGuesses[survivalGuesses.length - 1]?.guess ?? 0}
+          onRunAgain={() => startSurvival()}
+          onHome={() => setPhase("category")}
+          onShare={shareResult}
+          shareStatus={shareStatus}
+          headingRef={focusHeadingRef}
+          boardCallout={
+            leaderboard.enabled && leaderboard.ready ? (
+              <div className="board-callout">
+                {auth.status === "signed-out" ? (
+                  <>
+                    <p className="board-status">
+                      Your run is saved on this device. Sign in to put it on the
+                      survival board.
+                    </p>
+                    <AuthPanel compact />
+                  </>
+                ) : !auth.canUseLeaderboard ? (
+                  <ConfirmEmailNotice email={auth.user?.email ?? null} />
+                ) : !player ? (
+                  <JoinLeaderboardForm onJoin={joinAndPublishSurvival} />
+                ) : (
+                  <div className="board-status" role="status">
+                    {leaderboard.submit.status === "sending" &&
+                      "Saving your run…"}
+                    {leaderboard.submit.status === "sent" && (
+                      <>
+                        Saved as <strong>{player.displayName}</strong>. The
+                        server counted{" "}
+                        <strong>
+                          {formatPoints(leaderboard.submit.totalScore)}
+                        </strong>{" "}
+                        survived.
+                      </>
+                    )}
+                    {leaderboard.submit.status === "failed" && (
+                      <span className="is-error">
+                        {leaderboard.submit.message}
+                      </span>
+                    )}
+                  </div>
+                )}
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => openBoard({ kind: "survival" })}
+                >
+                  See the survival board
+                </button>
+              </div>
+            ) : null
+          }
+        />
+      )}
+
+      {activePhase === "daily-archive" && (
         <section className="board-screen">
           <div className="results-hero">
-            <p className="eyebrow">Best score per player</p>
+            <p className="eyebrow">
+              {streak > 0
+                ? `${streak}-day streak`
+                : "Play today's to start a streak"}
+            </p>
             <h1 ref={focusHeadingRef} tabIndex={-1}>
-              Leaderboard
+              Past dailies
             </h1>
           </div>
 
-          <div className="board-modes" aria-label="Choose a category">
-            {MODES.map((detail) => (
-              <button
-                key={detail.mode}
-                type="button"
-                className={`board-mode${detail.mode === mode ? " is-current" : ""}`}
-                aria-pressed={detail.mode === mode}
-                onClick={() => {
-                  setMode(detail.mode);
-                  void loadBoard(detail.mode);
-                }}
-              >
-                {detail.title}
-              </button>
-            ))}
-          </div>
-
-          <LeaderboardPanel
-            rows={leaderboard.board}
-            loading={leaderboard.boardLoading}
-            error={leaderboard.boardError}
-            profile={player}
+          <DailyArchive
+            dates={archiveDates}
+            progress={dailyProgress}
+            onPlay={startDaily}
           />
 
           <div className="result-actions">
-            <button
-              className="primary-button"
-              type="button"
-              onClick={() => startGame(mode)}
-            >
-              Play {MODE_LABELS[mode]}
-            </button>
             <button
               className="secondary-button"
               type="button"
               onClick={() => setPhase("category")}
             >
               Back
+            </button>
+          </div>
+        </section>
+      )}
+
+      {activePhase === "account" && (
+        <section className="account-screen">
+          <div className="results-hero">
+            <p className="eyebrow">
+              {auth.status === "signed-in" ? "Your account" : "Optional"}
+            </p>
+            <h1 ref={focusHeadingRef} tabIndex={-1}>
+              {auth.status === "signed-in" ? "Account" : "Sign in"}
+            </h1>
+            <p className="account-lede">
+              You never need an account to play. Signing in only puts your
+              scores on the leaderboard under a name of your choosing.
+            </p>
+          </div>
+
+          {auth.recovering ? (
+            <NewPasswordForm onDone={auth.endRecovery} />
+          ) : auth.status === "signed-in" ? (
+            <div className="account-detail">
+              <dl className="account-facts">
+                <div>
+                  <dt>Signed in as</dt>
+                  <dd>{auth.user?.email ?? "unknown"}</dd>
+                </div>
+                <div>
+                  <dt>Leaderboard name</dt>
+                  <dd>{player?.displayName ?? "Not chosen yet"}</dd>
+                </div>
+                <div>
+                  <dt>Email confirmed</dt>
+                  <dd>{auth.user?.emailConfirmed ? "Yes" : "Not yet"}</dd>
+                </div>
+              </dl>
+
+              {!auth.canUseLeaderboard && (
+                <ConfirmEmailNotice email={auth.user?.email ?? null} />
+              )}
+
+              {auth.canUseLeaderboard && !player && (
+                <JoinLeaderboardForm onJoin={(name) => leaderboard.join(name)} />
+              )}
+
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => {
+                  void signOut();
+                  setPhase("category");
+                }}
+              >
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <AuthPanel onSignedIn={() => setPhase("category")} />
+          )}
+
+          <div className="result-actions">
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => setPhase("category")}
+            >
+              Back to the game
             </button>
           </div>
         </section>

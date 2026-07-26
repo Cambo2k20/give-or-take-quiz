@@ -1,48 +1,44 @@
 import { describe, expect, it } from "vitest";
 import {
   CATEGORIES,
+  formatQuestionValue,
   formatYear,
   positionToValue,
+  QUESTION_HISTORY_KEY,
+  QUESTIONS_PER_GAME,
+  pickDemoQuestion,
   readBestScores,
+  readQuestionHistory,
   scoreGuess,
   selectQuestions,
+  selectQuestionsWithHistory,
+  startPosition,
   STORAGE_KEY,
   valueToPosition,
   writeBestScores,
+  writeQuestionHistory,
 } from "@/lib/game";
 
 type Question = Parameters<typeof positionToValue>[0];
 
-function question(
-  overrides: Partial<{
-    id: string;
-    category: "population" | "history";
-    subtype: string;
-    prompt: string;
-    answer: number;
-    min: number;
-    max: number;
-    scale: "linear" | "log";
-    unit: string;
-    referenceYear: number;
-    source: { title: string; url: string };
-    explanation: string;
-  }> = {},
-) {
+// Tied to the real Question type rather than a hand-listed subset, so a field
+// added to the model cannot silently become unsettable here.
+function question(overrides: Partial<Question> = {}): Question {
   return {
     id: "test-question",
-    category: "history" as const,
-    subtype: "year",
+    category: "history",
+    measure: "history",
+    subtype: "event",
     prompt: "When did the test event happen?",
     answer: 50,
     min: 0,
     max: 100,
-    scale: "linear" as const,
+    scale: "linear",
     unit: "year",
     source: { title: "Test source", url: "https://example.com/source" },
     explanation: "A deterministic fixture used by the unit tests.",
     ...overrides,
-  } as Question;
+  };
 }
 
 function seededRandom(seed: number) {
@@ -122,6 +118,60 @@ describe("scoreGuess", () => {
   });
 });
 
+describe("startPosition", () => {
+  it("gives the same question the same start every time", () => {
+    const subject = question({ id: "stable-question" });
+    expect(startPosition(subject)).toBe(startPosition(subject));
+    // A different object with the same id is the same puzzle to every player.
+    expect(startPosition(question({ id: "stable-question" }))).toBe(
+      startPosition(subject),
+    );
+  });
+
+  it("moves the start around as the question changes", () => {
+    const starts = new Set(
+      Array.from({ length: 40 }, (_, index) =>
+        startPosition(question({ id: `varied-${index}` })),
+      ),
+    );
+    // No fixed strategy survives if the opening position keeps moving.
+    expect(starts.size).toBeGreaterThan(30);
+  });
+
+  it("stays inside the band, away from both rail ends", () => {
+    for (let index = 0; index < 200; index += 1) {
+      const start = startPosition(question({ id: `banded-${index}` }));
+      expect(start).toBeGreaterThanOrEqual(0.1);
+      expect(start).toBeLessThanOrEqual(0.9);
+    }
+  });
+
+  it("never opens on top of the answer, wherever the answer sits", () => {
+    for (let answer = 0; answer <= 100; answer += 1) {
+      const subject = question({ id: `answer-${answer}`, answer });
+      const start = startPosition(subject);
+      const answerPosition = valueToPosition(subject, answer);
+      expect(Math.abs(start - answerPosition)).toBeGreaterThanOrEqual(0.2);
+    }
+  });
+
+  it("keeps its distance on a log scale too, where positions bunch up", () => {
+    for (let power = 0; power < 9; power += 1) {
+      const subject = question({
+        id: `log-${power}`,
+        answer: 10 ** power,
+        min: 1,
+        max: 1_000_000_000,
+        scale: "log",
+        unit: "count",
+      });
+      const start = startPosition(subject);
+      const answerPosition = valueToPosition(subject, subject.answer);
+      expect(Math.abs(start - answerPosition)).toBeGreaterThanOrEqual(0.2);
+    }
+  });
+});
+
 describe("formatYear", () => {
   it("uses historical era notation and has no display year zero", () => {
     expect(formatYear(-44)).toBe("44 BCE");
@@ -131,7 +181,16 @@ describe("formatYear", () => {
 });
 
 describe("selectQuestions", () => {
-  it.each(["geography", "history", "science", "space", "human-world"] as const)(
+  it.each([
+    "population",
+    "history",
+    "geography",
+    "science",
+    "animals",
+    "space",
+    "technology",
+    "movies",
+  ] as const)(
     "returns ten unique %s questions",
     (mode) => {
       const selected = selectQuestions(mode, seededRandom(1234));
@@ -147,10 +206,12 @@ describe("selectQuestions", () => {
 
     expect(selected).toHaveLength(10);
     expect(new Set(selected.map(({ id }) => id)).size).toBe(10);
+    // Ten slots across eight categories, so each appears at least once and
+    // the two spare slots go wherever the shuffle sends them.
     for (const category of CATEGORIES) {
       expect(
-        selected.filter((question) => question.category === category),
-      ).toHaveLength(2);
+        selected.filter((question) => question.category === category).length,
+      ).toBeGreaterThanOrEqual(1);
     }
   });
 
@@ -162,29 +223,174 @@ describe("selectQuestions", () => {
 
     expect(first).toEqual(second);
   });
+
+  it("remembers seen questions and avoids repeats while enough remain", () => {
+    const first = selectQuestionsWithHistory(
+      "history",
+      {},
+      seededRandom(100),
+    );
+    const second = selectQuestionsWithHistory(
+      "history",
+      first.history,
+      seededRandom(200),
+    );
+    const firstIds = new Set(first.questions.map(({ id }) => id));
+
+    expect(second.questions).toHaveLength(QUESTIONS_PER_GAME);
+    expect(second.questions.every(({ id }) => !firstIds.has(id))).toBe(true);
+  });
+
+  it("finishes a small category cycle before recycling questions", () => {
+    const first = selectQuestionsWithHistory(
+      "technology",
+      {},
+      seededRandom(300),
+    );
+    const second = selectQuestionsWithHistory(
+      "technology",
+      first.history,
+      seededRandom(400),
+    );
+    const firstIds = new Set(first.questions.map(({ id }) => id));
+    const secondIds = new Set(second.questions.map(({ id }) => id));
+
+    expect(secondIds.size).toBe(QUESTIONS_PER_GAME);
+    expect(
+      second.questions.filter(({ id }) => !firstIds.has(id)),
+    ).toHaveLength(1);
+  });
+
+  it("remembers mixed questions while keeping every category represented", () => {
+    const first = selectQuestionsWithHistory("mixed", {}, seededRandom(500));
+    const second = selectQuestionsWithHistory(
+      "mixed",
+      first.history,
+      seededRandom(600),
+    );
+    const firstIds = new Set(first.questions.map(({ id }) => id));
+
+    expect(second.questions.every(({ id }) => !firstIds.has(id))).toBe(true);
+    for (const category of CATEGORIES) {
+      expect(
+        second.questions.some((question) => question.category === category),
+      ).toBe(true);
+    }
+  });
+});
+
+describe("formatQuestionValue", () => {
+  const metres = (overrides = {}) =>
+    question({ measure: "size", subtype: "length", unit: "metre", scale: "log", min: 0.1, max: 100, answer: 6.5, ...overrides });
+
+  it("keeps a decimal on small fractional values", () => {
+    // 6.5 m displaying as "7 m" would contradict the answer the round scores.
+    expect(formatQuestionValue(metres(), 6.5)).toBe("6.5 m");
+    expect(formatQuestionValue(metres(), 0.25)).toBe("0.3 m");
+  });
+
+  it("still rounds whole numbers and large magnitudes", () => {
+    expect(formatQuestionValue(metres(), 7)).toBe("7 m");
+    expect(formatQuestionValue(metres(), 143000.4)).toBe("143,000 m");
+  });
+
+  it("leaves units that set their own precision alone", () => {
+    const percent = question({ measure: "quantity", subtype: "percentage", unit: "percent", scale: "linear", min: 0, max: 100, answer: 12.5 });
+    expect(formatQuestionValue(percent, 12.5)).toBe("12.5%");
+  });
+});
+
+describe("pickDemoQuestion", () => {
+  it("draws from the whole bank rather than one category", () => {
+    const drawn = new Set(
+      Array.from({ length: 200 }, (_, index) =>
+        pickDemoQuestion(seededRandom(index)).category,
+      ),
+    );
+
+    expect(drawn.size).toBeGreaterThan(1);
+  });
+
+  it("is deterministic when supplied the same random sequence", () => {
+    expect(pickDemoQuestion(seededRandom(7)).id).toBe(
+      pickDemoQuestion(seededRandom(7)).id,
+    );
+  });
+
+  it("stays in range at both ends of the random sequence", () => {
+    expect(pickDemoQuestion(() => 0)).toBeDefined();
+    // Math.random never returns 1, but an injected sequence might.
+    expect(pickDemoQuestion(() => 1)).toBeDefined();
+  });
+});
+
+describe("question history storage", () => {
+  it("round-trips valid seen IDs and drops invalid data", () => {
+    const draw = selectQuestionsWithHistory("history", {}, seededRandom(700));
+    writeQuestionHistory(draw.history, window.localStorage);
+
+    expect(window.localStorage.getItem(QUESTION_HISTORY_KEY)).not.toBeNull();
+    expect(readQuestionHistory(window.localStorage)).toEqual(draw.history);
+
+    window.localStorage.setItem(
+      QUESTION_HISTORY_KEY,
+      JSON.stringify({
+        version: 1,
+        seenByMode: {
+          history: [
+            draw.questions[0]?.id,
+            draw.questions[0]?.id,
+            "not-a-question",
+            42,
+          ],
+        },
+      }),
+    );
+
+    expect(readQuestionHistory(window.localStorage).history).toEqual([
+      draw.questions[0]?.id,
+    ]);
+  });
+
+  it("falls back safely for malformed or unknown versions", () => {
+    window.localStorage.setItem(QUESTION_HISTORY_KEY, "{not valid JSON");
+    expect(readQuestionHistory(window.localStorage)).toEqual({});
+
+    window.localStorage.setItem(
+      QUESTION_HISTORY_KEY,
+      JSON.stringify({ version: 999, seenByMode: {} }),
+    );
+    expect(readQuestionHistory(window.localStorage)).toEqual({});
+  });
 });
 
 describe("best-score storage", () => {
   const emptyScores = {
-    geography: 0,
+    population: 0,
     history: 0,
+    geography: 0,
     science: 0,
+    animals: 0,
     space: 0,
-    "human-world": 0,
+    technology: 0,
+    movies: 0,
     mixed: 0,
   };
 
   it("uses a versioned, application-specific key", () => {
-    expect(STORAGE_KEY).toBe("close-enough:v2");
+    expect(STORAGE_KEY).toBe("close-enough:v3");
   });
 
   it("round-trips best scores through an injected Storage object", () => {
     const scores = {
-      geography: 7_800,
+      population: 7_800,
       history: 8_250,
-      science: 6_400,
-      space: 7_100,
-      "human-world": 5_950,
+      geography: 6_400,
+      science: 7_100,
+      animals: 5_950,
+      space: 6_700,
+      technology: 7_450,
+      movies: 8_010,
       mixed: 9_100,
     };
 
