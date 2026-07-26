@@ -337,26 +337,32 @@ h2 {
 
 /* ── Daily challenge ────────────────────────────────────────────────────── */
 
-.daily-card {
+/*
+ * The daily banner. A stadium pill while it fits on one line; at narrow widths
+ * it wraps, and a 999px radius around two stacked lines reads as a mistake, so
+ * the corners relax to a rounded rectangle instead (see the 720px block below).
+ */
+.daily-strip-wrap {
   width: min(100%, var(--content));
-  margin: clamp(18px, 2.6vw, 24px) auto 0;
-  padding: clamp(20px, 3.4vw, 28px);
-  border: 1.5px solid var(--accent);
-  border-radius: 24px;
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
+  margin: 0 auto clamp(20px, 3.2vw, 30px);
 }
 
-.daily-head {
+.daily-strip {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: 10px 16px;
+  gap: 8px 14px;
+  padding: 9px 10px 9px 16px;
+  border: 1.5px solid var(--accent);
+  border-radius: 999px;
+  background: var(--surface);
 }
 
-.daily-eyebrow {
-  margin: 0;
+.daily-strip-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: var(--accent-ink);
   font-size: 12px;
   font-weight: 800;
@@ -364,10 +370,58 @@ h2 {
   text-transform: uppercase;
 }
 
-.daily-title {
-  margin: 4px 0 0;
-  font-size: clamp(22px, 3.4vw, 28px);
-  line-height: 1.2;
+.daily-strip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.daily-strip-date {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.daily-strip-meta {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.daily-strip-play,
+.daily-strip-past {
+  padding: 7px 16px;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+}
+
+.daily-strip-play {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.daily-strip-past {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+.daily-strip-past:hover {
+  border-color: var(--accent);
+}
+
+.daily-strip-note {
+  margin: 10px 0 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .streak-badge {
@@ -394,25 +448,6 @@ h2 {
 
 .streak-badge strong {
   font-variant-numeric: tabular-nums;
-}
-
-.daily-lede {
-  margin: 14px 0 0;
-  color: var(--muted);
-  font-size: 15px;
-}
-
-.daily-actions {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.daily-footnote {
-  margin: 12px 0 0;
-  color: var(--muted);
-  font-size: 13px;
 }
 
 .daily-archive {
@@ -1839,9 +1874,14 @@ h2 {
     grid-template-columns: 1fr;
   }
 
-  .hero-demo-actions,
-  .daily-actions {
+  .hero-demo-actions {
     grid-template-columns: 1fr;
+  }
+
+  /* Wrapped onto more than one line, a stadium pill stops reading as one. */
+  .daily-strip {
+    border-radius: 20px;
+    padding: 12px 14px;
   }
 
   .join-row {
