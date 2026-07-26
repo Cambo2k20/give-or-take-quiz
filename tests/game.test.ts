@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CATEGORIES,
+  formatQuestionValue,
   formatYear,
   positionToValue,
   QUESTION_HISTORY_KEY,
@@ -11,6 +12,7 @@ import {
   scoreGuess,
   selectQuestions,
   selectQuestionsWithHistory,
+  startPosition,
   STORAGE_KEY,
   valueToPosition,
   writeBestScores,
@@ -19,36 +21,24 @@ import {
 
 type Question = Parameters<typeof positionToValue>[0];
 
-function question(
-  overrides: Partial<{
-    id: string;
-    category: "population" | "history";
-    subtype: string;
-    prompt: string;
-    answer: number;
-    min: number;
-    max: number;
-    scale: "linear" | "log";
-    unit: string;
-    referenceYear: number;
-    source: { title: string; url: string };
-    explanation: string;
-  }> = {},
-) {
+// Tied to the real Question type rather than a hand-listed subset, so a field
+// added to the model cannot silently become unsettable here.
+function question(overrides: Partial<Question> = {}): Question {
   return {
     id: "test-question",
-    category: "history" as const,
-    subtype: "year",
+    category: "history",
+    measure: "history",
+    subtype: "event",
     prompt: "When did the test event happen?",
     answer: 50,
     min: 0,
     max: 100,
-    scale: "linear" as const,
+    scale: "linear",
     unit: "year",
     source: { title: "Test source", url: "https://example.com/source" },
     explanation: "A deterministic fixture used by the unit tests.",
     ...overrides,
-  } as Question;
+  };
 }
 
 function seededRandom(seed: number) {
@@ -125,6 +115,60 @@ describe("scoreGuess", () => {
   it("returns zero for opposite ends of the scale", () => {
     const fixture = question({ answer: 0 });
     expect(scoreGuess(fixture, 100)).toBe(0);
+  });
+});
+
+describe("startPosition", () => {
+  it("gives the same question the same start every time", () => {
+    const subject = question({ id: "stable-question" });
+    expect(startPosition(subject)).toBe(startPosition(subject));
+    // A different object with the same id is the same puzzle to every player.
+    expect(startPosition(question({ id: "stable-question" }))).toBe(
+      startPosition(subject),
+    );
+  });
+
+  it("moves the start around as the question changes", () => {
+    const starts = new Set(
+      Array.from({ length: 40 }, (_, index) =>
+        startPosition(question({ id: `varied-${index}` })),
+      ),
+    );
+    // No fixed strategy survives if the opening position keeps moving.
+    expect(starts.size).toBeGreaterThan(30);
+  });
+
+  it("stays inside the band, away from both rail ends", () => {
+    for (let index = 0; index < 200; index += 1) {
+      const start = startPosition(question({ id: `banded-${index}` }));
+      expect(start).toBeGreaterThanOrEqual(0.1);
+      expect(start).toBeLessThanOrEqual(0.9);
+    }
+  });
+
+  it("never opens on top of the answer, wherever the answer sits", () => {
+    for (let answer = 0; answer <= 100; answer += 1) {
+      const subject = question({ id: `answer-${answer}`, answer });
+      const start = startPosition(subject);
+      const answerPosition = valueToPosition(subject, answer);
+      expect(Math.abs(start - answerPosition)).toBeGreaterThanOrEqual(0.2);
+    }
+  });
+
+  it("keeps its distance on a log scale too, where positions bunch up", () => {
+    for (let power = 0; power < 9; power += 1) {
+      const subject = question({
+        id: `log-${power}`,
+        answer: 10 ** power,
+        min: 1,
+        max: 1_000_000_000,
+        scale: "log",
+        unit: "count",
+      });
+      const start = startPosition(subject);
+      const answerPosition = valueToPosition(subject, subject.answer);
+      expect(Math.abs(start - answerPosition)).toBeGreaterThanOrEqual(0.2);
+    }
   });
 });
 
@@ -232,6 +276,27 @@ describe("selectQuestions", () => {
         second.questions.some((question) => question.category === category),
       ).toBe(true);
     }
+  });
+});
+
+describe("formatQuestionValue", () => {
+  const metres = (overrides = {}) =>
+    question({ measure: "size", subtype: "length", unit: "metre", scale: "log", min: 0.1, max: 100, answer: 6.5, ...overrides });
+
+  it("keeps a decimal on small fractional values", () => {
+    // 6.5 m displaying as "7 m" would contradict the answer the round scores.
+    expect(formatQuestionValue(metres(), 6.5)).toBe("6.5 m");
+    expect(formatQuestionValue(metres(), 0.25)).toBe("0.3 m");
+  });
+
+  it("still rounds whole numbers and large magnitudes", () => {
+    expect(formatQuestionValue(metres(), 7)).toBe("7 m");
+    expect(formatQuestionValue(metres(), 143000.4)).toBe("143,000 m");
+  });
+
+  it("leaves units that set their own precision alone", () => {
+    const percent = question({ measure: "quantity", subtype: "percentage", unit: "percent", scale: "linear", min: 0, max: 100, answer: 12.5 });
+    expect(formatQuestionValue(percent, 12.5)).toBe("12.5%");
   });
 });
 

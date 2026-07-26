@@ -124,6 +124,27 @@ export async function submitRound(
   return { roundId: result.round_id, totalScore: result.total_score };
 }
 
+/**
+ * Records a finished daily. Unlike submitRound this names a calendar day, not a
+ * mode: the server checks the guesses against that day's published set and
+ * files the round on the per-day board.
+ */
+export async function submitDailyRound(
+  date: string,
+  guesses: readonly RoundGuess[],
+): Promise<SubmittedRound> {
+  const { data, error } = await client().rpc("submit_daily_round", {
+    p_date: date,
+    p_guesses: guesses,
+  });
+
+  if (error) throw new Error(error.message);
+
+  const result = data as { round_id: string; total_score: number } | null;
+  if (!result) throw new Error("The round was not recorded.");
+  return { roundId: result.round_id, totalScore: result.total_score };
+}
+
 export async function fetchLeaderboard(
   mode: GameMode,
   limit = 10,
@@ -142,6 +163,33 @@ export async function fetchLeaderboard(
     displayName: row.display_name,
     bestScore: row.best_score,
     roundsPlayed: row.rounds_played,
+    rank: row.rank,
+  }));
+}
+
+/**
+ * The board for one day's puzzle. Ranked within the date only — two dailies
+ * are different puzzles — so callers always name the day they want. `attempts`
+ * maps onto roundsPlayed: each attempt at the puzzle is one round.
+ */
+export async function fetchDailyLeaderboard(
+  date: string,
+  limit = 10,
+): Promise<LeaderboardRow[]> {
+  const { data, error } = await client()
+    .from("daily_leaderboard")
+    .select("player_id, display_name, best_score, attempts, rank")
+    .eq("puzzle_date", date)
+    .order("best_score", { ascending: false })
+    .limit(limit);
+
+  if (error) throw new Error(error.message);
+
+  return (data ?? []).map((row) => ({
+    playerId: row.player_id,
+    displayName: row.display_name,
+    bestScore: row.best_score,
+    roundsPlayed: row.attempts,
     rank: row.rank,
   }));
 }

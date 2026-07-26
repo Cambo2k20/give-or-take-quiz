@@ -5,6 +5,7 @@ import {
   pickDemoQuestion,
   positionToValue,
   scoreGuess,
+  startPosition,
 } from "../lib/game";
 import { EstimatePanel } from "./EstimatePanel";
 import {
@@ -21,7 +22,7 @@ import {
  */
 export function HeroDemo({ onPlay }: { onPlay: () => void }) {
   const [question, setQuestion] = useState(pickDemoQuestion);
-  const [position, setPosition] = useState(0.5);
+  const [position, setPosition] = useState(() => startPosition(question));
   const [locked, setLocked] = useState(false);
   const [revealing, setRevealing] = useState(false);
 
@@ -50,8 +51,9 @@ export function HeroDemo({ onPlay }: { onPlay: () => void }) {
   }
 
   function tryAnother() {
-    setQuestion(pickDemoQuestion());
-    setPosition(0.5);
+    const next = pickDemoQuestion();
+    setQuestion(next);
+    setPosition(startPosition(next));
     setLocked(false);
     setRevealing(false);
   }

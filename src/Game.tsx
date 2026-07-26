@@ -10,16 +10,28 @@ import {
   readQuestionHistory,
   scoreGuess,
   selectQuestionsWithHistory,
+  startPosition,
   writeBestScores,
   writeQuestionHistory,
 } from "../lib/game";
 import { signOut } from "../lib/auth";
+import {
+  activeStreak,
+  dailySetFor,
+  playableDailyDates,
+  readDailyProgress,
+  recordDailyResult,
+  todayIso,
+  todaysDailySet,
+  writeDailyProgress,
+} from "../lib/daily";
 import type { GameMode, Question } from "../lib/types";
 import {
   AuthPanel,
   ConfirmEmailNotice,
   NewPasswordForm,
 } from "./AuthPanel";
+import { DailyArchive, DailyCard, readableDate } from "./Daily";
 import { EstimatePanel } from "./EstimatePanel";
 import { HeroDemo } from "./HeroDemo";
 import { JoinLeaderboardForm, LeaderboardPanel } from "./Leaderboard";
@@ -34,7 +46,13 @@ import { type Theme, applyTheme, readTheme } from "./theme";
 import { useAuth } from "./useAuth";
 import { useLeaderboard } from "./useLeaderboard";
 
-type Phase = "category" | "playing" | "results" | "leaderboard" | "account";
+type Phase =
+  | "category"
+  | "playing"
+  | "results"
+  | "leaderboard"
+  | "account"
+  | "daily-archive";
 type RoundResult = { question: Question; guess: number; points: number };
 
 const GlobeIcon = () => (
@@ -219,6 +237,12 @@ export default function Game() {
   const [theme, setTheme] = useState<Theme>(readTheme);
   const [bestScores, setBestScores] = useState<BestScores>(readBestScores);
   const [questionHistory, setQuestionHistory] = useState(readQuestionHistory);
+  const [dailyProgress, setDailyProgress] = useState(readDailyProgress);
+  // Non-null while the round in play is a daily, and holds which day's it is.
+  const [dailyDate, setDailyDate] = useState<string | null>(null);
+  // Which board the leaderboard screen shows: a daily date, or null for the
+  // category board belonging to `mode`.
+  const [boardDate, setBoardDate] = useState<string | null>(null);
   const [shareStatus, setShareStatus] = useState("");
   const focusHeadingRef = useRef<HTMLHeadingElement>(null);
   const auth = useAuth();
@@ -261,39 +285,66 @@ export default function Game() {
     Boolean(currentResult),
   );
 
-  const { profile: player, publish, resetSubmit, loadBoard } = leaderboard;
+  // A daily is five questions and a category round ten, so the ceiling is read
+  // off the round rather than assumed.
+  const maxScore = gameQuestions.length * 1000;
+  const todaysDaily = useMemo(() => todaysDailySet(), []);
+  const archiveDates = useMemo(() => playableDailyDates(), []);
+  const streak = activeStreak(dailyProgress);
+  const today = todayIso();
+  const playedToday = dailyProgress.lastPlayedDate === today;
+
+  const {
+    profile: player,
+    publish,
+    publishDaily,
+    resetSubmit,
+    loadBoard,
+    loadDailyBoard,
+  } = leaderboard;
   const canPublish = auth.canUseLeaderboard;
 
   // Publish the moment a round ends, but only for a player who already has a
   // name. Everyone else is offered the join form on the results screen.
+  //
+  // A daily goes to its own per-day board, never a category one: two days are
+  // two different puzzles, so their scores must not rank together.
   useEffect(() => {
     if (phase !== "results" || publishedRef.current) return;
     if (!player || !canPublish || results.length === 0) return;
     publishedRef.current = true;
-    void publish(
-      mode,
-      results.map((result) => ({
-        question_id: result.question.id,
-        guess: result.guess,
-      })),
-    );
-  }, [phase, mode, results, player, canPublish, publish]);
+    const guesses = results.map((result) => ({
+      question_id: result.question.id,
+      guess: result.guess,
+    }));
+    void (dailyDate ? publishDaily(dailyDate, guesses) : publish(mode, guesses));
+  }, [phase, mode, results, player, canPublish, publish, publishDaily, dailyDate]);
 
   async function joinAndPublish(name: string) {
     await leaderboard.join(name);
     publishedRef.current = true;
-    await publish(
-      mode,
-      results.map((result) => ({
-        question_id: result.question.id,
-        guess: result.guess,
-      })),
-    );
+    const guesses = results.map((result) => ({
+      question_id: result.question.id,
+      guess: result.guess,
+    }));
+    if (dailyDate) {
+      await publishDaily(dailyDate, guesses);
+    } else {
+      await publish(mode, guesses);
+    }
   }
 
   function openLeaderboard() {
+    setBoardDate(null);
     setPhase("leaderboard");
     void loadBoard(mode);
+  }
+
+  /** The per-day board. Reached from a daily's results or the Daily tab. */
+  function openDailyBoard(date: string) {
+    setBoardDate(date);
+    setPhase("leaderboard");
+    void loadDailyBoard(date);
   }
 
   function toggleTheme() {
@@ -302,14 +353,11 @@ export default function Game() {
     applyTheme(next);
   }
 
-  function startGame(selectedMode: GameMode) {
-    const draw = selectQuestionsWithHistory(selectedMode, questionHistory);
-    setMode(selectedMode);
-    setGameQuestions(draw.questions);
-    setQuestionHistory(draw.history);
-    writeQuestionHistory(draw.history);
+  /** Everything a round needs reset, whichever way it was started. */
+  function beginRound(roundQuestions: Question[]) {
+    setGameQuestions(roundQuestions);
     setQuestionIndex(0);
-    setPosition(0.5);
+    setPosition(roundQuestions[0] ? startPosition(roundQuestions[0]) : 0.5);
     setLocked(false);
     setRevealing(false);
     setResults([]);
@@ -317,6 +365,26 @@ export default function Game() {
     publishedRef.current = false;
     resetSubmit();
     setPhase("playing");
+  }
+
+  function startGame(selectedMode: GameMode) {
+    const draw = selectQuestionsWithHistory(selectedMode, questionHistory);
+    setMode(selectedMode);
+    setDailyDate(null);
+    setQuestionHistory(draw.history);
+    writeQuestionHistory(draw.history);
+    beginRound(draw.questions);
+  }
+
+  /**
+   * The daily is a fixed set, so it neither draws from the shared bank nor
+   * touches question history — everyone must get the same ten in the same order.
+   */
+  function startDaily(date: string) {
+    const set = dailySetFor(date);
+    if (!set) return;
+    setDailyDate(date);
+    beginRound([...set.questions]);
   }
 
   function lockGuess() {
@@ -332,23 +400,35 @@ export default function Game() {
   function goToNextQuestion() {
     if (!locked) return;
     if (questionIndex === gameQuestions.length - 1) {
-      const updated = {
-        ...bestScores,
-        [mode]: Math.max(bestScores[mode], totalScore),
-      };
-      setBestScores(updated);
-      writeBestScores(updated);
+      // A daily is scored per day rather than as a personal best, so the two
+      // records never mix.
+      if (dailyDate) {
+        const updated = recordDailyResult(dailyProgress, dailyDate, totalScore);
+        setDailyProgress(updated);
+        writeDailyProgress(updated);
+      } else {
+        const updated = {
+          ...bestScores,
+          [mode]: Math.max(bestScores[mode], totalScore),
+        };
+        setBestScores(updated);
+        writeBestScores(updated);
+      }
       setPhase("results");
       return;
     }
+    const next = gameQuestions[questionIndex + 1];
     setQuestionIndex((current) => current + 1);
-    setPosition(0.5);
+    setPosition(next ? startPosition(next) : 0.5);
     setLocked(false);
     setRevealing(false);
   }
 
   async function shareResult() {
-    const text = `I scored ${formatPoints(totalScore)}/10,000 in Give or Take — ${MODE_LABELS[mode]}. How close can you get?`;
+    // Naming the day is the point of sharing a daily: the reader can play the
+    // same ten questions and compare directly.
+    const label = dailyDate ? `the ${dailyDate} daily` : MODE_LABELS[mode];
+    const text = `I scored ${formatPoints(totalScore)}/${formatPoints(maxScore)} in Give or Take — ${label}. How close can you get?`;
     const url = window.location.href;
     try {
       if (navigator.share) {
@@ -383,7 +463,8 @@ export default function Game() {
         <div className="header-side">
           {activePhase === "playing" && (
             <p className="score-chip">
-              {MODE_LABELS[mode]} · <strong>{formatPoints(totalScore)}</strong>
+              {dailyDate ? "Daily" : MODE_LABELS[mode]} ·{" "}
+              <strong>{formatPoints(totalScore)}</strong>
             </p>
           )}
           {leaderboard.enabled && activePhase !== "playing" && (
@@ -453,6 +534,18 @@ export default function Game() {
           </div>
 
           <HeroDemo onPlay={() => startGame("mixed")} />
+
+          {todaysDaily && (
+            <DailyCard
+              set={todaysDaily}
+              streak={streak}
+              playedToday={playedToday}
+              score={dailyProgress.scores[today] ?? null}
+              archiveCount={archiveDates.length}
+              onPlay={() => startDaily(todaysDaily.date)}
+              onOpenArchive={() => setPhase("daily-archive")}
+            />
+          )}
 
           <p className="mode-grid-label">Or pick a category</p>
           <div className="mode-grid" aria-label="Choose a category">
@@ -578,34 +671,53 @@ export default function Game() {
       {activePhase === "results" && (
         <section className="results-screen">
           <div className="results-hero">
-            <p className="eyebrow">{MODE_LABELS[mode]} · Game complete</p>
+            <p className="eyebrow">
+              {dailyDate ? `Daily · ${dailyDate}` : MODE_LABELS[mode]} · Game
+              complete
+            </p>
             <h1 ref={focusHeadingRef} tabIndex={-1}>
               Final score
             </h1>
             <div className="final-score">
               <strong>{formatPoints(totalScore)}</strong>
-              <span>/ 10,000</span>
+              <span>/ {formatPoints(maxScore)}</span>
             </div>
             <div className="result-summary">
               <p>
-                {totalScore === bestScores[mode] && totalScore > 0
-                  ? "That’s your best score in this category."
-                  : `Your best ${MODE_LABELS[mode].toLowerCase()} score is ${formatPoints(bestScores[mode])}.`}
+                {dailyDate
+                  ? streak > 0
+                    ? `That's a ${streak}-day streak. Come back tomorrow to keep it.`
+                    : "Play tomorrow's daily to start a streak."
+                  : totalScore === bestScores[mode] && totalScore > 0
+                    ? "That’s your best score in this category."
+                    : `Your best ${MODE_LABELS[mode].toLowerCase()} score is ${formatPoints(bestScores[mode])}.`}
               </p>
               <div className="result-actions">
-                <button
-                  className="primary-button"
-                  type="button"
-                  onClick={() => startGame(mode)}
-                >
-                  Play again
-                </button>
+                {dailyDate ? (
+                  <button
+                    className="primary-button"
+                    type="button"
+                    onClick={() => setPhase("category")}
+                  >
+                    Back to the game
+                  </button>
+                ) : (
+                  <button
+                    className="primary-button"
+                    type="button"
+                    onClick={() => startGame(mode)}
+                  >
+                    Play again
+                  </button>
+                )}
                 <button
                   className="secondary-button"
                   type="button"
-                  onClick={() => setPhase("category")}
+                  onClick={() =>
+                    setPhase(dailyDate ? "daily-archive" : "category")
+                  }
                 >
-                  Change category
+                  {dailyDate ? "Past dailies" : "Change category"}
                 </button>
                 <button
                   className="secondary-button"
@@ -626,8 +738,8 @@ export default function Game() {
               {auth.status === "signed-out" ? (
                 <>
                   <p className="board-status">
-                    Your score is saved on this device. Sign in to put it on the
-                    leaderboard.
+                    Your score is saved on this device. Sign in to put it on{" "}
+                    {dailyDate ? "the day's board" : "the leaderboard"}.
                   </p>
                   <AuthPanel compact />
                 </>
@@ -659,9 +771,11 @@ export default function Game() {
               <button
                 className="secondary-button"
                 type="button"
-                onClick={openLeaderboard}
+                onClick={() =>
+                  dailyDate ? openDailyBoard(dailyDate) : openLeaderboard()
+                }
               >
-                See the leaderboard
+                {dailyDate ? "See the day's board" : "See the leaderboard"}
               </button>
             </div>
           )}
@@ -700,20 +814,39 @@ export default function Game() {
       {activePhase === "leaderboard" && (
         <section className="board-screen">
           <div className="results-hero">
-            <p className="eyebrow">Best score per player</p>
+            <p className="eyebrow">
+              {boardDate
+                ? `Daily · ${readableDate(boardDate)}`
+                : "Best score per player"}
+            </p>
             <h1 ref={focusHeadingRef} tabIndex={-1}>
               Leaderboard
             </h1>
           </div>
 
-          <div className="board-modes" aria-label="Choose a category">
+          <div className="board-modes" aria-label="Choose a board">
+            {archiveDates.length > 0 && (
+              <button
+                type="button"
+                className={`board-mode${boardDate ? " is-current" : ""}`}
+                aria-pressed={boardDate !== null}
+                onClick={() => {
+                  // The newest playable date, which is today once its set is out.
+                  const [latest] = archiveDates;
+                  if (latest) openDailyBoard(latest);
+                }}
+              >
+                Daily
+              </button>
+            )}
             {MODES.map((detail) => (
               <button
                 key={detail.mode}
                 type="button"
-                className={`board-mode${detail.mode === mode ? " is-current" : ""}`}
-                aria-pressed={detail.mode === mode}
+                className={`board-mode${detail.mode === mode && !boardDate ? " is-current" : ""}`}
+                aria-pressed={detail.mode === mode && !boardDate}
                 onClick={() => {
+                  setBoardDate(null);
                   setMode(detail.mode);
                   void loadBoard(detail.mode);
                 }}
@@ -731,13 +864,54 @@ export default function Game() {
           />
 
           <div className="result-actions">
+            {boardDate ? (
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() => startDaily(boardDate)}
+              >
+                Play this daily
+              </button>
+            ) : (
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() => startGame(mode)}
+              >
+                Play {MODE_LABELS[mode]}
+              </button>
+            )}
             <button
-              className="primary-button"
+              className="secondary-button"
               type="button"
-              onClick={() => startGame(mode)}
+              onClick={() => setPhase("category")}
             >
-              Play {MODE_LABELS[mode]}
+              Back
             </button>
+          </div>
+        </section>
+      )}
+
+      {activePhase === "daily-archive" && (
+        <section className="board-screen">
+          <div className="results-hero">
+            <p className="eyebrow">
+              {streak > 0
+                ? `${streak}-day streak`
+                : "Play today's to start a streak"}
+            </p>
+            <h1 ref={focusHeadingRef} tabIndex={-1}>
+              Past dailies
+            </h1>
+          </div>
+
+          <DailyArchive
+            dates={archiveDates}
+            progress={dailyProgress}
+            onPlay={startDaily}
+          />
+
+          <div className="result-actions">
             <button
               className="secondary-button"
               type="button"

@@ -1,8 +1,40 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+// The real schedule is content the game owner edits, so the daily tests run
+// against a fixture instead: they should not start failing the day a set is
+// added, rewritten or retired.
+vi.mock("@/data/daily-sets.json", () => ({
+  default: {
+    version: 1,
+    sets: [
+      { date: "2026-08-01", questions: fixtureQuestions("one") },
+      { date: "2026-08-02", questions: fixtureQuestions("two") },
+    ],
+  },
+}));
+
+function fixtureQuestions(prefix: string) {
+  return Array.from({ length: 5 }, (_, index) => ({
+    id: `fixture-${prefix}-${index + 1}`,
+    category: "science" as const,
+    measure: "physics" as const,
+    subtype: "duration" as const,
+    prompt: `Fixture question ${prefix} number ${index + 1}, how long?`,
+    answer: 40 + index,
+    min: 1,
+    max: 100,
+    scale: "linear" as const,
+    unit: "second" as const,
+    source: { title: "Fixture source", url: "https://example.com/fixture" },
+    explanation: "A fixture question used only by the test suite.",
+  }));
+}
+
 import Game from "@/src/Game";
 import { readBestScores } from "@/lib/game";
+import { dailySets, readDailyProgress } from "@/lib/daily";
 
 function categoryButton(mode: "Geography" | "History" | "Mixed") {
   const label = screen.getByText(mode, { exact: true, selector: "strong" });
@@ -159,6 +191,81 @@ describe("Game", () => {
     expect(
       screen.queryByRole("heading", { name: /how close can you get\?/i }),
     ).not.toBeInTheDocument();
+  });
+
+  describe("daily challenge", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+      window.localStorage.clear();
+    });
+
+    /** Pins the clock to a published set so "today" has a daily to play. */
+    function onPublishedDay(index = 0) {
+      const set = dailySets[index];
+      if (!set) throw new Error("data/daily-sets.json has no sets to test with");
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      vi.setSystemTime(new Date(`${set.date}T09:00:00`));
+      return set;
+    }
+
+    it("offers today's daily and plays it to a score", async () => {
+      const set = onPublishedDay();
+      const user = userEvent.setup();
+      render(<Game />);
+
+      expect(
+        screen.getByRole("button", { name: /play today's daily/i }),
+      ).toBeInTheDocument();
+
+      await user.click(
+        screen.getByRole("button", { name: /play today's daily/i }),
+      );
+
+      for (let index = 0; index < set.questions.length; index += 1) {
+        await user.click(
+          await screen.findByRole("button", { name: /lock in guess/i }),
+        );
+        const last = index === set.questions.length - 1;
+        await user.click(
+          await screen.findByRole("button", {
+            name: last ? /see results/i : /next question/i,
+          }),
+        );
+      }
+
+      expect(
+        await screen.findByRole("heading", { name: /final score/i }),
+      ).toBeInTheDocument();
+      // Five questions, so the ceiling is 5,000 rather than a category round's.
+      expect(screen.getByText("/ 5,000")).toBeInTheDocument();
+
+      const progress = readDailyProgress(window.localStorage);
+      expect(progress.current).toBe(1);
+      expect(progress.lastPlayedDate).toBe(set.date);
+      expect(progress.scores[set.date]).toEqual(expect.any(Number));
+
+      // The daily is scored per day and must not touch category bests.
+      expect(readBestScores(window.localStorage).mixed).toBe(0);
+    });
+
+    it("lists past dailies in the archive", async () => {
+      // Stand on the second published day so the first is in the past.
+      const set = onPublishedDay(1);
+      const earlier = dailySets[0];
+      if (!earlier) throw new Error("expected an earlier daily set");
+
+      const user = userEvent.setup();
+      render(<Game />);
+
+      await user.click(screen.getByRole("button", { name: /past dailies/i }));
+
+      expect(
+        await screen.findByRole("heading", { name: /past dailies/i }),
+      ).toBeInTheDocument();
+      // Both the current day and the earlier one are playable.
+      expect(screen.getAllByRole("button", { name: /^play$/i })).toHaveLength(2);
+      expect(set.date >= earlier.date).toBe(true);
+    });
   });
 
   it("copies the result when Web Share is unavailable, then returns to categories", async () => {

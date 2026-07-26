@@ -69,6 +69,64 @@ export function valueToPosition(question: Question, value: number): number {
   return (safeValue - question.min) / (question.max - question.min);
 }
 
+/**
+ * Where the slider sits before it is touched, as a fraction of the rail.
+ *
+ * The band stops short of the ends so the opening estimate always reads as a
+ * plausible guess rather than a limit, and the gap keeps a start from landing
+ * on its own answer — that would pay out forever to anyone who left the slider
+ * alone on that question.
+ */
+const START_BAND_MIN = 0.1;
+const START_BAND_MAX = 0.9;
+const START_ANSWER_GAP = 0.2;
+
+/** FNV-1a folded into [0, 1). Small and stable; not a security boundary. */
+function hashUnitInterval(text: string): number {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0) / 0x100000000;
+}
+
+/**
+ * The slider's opening position for a question.
+ *
+ * Derived from the question id rather than drawn at random, so that everyone
+ * playing a given daily starts from the same place: a start that varied per
+ * device would hand some players a shorter drag than others on the same puzzle.
+ * Varying it per question is what stops a player from leaving the slider alone
+ * and collecting a reliable score for it.
+ */
+export function startPosition(question: Question): number {
+  const answer = valueToPosition(question, question.answer);
+  const below: [number, number] = [
+    START_BAND_MIN,
+    Math.min(START_BAND_MAX, answer - START_ANSWER_GAP),
+  ];
+  const above: [number, number] = [
+    Math.max(START_BAND_MIN, answer + START_ANSWER_GAP),
+    START_BAND_MAX,
+  ];
+  const spans = [below, above].filter(([from, to]) => to > from);
+
+  // Unreachable while the band is wider than one gap, but a later change to
+  // these constants should degrade rather than return NaN.
+  if (spans.length === 0) {
+    return answer > 0.5 ? START_BAND_MIN : START_BAND_MAX;
+  }
+
+  const total = spans.reduce((sum, [from, to]) => sum + (to - from), 0);
+  let offset = hashUnitInterval(question.id) * total;
+  for (const [from, to] of spans) {
+    if (offset < to - from) return from + offset;
+    offset -= to - from;
+  }
+  return spans[spans.length - 1][1];
+}
+
 export function scoreGuess(question: Question, guess: number): number {
   const distance = Math.abs(
     valueToPosition(question, question.answer) -
@@ -130,17 +188,32 @@ const UNIT_SUFFIXES: Record<QuestionUnit, string> = {
   celsius: " °C",
 };
 
-// Sliders only ever emit whole numbers, but a stored answer may be fractional.
+// Sliders only ever emit whole numbers, but a stored answer or slider bound may
+// be fractional.
 const UNIT_FRACTION_DIGITS: Partial<Record<QuestionUnit, number>> = {
   percent: 1,
   celsius: 1,
 };
 
+/**
+ * How many decimals a value needs to survive being displayed.
+ *
+ * Rounding to whole numbers is right for the magnitudes most questions deal in,
+ * but it turns a 6.5 m mirror into "7 m" and a 0.25 m slider floor into "0 m".
+ * Small fractional values therefore keep one decimal.
+ */
+function fractionDigits(unit: QuestionUnit, value: number): number {
+  const explicit = UNIT_FRACTION_DIGITS[unit];
+  if (explicit !== undefined) return explicit;
+  if (Number.isInteger(value)) return 0;
+  return Math.abs(value) < 1000 ? 1 : 0;
+}
+
 export function formatQuestionValue(question: Question, value: number): string {
   if (question.unit === "year") return formatYear(value);
 
   const formatted = new Intl.NumberFormat("en-GB", {
-    maximumFractionDigits: UNIT_FRACTION_DIGITS[question.unit] ?? 0,
+    maximumFractionDigits: fractionDigits(question.unit, value),
   }).format(value);
 
   if (question.unit === "usd") return `$${formatted}`;

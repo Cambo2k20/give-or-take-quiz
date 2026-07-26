@@ -86,3 +86,22 @@ export interface Question {
   source: QuestionSource;
   explanation: string;
 }
+
+/**
+ * One day's puzzle. Every player who opens the app on `date` gets exactly these
+ * questions in this order, which is what makes daily scores comparable.
+ *
+ * Daily questions are written for the daily and never appear in category play,
+ * so `data/daily-sets.json` is a bank of its own rather than a schedule over
+ * the shared one.
+ */
+export interface DailySet {
+  /** Calendar day in ISO `YYYY-MM-DD`, read in the player's own timezone. */
+  date: string;
+  questions: Question[];
+}
+
+export interface DailySchedule {
+  version: number;
+  sets: DailySet[];
+}
