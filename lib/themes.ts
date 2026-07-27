@@ -286,6 +286,69 @@ export const BACKGROUND_THEMES = [
       },
     },
   }),
+  defineBackgroundTheme({
+    id: "aurora-drift",
+    name: "Aurora Drift",
+    description:
+      "Slow emerald and violet ribbons beneath a sparse, meteor-lit night sky.",
+    gate: {
+      category: "space",
+      rank: 10,
+    },
+    modes: {
+      dark: {
+        ui: {
+        "--bg": "#030509",
+        "--surface": "rgba(8, 19, 25, 0.89)",
+        "--sunk": "rgba(10, 30, 34, 0.84)",
+        "--rail": "rgba(94, 234, 212, 0.15)",
+        "--ink": "#f3fbfa",
+        "--ink-soft": "#d1eeeb",
+        "--muted": "#9ebbb8",
+        "--line": "rgba(94, 234, 212, 0.22)",
+        "--line-strong": "rgba(139, 92, 246, 0.38)",
+        "--accent": "#5eead4",
+        "--accent-hover": "#8bf4e4",
+        "--accent-shadow": "#187a70",
+        "--accent-ink": "#76f3df",
+        "--accent-wash": "rgba(45, 212, 191, 0.16)",
+        "--on-accent": "#05120f",
+        "--good": "#72e0bd",
+        "--good-wash": "rgba(64, 199, 156, 0.14)",
+        "--warn": "#f0c568",
+        "--warn-wash": "rgba(224, 170, 55, 0.14)",
+        "--bad": "#f08ba7",
+        "--bad-wash": "rgba(225, 88, 133, 0.14)",
+        "--shadow-card":
+          "0 18px 54px rgba(0, 5, 9, 0.42), 0 1px 0 rgba(255, 255, 255, 0.04)",
+        "--shadow-press": "0 3px 0 var(--accent-shadow)",
+        },
+        artwork: {
+        "--artwork-aurora-sky-center": "#0b1a1f",
+        "--artwork-aurora-sky-middle": "#060d14",
+        "--artwork-aurora-sky-edge": "#030509",
+        "--artwork-aurora-violet": "rgba(168, 85, 247, 0.4)",
+        "--artwork-aurora-emerald": "rgba(16, 185, 129, 0.35)",
+        "--artwork-aurora-teal": "rgba(45, 212, 191, 0.5)",
+        "--artwork-aurora-purple": "rgba(139, 92, 246, 0.4)",
+        "--artwork-aurora-mint": "rgba(94, 234, 212, 0.4)",
+        "--artwork-aurora-magenta": "rgba(217, 70, 239, 0.35)",
+        "--artwork-aurora-star": "rgba(255, 255, 255, 0.82)",
+        "--artwork-aurora-star-bright": "rgba(204, 251, 241, 0.96)",
+        "--artwork-aurora-meteor-faint": "rgba(132, 199, 255, 0.12)",
+        "--artwork-aurora-meteor-tail": "rgba(206, 235, 255, 0.68)",
+        "--artwork-aurora-meteor-head": "rgba(255, 255, 255, 1)",
+        "--artwork-aurora-meteor-glow": "rgba(160, 214, 255, 0.4)",
+        "--artwork-aurora-meteor-bloom": "rgba(151, 210, 255, 0.78)",
+        "--artwork-aurora-meteor-halo": "rgba(196, 137, 255, 0.3)",
+        "--artwork-aurora-vignette": "rgba(0, 0, 0, 0.55)",
+        "--artwork-aurora-lock-ink": "rgba(243, 251, 250, 0.88)",
+        "--artwork-aurora-lock-bg": "rgba(3, 5, 9, 0.52)",
+        "--artwork-aurora-veil": "rgba(3, 5, 9, 0.04)",
+        },
+      },
+    },
+  }),
 ] as const satisfies readonly BackgroundThemeMetadata[];
 
 export type BackgroundTheme = (typeof BACKGROUND_THEMES)[number];
@@ -320,6 +383,7 @@ export function isThemeSupportedInMode(
 const DEV_UNLOCKED_THEME_IDS = [
   "city-pulse",
   "front-row",
+  "aurora-drift",
 ] as const satisfies readonly BackgroundThemeId[];
 const DEV_UNLOCKED_THEME_ID_SET: ReadonlySet<BackgroundThemeId> = new Set(
   DEV_UNLOCKED_THEME_IDS,

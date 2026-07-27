@@ -1,4 +1,5 @@
 import { DAILY_MAX_SCORE } from "../lib/daily";
+import { BrandMark } from "./BrandMark";
 import { compactReadableDate, readableDate } from "./Daily";
 import { formatPoints } from "./questionText";
 import type { Theme } from "./theme";
@@ -106,7 +107,7 @@ export function HomeHeader({
         onClick={onHome}
         aria-label="Give or Take home"
       >
-        <span className="wordmark-mark" aria-hidden="true" />
+        <BrandMark />
         <span>Give or Take</span>
       </button>
 

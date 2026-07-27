@@ -140,6 +140,9 @@
     .theme-preview *,
     .theme-preview *::before,
     .theme-preview *::after,
+    .aurora-drift--preview *,
+    .aurora-drift--preview *::before,
+    .aurora-drift--preview *::after,
     .svg-theme-artwork--preview *,
     .svg-theme-artwork--preview *::before,
     .svg-theme-artwork--preview *::after
@@ -152,6 +155,9 @@
     .theme-preview *,
     .theme-preview *::before,
     .theme-preview *::after,
+    .aurora-drift--preview *,
+    .aurora-drift--preview *::before,
+    .aurora-drift--preview *::after,
     .svg-theme-artwork--preview *,
     .svg-theme-artwork--preview *::before,
     .svg-theme-artwork--preview *::after

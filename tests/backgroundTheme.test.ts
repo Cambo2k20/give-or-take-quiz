@@ -161,6 +161,12 @@ function modeFixture(
 }
 
 describe("background theme mode contract", () => {
+  it("gates Aurora Drift at Space rank 10", () => {
+    expect(
+      BACKGROUND_THEMES.find((theme) => theme.id === "aurora-drift")?.gate,
+    ).toEqual({ category: "space", rank: 10 });
+  });
+
   it("defines every shipped theme as dark-only for now", () => {
     for (const theme of BACKGROUND_THEMES) {
       expect(supportedModesForTheme(theme), theme.id).toEqual(["dark"]);

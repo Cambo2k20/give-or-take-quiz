@@ -91,4 +91,101 @@
 - `npm test -- --run` — 14 files and 187 tests passed.
 - `npm run build` — passed, including data validation, TypeScript and production Vite output.
 
+## Adaptive brand mark
+
+### Evidence
+
+- Source visual truth: `C:\Users\Cambo\.codex\generated_images\019f9dfa-7a75-7d93-bde2-46607ecd925e\call_gWHLEl1tZjNsgcpNSEsRMCuT.png` (selected **Opposing Brackets** concept).
+- Generated production asset source: `C:\Users\Cambo\.codex\generated_images\019f9dfa-7a75-7d93-bde2-46607ecd925e\call_BOR0WCLZw0ZMbEBKwjunq8hr.png`.
+- Rendered implementation captures:
+  - `C:\Users\Cambo\AppData\Local\Temp\give-or-take-logo-light.png`
+  - `C:\Users\Cambo\AppData\Local\Temp\give-or-take-logo-deep-space.png`
+  - `C:\Users\Cambo\AppData\Local\Temp\give-or-take-logo-city-pulse.png`
+  - `C:\Users\Cambo\AppData\Local\Temp\give-or-take-logo-front-row.png`
+- Combined full-view comparison: `C:\Users\Cambo\AppData\Local\Temp\give-or-take-logo-qa-full.png`.
+- Combined focused comparison: `C:\Users\Cambo\AppData\Local\Temp\give-or-take-logo-qa-focused.png`.
+- Source pixels: 1536 x 1024. Implementation screenshots: 1263 x 1257 pixels from a 1278 x 1272 CSS-pixel browser viewport at device scale 1.
+- Comparison images normalize the source and implementation by proportional downscaling only; neither artifact was stretched.
+- State: signed-in player on the homepage plus the standard account header, in default light, Deep Space, City Pulse, and Front Row.
+
+### Full-view comparison
+
+- The selected bracket-and-point idea is clearly recognizable in the live header without changing the existing homepage hierarchy or header proportions.
+- The mark remains subordinate to the product name and does not compete with the Daily or navigation controls.
+- Existing theme artwork, palettes, typography, and page composition remain unchanged.
+
+### Focused fidelity review
+
+- **Fonts and typography:** The existing product wordmark type remains unchanged. Its 800 weight, 17-23px responsive sizing, and spacing preserve the current header while matching the selected concept's heavy sans-serif character.
+- **Spacing and layout rhythm:** The production mark uses a compact 28 x 21px base frame and a 32 x 24px homepage frame. It stays vertically centred and does not change the header shell height.
+- **Colors and tokens:** The left bracket and centre point use the active semantic `--accent`; the right bracket uses the wordmark's current text colour. This intentionally adapts the concept to every current and future palette without adding theme-specific overrides.
+- **Image quality and asset fidelity:** Both visible shapes come from transparent raster masks generated from the selected ImageGen artwork. Edges remain clean at header size, with no white halo, stretched crop, CSS drawing, inline SVG, or placeholder asset.
+- **Copy and content:** “Give or Take” and the accessible “Give or Take home” label are unchanged.
+
+### Interaction, accessibility, and browser checks
+
+- Home navigation works from both the merged homepage header and the standard application header.
+- Theme switching and selecting Deep Space, City Pulse, and Front Row update the mark immediately.
+- The decorative mark remains `aria-hidden`; the button retains its accessible label and keyboard focus behavior.
+- Browser console check found no errors.
+- The fixed in-app browser viewport was used for visual comparison. The existing sub-720px mark sizing rule was updated in place; no surrounding responsive layout rule changed.
+
+### Findings and comparison history
+
+- The first generated mask split allowed a thin neutral sliver to overlap the centre point. The masks were regenerated from the same source with the split moved into the clear gap between the centre point and right bracket.
+- The post-fix focused comparison shows a clean centre point in all four palettes, with no overlap or transparency halo.
+- No actionable P0, P1, or P2 differences remain.
+- Accepted P3 adaptation: the default app uses its established warm accent instead of the concept board's fixed violet, and City Pulse uses the semantic text colour for the neutral bracket instead of introducing an extra cyan-only logo token. This is deliberate theme-system integration, not visual drift.
+
+### Verification
+
+- `npm run lint` — passed.
+- `npm test -- --run` — 15 files and 198 tests passed.
+- `npm run build` — passed, including data validation, TypeScript, and production Vite output.
+
+## Aurora Drift theme
+
+### Evidence
+
+- Source visual truth: `C:\Users\Cambo\Documents\Codex\2026-07-27\https-supabase-com-dashboard-project-zwovdyyuacuipfhtycxw\animated-space-background-options\audit\07-improved-1c-shooting-star.png`.
+- Browser-rendered implementation: `C:\Users\Cambo\Documents\Codex\2026-07-27\https-supabase-com-dashboard-project-zwovdyyuacuipfhtycxw\animated-space-background-options\audit\aurora-drift-production-640x360.png`.
+- Equal-size comparison input: `C:\Users\Cambo\Documents\Codex\2026-07-27\https-supabase-com-dashboard-project-zwovdyyuacuipfhtycxw\animated-space-background-options\audit\aurora-drift-source-vs-production.png` (source left, production right).
+- Source and implementation pixels: 640 x 360. Implementation CSS frame: 640 x 360 at device scale 1. No scaling, stretching, density conversion or device-frame normalization was required.
+- State: dark-only Aurora Drift artwork with the first meteor held at its visible keyframe for a deterministic comparison. The live preview uses the production timing and remains animated.
+
+### Full-view comparison
+
+- The production frame preserves the selected 1c composition: teal-black radial sky, violet atmosphere above, emerald light below, two soft horizontal aurora ribbons, a dark vignette and a top-right diagonal meteor.
+- The meteor keeps the improved five-pixel luminous head, tapered blue-white trail and layered violet-blue bloom from the selected source.
+- The final star field has comparable visual density without creating 150 DOM nodes. Small tiled CSS stars provide depth while the brighter hand-placed layer prevents visible repetition.
+
+### Focused fidelity review
+
+- **Fonts and typography:** not applicable; both the visual target and theme artwork contain no text.
+- **Spacing and layout rhythm:** the source and implementation share the same 16:9 frame, ribbon band, meteor quadrant and edge vignette. The implementation is also responsive at the full portrait browser viewport without clipping or exposing a hard artwork boundary.
+- **Colors and tokens:** the production tokens preserve the source values for the sky (`#0b1a1f` through `#030509`), violet, emerald, teal, purple, mint and magenta layers. The full UI palette passed the shared contrast checks.
+- **Image quality and asset fidelity:** the source itself is generated CSS motion rather than a raster illustration. Production uses the same code-native layer technique, with sharper CSS stars and no stretched raster, compression, masking halo or substitute asset.
+- **Copy and content:** the registry name is “Aurora Drift”; its unlock is Space rank 10, whose live rank title is “Orbit Scout.”
+- A separate focused crop was not needed because the equal-size 640 x 360 comparison makes the meteor head, trail, stars, ribbons and vignette individually readable.
+
+### Interaction, accessibility and browser checks
+
+- The theme registry auto-discovers one artwork component for Aurora Drift and renders both locked preview and equipped backdrop variants.
+- Gallery animation stays paused until hover, focus or active interaction. Reduced motion stops every aurora animation and removes the meteors.
+- Aurora Drift is dark-only, persists through the existing background preference flow and remains independent of the free light/dark setting.
+- The live production preview loads both aurora ribbons and both meteors. Reload checks found no console event or page error in either the integrated app or the isolated artwork preview.
+- The unlock contract has a regression test for `{ category: "space", rank: 10 }`.
+
+### Findings and comparison history
+
+- Initial P2: the first production capture had much lower star density than the selected 1c source. The base layer was expanded with small, staggered repeating fields while retaining the brighter hand-placed stars. The post-fix equal-size comparison shows comparable density with less foreground glare behind game UI.
+- Accepted P3: the production stars are slightly dimmer than the source. This preserves the source's depth while reducing competition with live game copy and controls.
+- No actionable P0, P1 or P2 differences remain.
+
+### Verification
+
+- `npm run lint` — passed.
+- `npm test` — 15 files and 209 tests passed.
+- `npm run build` — passed, including data validation, TypeScript and production Vite output.
+
 final result: passed

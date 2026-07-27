@@ -52,6 +52,7 @@ import type { BackgroundThemeId } from "../lib/themes";
 import { ThemeArtwork } from "./themes/ThemeArtwork";
 import { DailyArchive } from "./Daily";
 import { HomeHeader } from "./HomeHeader";
+import { BrandMark } from "./BrandMark";
 import {
   AchievementPanel,
   ProfileDashboard,
@@ -737,7 +738,7 @@ export default function Game() {
           onClick={() => setPhase("category")}
           aria-label="Give or Take home"
         >
-          <span className="wordmark-mark" aria-hidden="true" />
+          <BrandMark />
           <span>Give or Take</span>
         </button>
         <div className="header-side">

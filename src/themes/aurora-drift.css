@@ -1,0 +1,493 @@
+.aurora-drift {
+  overflow: hidden;
+  isolation: isolate;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 50% 60%,
+    var(--artwork-aurora-sky-center) 0%,
+    var(--artwork-aurora-sky-middle) 55%,
+    var(--artwork-aurora-sky-edge) 100%
+  );
+}
+
+.aurora-drift--preview {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 1;
+}
+
+.aurora-drift--backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+}
+
+.aurora-drift__scene,
+.aurora-drift__glow,
+.aurora-drift__ribbon,
+.aurora-drift__stars,
+.aurora-drift__vignette {
+  position: absolute;
+  inset: 0;
+}
+
+.aurora-drift__scene {
+  overflow: hidden;
+}
+
+.aurora-drift__glow {
+  border-radius: 50%;
+  mix-blend-mode: screen;
+}
+
+.aurora-drift__glow--violet {
+  width: 65%;
+  height: 65%;
+  left: 10%;
+  top: 0%;
+  background: radial-gradient(
+    circle,
+    var(--artwork-aurora-violet) 0%,
+    transparent 70%
+  );
+  filter: blur(50px);
+  animation: aurora-drift-violet 34s ease-in-out infinite;
+}
+
+.aurora-drift__glow--emerald {
+  width: 55%;
+  height: 55%;
+  left: auto;
+  right: 0%;
+  top: auto;
+  bottom: 5%;
+  background: radial-gradient(
+    circle,
+    var(--artwork-aurora-emerald) 0%,
+    transparent 70%
+  );
+  filter: blur(50px);
+  animation: aurora-drift-emerald 32s ease-in-out infinite;
+}
+
+.aurora-drift__ribbon {
+  left: -10%;
+  width: 120%;
+  height: 28%;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  transform-origin: center;
+}
+
+.aurora-drift__ribbon--upper {
+  top: 32%;
+  bottom: auto;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--artwork-aurora-teal),
+    var(--artwork-aurora-purple),
+    transparent
+  );
+  filter: blur(25px);
+  animation: aurora-drift-wave 22s ease-in-out infinite;
+}
+
+.aurora-drift__ribbon--lower {
+  top: 52%;
+  bottom: auto;
+  height: 22%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--artwork-aurora-mint),
+    var(--artwork-aurora-magenta),
+    transparent
+  );
+  filter: blur(22px);
+  animation: aurora-drift-wave 28s ease-in-out infinite reverse;
+}
+
+.aurora-drift__stars {
+  opacity: 0.62;
+  background-image:
+    radial-gradient(
+      circle at 7% 18%,
+      var(--artwork-aurora-star) 0 0.8px,
+      transparent 1.6px
+    ),
+    radial-gradient(
+      circle at 18% 72%,
+      var(--artwork-aurora-star) 0 1.05px,
+      transparent 1.75px
+    ),
+    radial-gradient(
+      circle at 27% 31%,
+      var(--artwork-aurora-star) 0 0.75px,
+      transparent 1.45px
+    ),
+    radial-gradient(
+      circle at 36% 86%,
+      var(--artwork-aurora-star) 0 0.9px,
+      transparent 1.65px
+    ),
+    radial-gradient(
+      circle at 45% 12%,
+      var(--artwork-aurora-star) 0 1px,
+      transparent 1.7px
+    ),
+    radial-gradient(
+      circle at 54% 66%,
+      var(--artwork-aurora-star) 0 0.7px,
+      transparent 1.45px
+    ),
+    radial-gradient(
+      circle at 64% 25%,
+      var(--artwork-aurora-star) 0 0.9px,
+      transparent 1.55px
+    ),
+    radial-gradient(
+      circle at 73% 78%,
+      var(--artwork-aurora-star) 0 1.05px,
+      transparent 1.8px
+    ),
+    radial-gradient(
+      circle at 84% 42%,
+      var(--artwork-aurora-star) 0 0.75px,
+      transparent 1.5px
+    ),
+    radial-gradient(
+      circle at 93% 11%,
+      var(--artwork-aurora-star) 0 1px,
+      transparent 1.7px
+    ),
+    radial-gradient(
+      circle at 96% 89%,
+      var(--artwork-aurora-star) 0 0.8px,
+      transparent 1.55px
+    ),
+    radial-gradient(
+      circle at 12% 48%,
+      var(--artwork-aurora-star) 0 0.7px,
+      transparent 1.4px
+    ),
+    radial-gradient(
+      circle at 41% 49%,
+      var(--artwork-aurora-star) 0 0.8px,
+      transparent 1.5px
+    ),
+    radial-gradient(
+      circle at 69% 55%,
+      var(--artwork-aurora-star) 0 0.85px,
+      transparent 1.55px
+    ),
+    radial-gradient(
+      circle at 87% 67%,
+      var(--artwork-aurora-star) 0 0.7px,
+      transparent 1.4px
+    );
+  animation: aurora-drift-stars 11s ease-in-out infinite alternate;
+}
+
+.aurora-drift__stars--bright {
+  opacity: 0.72;
+  background-image:
+    radial-gradient(
+      circle at 14% 27%,
+      var(--artwork-aurora-star-bright) 0 1.45px,
+      transparent 2.15px
+    ),
+    radial-gradient(
+      circle at 33% 63%,
+      var(--artwork-aurora-star-bright) 0 1.25px,
+      transparent 1.95px
+    ),
+    radial-gradient(
+      circle at 58% 8%,
+      var(--artwork-aurora-star-bright) 0 1.55px,
+      transparent 2.25px
+    ),
+    radial-gradient(
+      circle at 76% 37%,
+      var(--artwork-aurora-star-bright) 0 1.35px,
+      transparent 2.05px
+    ),
+    radial-gradient(
+      circle at 91% 82%,
+      var(--artwork-aurora-star-bright) 0 1.5px,
+      transparent 2.2px
+    );
+  animation-duration: 5.5s;
+  animation-delay: -2s;
+}
+
+.aurora-drift__stars:not(.aurora-drift__stars--bright)::before,
+.aurora-drift__stars:not(.aurora-drift__stars--bright)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-repeat: repeat;
+}
+
+.aurora-drift__stars:not(.aurora-drift__stars--bright)::before {
+  opacity: 0.58;
+  background-image:
+    radial-gradient(
+      circle at 17% 23%,
+      var(--artwork-aurora-star) 0 0.55px,
+      transparent 1.05px
+    ),
+    radial-gradient(
+      circle at 74% 61%,
+      var(--artwork-aurora-star) 0 0.65px,
+      transparent 1.15px
+    ),
+    radial-gradient(
+      circle at 42% 82%,
+      var(--artwork-aurora-star) 0 0.5px,
+      transparent 1px
+    );
+  background-size: 83px 97px, 127px 109px, 101px 137px;
+  background-position: 11px 7px, 37px 19px, 5px 43px;
+}
+
+.aurora-drift__stars:not(.aurora-drift__stars--bright)::after {
+  opacity: 0.44;
+  background-image:
+    radial-gradient(
+      circle at 63% 14%,
+      var(--artwork-aurora-star) 0 0.45px,
+      transparent 0.95px
+    ),
+    radial-gradient(
+      circle at 29% 69%,
+      var(--artwork-aurora-star) 0 0.55px,
+      transparent 1.05px
+    );
+  background-size: 149px 83px, 109px 151px;
+  background-position: 23px 31px, 67px 13px;
+}
+
+.aurora-drift__meteor {
+  --meteor-angle: 52deg;
+  --meteor-duration: 15.7s;
+  --meteor-delay: 4.1s;
+  --meteor-x: 32vw;
+  --meteor-y: 58vh;
+  position: absolute;
+  width: min(18vw, 180px);
+  height: 2px;
+  left: 34%;
+  top: -5%;
+  border-radius: 999px;
+  transform-origin: right center;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--artwork-aurora-meteor-faint) 28%,
+    var(--artwork-aurora-meteor-tail) 76%,
+    var(--artwork-aurora-meteor-head) 100%
+  );
+  box-shadow: 0 0 5px var(--artwork-aurora-meteor-glow);
+  opacity: 0;
+  animation: aurora-drift-meteor
+    var(--meteor-duration)
+    linear
+    var(--meteor-delay)
+    infinite;
+}
+
+.aurora-drift__meteor::before {
+  content: "";
+  position: absolute;
+  inset: -3px 0;
+  border-radius: inherit;
+  background: inherit;
+  filter: blur(4px);
+  opacity: 0.55;
+}
+
+.aurora-drift__meteor::after {
+  content: "";
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  right: -2px;
+  top: 50%;
+  border-radius: 50%;
+  background: var(--artwork-aurora-meteor-head);
+  transform: translateY(-50%);
+  box-shadow:
+    0 0 5px 1px var(--artwork-aurora-meteor-head),
+    0 0 14px 4px var(--artwork-aurora-meteor-bloom),
+    0 0 24px 7px var(--artwork-aurora-meteor-halo);
+}
+
+.aurora-drift__meteor--two {
+  --meteor-angle: 14deg;
+  --meteor-duration: 19.3s;
+  --meteor-delay: 11.2s;
+  --meteor-x: 116vw;
+  --meteor-y: 28vh;
+  width: min(16vw, 155px);
+  left: -25%;
+  top: 68%;
+}
+
+.aurora-drift__vignette {
+  z-index: 1;
+  background:
+    radial-gradient(
+      ellipse at 50% 50%,
+      transparent 48%,
+      var(--artwork-aurora-vignette) 100%
+    ),
+    var(--artwork-aurora-veil);
+}
+
+.aurora-drift__lock {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--artwork-aurora-lock-ink);
+  background: var(--artwork-aurora-lock-bg);
+}
+
+.aurora-drift__lock svg {
+  width: 22px;
+  height: 22px;
+}
+
+.aurora-drift.is-locked .aurora-drift__scene {
+  filter: grayscale(1) brightness(0.55);
+}
+
+.aurora-drift--preview .aurora-drift__meteor--one {
+  --meteor-x: 210px;
+  --meteor-y: 280px;
+  width: 150px;
+}
+
+.aurora-drift--preview .aurora-drift__meteor--two {
+  --meteor-x: 640px;
+  --meteor-y: 160px;
+  width: 130px;
+}
+
+.aurora-drift--backdrop
+  :where(
+    .aurora-drift__glow,
+    .aurora-drift__ribbon,
+    .aurora-drift__stars,
+    .aurora-drift__meteor
+  ) {
+  will-change: transform, opacity;
+}
+
+@keyframes aurora-drift-violet {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(1.8%, -1%, 0) scale(1.02);
+  }
+}
+
+@keyframes aurora-drift-emerald {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-1.2%, -1.5%, 0) scale(1.025);
+  }
+}
+
+@keyframes aurora-drift-wave {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: translate3d(-2%, 0, 0) skewY(-2deg);
+  }
+  50% {
+    opacity: 0.55;
+    transform: translate3d(2%, 0, 0) skewY(-1deg);
+  }
+}
+
+@keyframes aurora-drift-stars {
+  from {
+    opacity: 0.34;
+  }
+  to {
+    opacity: 0.78;
+  }
+}
+
+@keyframes aurora-drift-meteor {
+  0%,
+  68% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0)
+      rotate(var(--meteor-angle))
+      scaleX(0.28);
+  }
+  71% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0)
+      rotate(var(--meteor-angle))
+      scaleX(0.45);
+  }
+  73% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0)
+      rotate(var(--meteor-angle))
+      scaleX(0.82);
+  }
+  76% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(var(--meteor-angle))
+      scaleX(1);
+  }
+  84% {
+    opacity: 0.9;
+  }
+  90%,
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--meteor-x), var(--meteor-y), 0)
+      rotate(var(--meteor-angle))
+      scaleX(0.62);
+  }
+}
+
+@media (max-width: 600px) {
+  .aurora-drift__glow--violet,
+  .aurora-drift__glow--emerald {
+    filter: blur(38px);
+  }
+
+  .aurora-drift__ribbon--upper {
+    filter: blur(19px);
+  }
+
+  .aurora-drift__ribbon--lower {
+    filter: blur(17px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-drift *,
+  .aurora-drift *::before,
+  .aurora-drift *::after {
+    animation: none !important;
+  }
+
+  .aurora-drift__meteor {
+    display: none;
+  }
+}

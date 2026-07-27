@@ -5,6 +5,7 @@ import {
   BADGE_RANK_FLOORS,
   type PlayerProgress,
 } from "@/lib/progress";
+import { BACKGROUND_THEMES } from "@/lib/themes";
 import type { QuestionCategory } from "@/lib/types";
 
 // A player mid-ladder: two subjects titled, the rest still Newcomer, and a
@@ -386,7 +387,9 @@ describe("progression screens", () => {
       await screen.findByRole("heading", { name: /^unlocks$/i }),
     ).toBeInTheDocument();
     expect(screen.getByText("Deep Space")).toBeInTheDocument();
-    expect(screen.getAllByText("Dark mode")).toHaveLength(3);
+    expect(screen.getAllByText("Dark mode")).toHaveLength(
+      BACKGROUND_THEMES.length,
+    );
     // The fixture's Space rank is 1; the gate is rank 5 (Stargazer).
     expect(screen.getByText(/Space rank 1 \/ 5 for Stargazer/)).toBeInTheDocument();
     expect(screen.queryByText(/^Unlocked/)).not.toBeInTheDocument();

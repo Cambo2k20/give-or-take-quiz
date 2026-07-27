@@ -24,6 +24,10 @@ const deepSpaceStyles = readFileSync(
   resolve("src/themes/deep-space.css"),
   "utf8",
 );
+const auroraDriftStyles = readFileSync(
+  resolve("src/themes/aurora-drift.css"),
+  "utf8",
+);
 
 describe("theme artwork registry", () => {
   it("has exactly one auto-discovered artwork component per theme", () => {
@@ -83,7 +87,13 @@ describe("theme artwork registry", () => {
   });
 
   it("disables every artwork animation for reduced motion", () => {
-    for (const css of [themeStyles, cityStyles, frontRowStyles, deepSpaceStyles]) {
+    for (const css of [
+      themeStyles,
+      cityStyles,
+      frontRowStyles,
+      deepSpaceStyles,
+      auroraDriftStyles,
+    ]) {
       expect(css).toContain("@media (prefers-reduced-motion: reduce)");
       expect(css).toMatch(/animation:\s*none(?:\s*!important)?/);
     }
@@ -91,12 +101,23 @@ describe("theme artwork registry", () => {
 
   it("never uses backdrop-filter over moving artwork", () => {
     expect(
-      [themeStyles, cityStyles, frontRowStyles, deepSpaceStyles].join("\n"),
+      [
+        themeStyles,
+        cityStyles,
+        frontRowStyles,
+        deepSpaceStyles,
+        auroraDriftStyles,
+      ].join("\n"),
     ).not.toContain("backdrop-filter");
   });
 
   it("limits will-change to backdrop animation selectors", () => {
-    for (const css of [themeStyles, cityStyles, frontRowStyles]) {
+    for (const css of [
+      themeStyles,
+      cityStyles,
+      frontRowStyles,
+      auroraDriftStyles,
+    ]) {
       const selectors = [...css.matchAll(/([^{}]+)\{[^{}]*will-change:/g)].map(
         (match) => match[1],
       );
@@ -106,6 +127,41 @@ describe("theme artwork registry", () => {
         expect(selector).not.toContain("--preview");
       }
     }
+  });
+});
+
+describe("Aurora Drift artwork", () => {
+  it("keeps two aurora ribbons, two star fields and two improved meteors", () => {
+    const { container } = render(
+      <ThemeArtwork
+        themeId="aurora-drift"
+        mode="dark"
+        variant="backdrop"
+      />,
+    );
+
+    expect(container.querySelectorAll(".aurora-drift__ribbon")).toHaveLength(2);
+    expect(container.querySelectorAll(".aurora-drift__stars")).toHaveLength(2);
+    expect(container.querySelectorAll(".aurora-drift__meteor")).toHaveLength(2);
+    expect(auroraDriftStyles).toContain("aurora-drift-meteor");
+    expect(auroraDriftStyles).toContain("aurora-drift-wave");
+  });
+
+  it("renders a locked, motion-paused gallery preview", () => {
+    const { container } = render(
+      <ThemeArtwork
+        themeId="aurora-drift"
+        mode="dark"
+        variant="preview"
+        locked
+      />,
+    );
+
+    expect(container.querySelector(".aurora-drift--preview")).toHaveClass(
+      "is-locked",
+    );
+    expect(container.querySelector(".aurora-drift__lock")).not.toBeNull();
+    expect(themeStyles).toContain(".aurora-drift--preview *");
   });
 });
 
