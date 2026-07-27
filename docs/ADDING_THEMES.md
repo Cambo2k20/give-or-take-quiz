@@ -31,7 +31,6 @@ defineBackgroundTheme({
   gate: {
     category: "geography",
     rank: 5,
-    title: "Abyss Diver",
   },
   modes: {
     dark: {
@@ -65,6 +64,11 @@ The UI palette owns:
 
 `category` must be a real `QuestionCategory`. The example uses `geography`;
 inventing a category such as `depth` will fail the typecheck.
+
+Gate titles are not duplicated in this registry. The unlock card resolves the
+matching `(category, rank)` title from the public `rank_titles` badge
+catalogue, so correcting a ladder title updates ranks, rewards and theme copy
+together.
 
 ### Light-only
 

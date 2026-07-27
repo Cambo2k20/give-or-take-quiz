@@ -78,7 +78,7 @@ export type BackgroundThemeMetadata<
   name: string;
   description: string;
   /** The rank that unlocks it, in the currency the player already earns. */
-  gate: { category: QuestionCategory; rank: number; title: string };
+  gate: { category: QuestionCategory; rank: number };
   /** A theme may support one application mode or both, but never neither. */
   modes: BackgroundThemeModes<Artwork>;
 };
@@ -115,7 +115,7 @@ export const BACKGROUND_THEMES = [
     name: "Deep Space",
     description:
       "A drifting nebula and a slow orbit behind every screen. Reduced motion holds it still.",
-    gate: { category: "space", rank: 5, title: "Stargazer" },
+    gate: { category: "space", rank: 5 },
     modes: {
       dark: {
         ui: {
@@ -177,7 +177,6 @@ export const BACKGROUND_THEMES = [
     gate: {
       category: "technology",
       rank: 5,
-      title: "Grid Architect",
     },
     modes: {
       dark: {
@@ -238,7 +237,6 @@ export const BACKGROUND_THEMES = [
     gate: {
       category: "movies",
       rank: 5,
-      title: "Projectionist",
     },
     modes: {
       dark: {

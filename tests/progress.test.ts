@@ -1,15 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // player_progress reads stop at .eq(); player_achievements chains .order()
-// on top. A thenable that also exposes .order() covers both shapes without
-// two separate mock setups per test.
+// on top; rank_titles is awaited directly after .select().
 function tableResponse(data: unknown, error: unknown = null) {
   const resolved = Promise.resolve({ data, error });
+  const order = vi.fn(() => resolved);
   const eq = vi.fn(() => ({
     then: resolved.then.bind(resolved),
-    order: vi.fn(() => resolved),
+    order,
   }));
-  return { select: vi.fn(() => ({ eq })), eq };
+  return {
+    select: vi.fn(() => ({
+      then: resolved.then.bind(resolved),
+      eq,
+      order,
+    })),
+    eq,
+  };
 }
 
 const { tables } = vi.hoisted(() => ({
@@ -25,6 +32,18 @@ vi.mock("@/lib/supabase", () => ({
 
 const { diffProgress, fetchProgress } = await import("@/lib/progress");
 const { CATEGORIES } = await import("@/lib/game");
+const { BADGE_RANK_FLOORS } = await import("@/lib/progress");
+
+function badgeRows() {
+  return CATEGORIES.flatMap((category) =>
+    BADGE_RANK_FLOORS.map((rankFloor) => ({
+      category,
+      rank_floor: rankFloor,
+      title: `${category} title ${rankFloor}`,
+      badge_key: `${category}-${String(rankFloor).padStart(2, "0")}`,
+    })),
+  );
+}
 
 function progressRow(overrides: Partial<Record<string, unknown>> = {}) {
   return {
@@ -42,6 +61,7 @@ function progressRow(overrides: Partial<Record<string, unknown>> = {}) {
 
 beforeEach(() => {
   for (const key of Object.keys(tables)) delete tables[key];
+  tables.rank_titles = tableResponse(badgeRows());
 });
 
 describe("fetchProgress", () => {
@@ -63,6 +83,11 @@ describe("fetchProgress", () => {
       (entry) => entry.category === "history",
     );
     expect(history).toMatchObject({ xp: 0, rank: 1, title: "Newcomer" });
+    expect(result.badgeCatalogueAvailable).toBe(true);
+    expect(result.badges).toHaveLength(48);
+    expect(
+      result.badges.find((badge) => badge.badgeKey === "space-05"),
+    ).toMatchObject({ earned: true, current: true });
   });
 
   it("sums every subject's XP into the one headline total", async () => {
@@ -168,6 +193,34 @@ describe("fetchProgress", () => {
 
     await expect(fetchProgress("player-1")).rejects.toThrow("network error");
   });
+
+  it("keeps ordinary progression when the optional badge catalogue fails", async () => {
+    tables.player_progress = tableResponse([
+      progressRow({ category: "science", xp: 900, rank: 3 }),
+    ]);
+    tables.player_achievements = tableResponse([]);
+    tables.rank_titles = tableResponse(null, { message: "catalogue offline" });
+
+    const result = await fetchProgress("player-1");
+
+    expect(result.categories.find((entry) => entry.category === "science")).toMatchObject({
+      xp: 900,
+      rank: 3,
+    });
+    expect(result.badgeCatalogueAvailable).toBe(false);
+    expect(result.badges).toEqual([]);
+  });
+
+  it("rejects an incomplete catalogue as a unit instead of mixing ladders", async () => {
+    tables.player_progress = tableResponse([]);
+    tables.player_achievements = tableResponse([]);
+    tables.rank_titles = tableResponse(badgeRows().slice(0, -1));
+
+    const result = await fetchProgress("player-1");
+
+    expect(result.badgeCatalogueAvailable).toBe(false);
+    expect(result.badges).toEqual([]);
+  });
 });
 
 describe("diffProgress", () => {
@@ -206,19 +259,35 @@ describe("diffProgress", () => {
         earned: false,
       },
     ],
+    badges: [
+      {
+        badgeKey: "population-05",
+        category: "population" as const,
+        rankFloor: 5 as const,
+        title: "People Watcher",
+        earned: false,
+        current: false,
+      },
+    ],
+    badgeCatalogueAvailable: true,
   };
 
   it("reports nothing when there is no prior snapshot to compare against", () => {
     // Announcing a returning player's whole back catalogue after one round
     // would be worse than staying quiet.
     const after = { ...before };
-    expect(diffProgress(null, after)).toEqual({ rankUps: [], unlocked: [] });
+    expect(diffProgress(null, after)).toEqual({
+      rankUps: [],
+      unlocked: [],
+      badgesUnlocked: [],
+    });
   });
 
   it("reports nothing when nothing actually moved", () => {
     expect(diffProgress(before, before)).toEqual({
       rankUps: [],
       unlocked: [],
+      badgesUnlocked: [],
     });
   });
 
@@ -235,6 +304,7 @@ describe("diffProgress", () => {
         { category: "population", rank: 5, title: "People Watcher" },
       ],
       unlocked: [],
+      badgesUnlocked: [],
     });
   });
 
@@ -259,5 +329,64 @@ describe("diffProgress", () => {
     const result = diffProgress(before, after);
     expect(result.unlocked).toHaveLength(1);
     expect(result.unlocked[0].id).toBe("regular");
+  });
+
+  it("reports every badge threshold crossed in one refresh", () => {
+    const badgeSteps = [
+      {
+        badgeKey: "population-05",
+        category: "population" as const,
+        rankFloor: 5 as const,
+        title: "People Watcher",
+        earned: false,
+        current: false,
+      },
+      {
+        badgeKey: "population-10",
+        category: "population" as const,
+        rankFloor: 10 as const,
+        title: "Crowd Counter",
+        earned: false,
+        current: false,
+      },
+      {
+        badgeKey: "population-15",
+        category: "population" as const,
+        rankFloor: 15 as const,
+        title: "Census Scout",
+        earned: false,
+        current: false,
+      },
+    ];
+    const start = { ...before, badges: badgeSteps };
+    const after = {
+      ...start,
+      categories: [{ ...before.categories[0], rank: 16 }],
+      badges: badgeSteps.map((badge, index) => ({
+        ...badge,
+        earned: true,
+        current: index === badgeSteps.length - 1,
+      })),
+    };
+
+    expect(diffProgress(start, after).badgesUnlocked.map((badge) => badge.badgeKey)).toEqual([
+      "population-05",
+      "population-10",
+      "population-15",
+    ]);
+  });
+
+  it("does not announce a backlog when the catalogue recovers after a failure", () => {
+    const after = {
+      ...before,
+      badges: before.badges.map((badge) => ({ ...badge, earned: true, current: true })),
+    };
+
+    expect(
+      diffProgress(
+        { ...before, badges: [], badgeCatalogueAvailable: false },
+        after,
+      ).badgesUnlocked,
+    ).toEqual([]);
   });
 });

@@ -1,13 +1,15 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { PlayerProgress } from "@/lib/progress";
+import {
+  BADGE_RANK_FLOORS,
+  type PlayerProgress,
+} from "@/lib/progress";
+import type { QuestionCategory } from "@/lib/types";
 
 // A player mid-ladder: two subjects titled, the rest still Newcomer, and a
 // mix of earned and unearned achievements.
-const fixture: PlayerProgress = {
-  totalXp: 9_400,
-  categories: [
+const fixtureCategories: PlayerProgress["categories"] = [
     ["population", 4_200, 10, "Crowd Counter"],
     ["history", 3_700, 9, "Time Tourist"],
     ["geography", 900, 2, "Newcomer"],
@@ -26,7 +28,104 @@ const fixture: PlayerProgress = {
     rankFloorXp: 0,
     nextRankXp: 5_000,
     fraction: 0.5,
-  })),
+  }));
+
+const badgeTitles: Record<QuestionCategory, readonly string[]> = {
+  population: [
+    "People Watcher",
+    "Crowd Counter",
+    "Census Scout",
+    "Demography Detective",
+    "Population Expert",
+    "Sage of the Census",
+  ],
+  history: [
+    "Time Tourist",
+    "Past Pupil",
+    "Chronicle Keeper",
+    "Era Expert",
+    "Timeline Sage",
+    "Master of Ages",
+  ],
+  geography: [
+    "Globe Gazer",
+    "Terrain Tracker",
+    "Atlas Scholar",
+    "Meridian Master",
+    "Famed Pathfinder",
+    "Master of the Earth",
+  ],
+  science: [
+    "Curious Mind",
+    "Lab Assistant",
+    "Theory Tester",
+    "Formula Finder",
+    "Master of Matter",
+    "Architect of Reality",
+  ],
+  animals: [
+    "Creature Curious",
+    "Wildlife Tracker",
+    "Species Specialist",
+    "Creature Connoisseur",
+    "Beast Whisperer",
+    "Guardian of the Wild",
+  ],
+  space: [
+    "Stargazer",
+    "Orbit Scout",
+    "Planet Pathfinder",
+    "Cosmic Navigator",
+    "Galactic Sage",
+    "Oracle of the Cosmos",
+  ],
+  technology: [
+    "Tinkerer",
+    "Gadget Scout",
+    "Machine Maker",
+    "Engineering Expert",
+    "Master Inventor",
+    "Titan of Technology",
+  ],
+  movies: [
+    "Casual Viewer",
+    "Film Fan",
+    "Screen Scholar",
+    "Movie Maestro",
+    "Cinema Savant",
+    "Legend of the Silver Screen",
+  ],
+};
+
+function fixtureBadges(
+  categories: PlayerProgress["categories"] = fixtureCategories,
+): PlayerProgress["badges"] {
+  const rankByCategory = new Map(
+    categories.map((entry) => [entry.category, entry.rank]),
+  );
+  return Object.entries(badgeTitles).flatMap(([rawCategory, titles]) => {
+    const category = rawCategory as QuestionCategory;
+    const rank = rankByCategory.get(category) ?? 1;
+    const currentFloor = [...BADGE_RANK_FLOORS]
+      .reverse()
+      .find((floor) => floor <= rank);
+    return titles.map((title, index) => {
+      const rankFloor = BADGE_RANK_FLOORS[index];
+      return {
+        badgeKey: `${category}-${String(rankFloor).padStart(2, "0")}`,
+        category,
+        rankFloor,
+        title,
+        earned: rankFloor <= rank,
+        current: rankFloor === currentFloor,
+      };
+    });
+  });
+}
+
+const fixture: PlayerProgress = {
+  totalXp: 9_400,
+  categories: fixtureCategories,
   achievements: [
     {
       id: "first-steps",
@@ -47,6 +146,8 @@ const fixture: PlayerProgress = {
       earned: false,
     },
   ],
+  badges: fixtureBadges(),
+  badgeCatalogueAvailable: true,
 };
 
 vi.mock("@/src/useAuth", () => ({
@@ -88,9 +189,25 @@ function defaultProgress() {
   };
 }
 
+function progressAtRank(
+  category: QuestionCategory,
+  rank: number,
+  title: string,
+): PlayerProgress {
+  const categories = fixture.categories.map((entry) =>
+    entry.category === category ? { ...entry, rank, title } : entry,
+  );
+  return {
+    ...fixture,
+    categories,
+    badges: fixtureBadges(categories),
+  };
+}
+
 vi.mock("@/src/useProgress", () => ({ useProgress: vi.fn() }));
 
 import Game from "@/src/Game";
+import { ProgressRibbon } from "@/src/Progress";
 import { useProgress } from "@/src/useProgress";
 
 beforeEach(() => {
@@ -133,8 +250,16 @@ describe("progression screens", () => {
     expect(
       await screen.findByRole("heading", { name: /^ranks$/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Crowd Counter")).toBeInTheDocument();
-    expect(screen.getByText("Time Tourist")).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: /choose a subject/i })).toHaveValue(
+      "population",
+    );
+    expect(
+      screen.getByRole("heading", { name: "Crowd Counter" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /population collection/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Time Tourist")).not.toBeInTheDocument();
     // Achievements are not along for the ride.
     expect(screen.queryByText("First Steps")).not.toBeInTheDocument();
 
@@ -142,6 +267,93 @@ describe("progression screens", () => {
     expect(
       await screen.findByRole("heading", { name: /^ada$/i }),
     ).toBeInTheDocument();
+  });
+
+  it("opens the clicked Profile subject and lets the dropdown switch in place", async () => {
+    const user = userEvent.setup();
+    render(<Game />);
+    await openAccount(user);
+
+    await user.click(
+      screen.getByRole("button", { name: /open history ranks/i }),
+    );
+
+    const subject = await screen.findByRole("combobox", {
+      name: /choose a subject/i,
+    });
+    expect(subject).toHaveValue("history");
+    expect(screen.getByRole("heading", { name: "Time Tourist" })).toBeInTheDocument();
+
+    await user.selectOptions(subject, "space");
+    expect(subject).toHaveValue("space");
+    expect(
+      screen.getByRole("heading", { name: /space collection/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("First badge at rank 5")).toBeInTheDocument();
+  });
+
+  it("keeps locked artwork visible while making locked titles unreadable", async () => {
+    const user = userEvent.setup();
+    render(<Game />);
+    await openAccount(user);
+    await user.click(screen.getByRole("button", { name: /rank details/i }));
+
+    const lockedCard = await screen.findByRole("listitem", {
+      name: "Rank 15, locked title",
+    });
+    const blurredTitle = screen.getByText("Census Scout");
+    expect(lockedCard).toBeInTheDocument();
+    expect(blurredTitle).toHaveClass("is-blurred");
+    expect(blurredTitle).toHaveAttribute("aria-hidden", "true");
+    expect(
+      screen.queryByRole("listitem", { name: /Census Scout/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows all six titles earned at rank 30", async () => {
+    vi.mocked(useProgress).mockReturnValue({
+      enabled: true,
+      progress: progressAtRank("population", 30, "Sage of the Census"),
+      change: null,
+      refresh: vi.fn().mockResolvedValue(null),
+      clearChange: vi.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<Game />);
+    await openAccount(user);
+    await user.click(screen.getByRole("button", { name: /rank details/i }));
+
+    expect(await screen.findByText("6 of 6 earned")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Sage of the Census" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("listitem", { name: /locked title/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps ranks usable when the badge catalogue is unavailable", async () => {
+    vi.mocked(useProgress).mockReturnValue({
+      enabled: true,
+      progress: {
+        ...fixture,
+        badges: [],
+        badgeCatalogueAvailable: false,
+      },
+      change: null,
+      refresh: vi.fn().mockResolvedValue(null),
+      clearChange: vi.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<Game />);
+    await openAccount(user);
+    await user.click(screen.getByRole("button", { name: /rank details/i }));
+
+    expect(await screen.findByText("Badges temporarily unavailable")).toBeInTheDocument();
+    expect(screen.getByText(/Your ranks and XP are still available/i)).toBeInTheDocument();
+    expect(screen.getByText("4,200 XP")).toBeInTheDocument();
   });
 
   it("opens achievements on its own screen, earned and unearned", async () => {
@@ -285,5 +497,40 @@ describe("progression screens", () => {
     expect(screen.getByText(/Crowd Counter/)).toBeInTheDocument();
     expect(screen.getByText(/Time Tourist/)).toBeInTheDocument();
     expect(screen.queryByText(/Newcomer/)).not.toBeInTheDocument();
+  });
+});
+
+describe("rank badge rewards", () => {
+  it("announces the badge and suppresses the duplicate rank-up line", () => {
+    const badge = progressAtRank(
+      "population",
+      5,
+      "People Watcher",
+    ).badges.find((item) => item.badgeKey === "population-05");
+    if (!badge) throw new Error("Missing population badge fixture.");
+    const labels = Object.fromEntries(
+      fixture.categories.map((entry) => [
+        entry.category,
+        { title: entry.category[0].toUpperCase() + entry.category.slice(1) },
+      ]),
+    ) as Record<QuestionCategory, { title: string }>;
+
+    render(
+      <ProgressRibbon
+        change={{
+          rankUps: [
+            { category: "population", rank: 5, title: "People Watcher" },
+          ],
+          unlocked: [],
+          badgesUnlocked: [badge],
+        }}
+        labels={labels}
+      />,
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Badge unlocked · Population · People Watcher · Rank 5",
+    );
+    expect(screen.queryByText("Population rank 5")).not.toBeInTheDocument();
   });
 });

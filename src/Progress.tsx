@@ -4,6 +4,7 @@ import {
   type Achievement,
   type PlayerProgress,
   type ProgressChange,
+  type RankBadge,
 } from "../lib/progress";
 import {
   BACKGROUND_THEMES,
@@ -16,6 +17,7 @@ import {
 } from "../lib/themes";
 import type { QuestionCategory } from "../lib/types";
 import { formatPoints } from "./questionText";
+import { RankBadgeArtwork } from "./RankBadgeArtwork";
 import type { Theme } from "./theme";
 import { ThemeArtwork } from "./themes/ThemeArtwork";
 
@@ -53,6 +55,11 @@ function ThemeCard({
   const current =
     progress.categories.find((entry) => entry.category === theme.gate.category)
       ?.rank ?? 1;
+  const gateTitle = progress.badges.find(
+    (badge) =>
+      badge.category === theme.gate.category &&
+      badge.rankFloor === theme.gate.rank,
+  )?.title;
 
   const body = (
     <>
@@ -82,8 +89,8 @@ function ThemeCard({
           {temporarilyUnlocked
             ? `Unlocked for local testing · ${categoryLabel} rank ${theme.gate.rank} in production`
             : unlocked
-            ? `Unlocked · ${categoryLabel} rank ${theme.gate.rank} · ${theme.gate.title}`
-            : `${categoryLabel} rank ${current} / ${theme.gate.rank} for ${theme.gate.title}`}
+            ? `Unlocked · ${categoryLabel} rank ${theme.gate.rank}${gateTitle ? ` · ${gateTitle}` : ""}`
+            : `${categoryLabel} rank ${current} / ${theme.gate.rank}${gateTitle ? ` for ${gateTitle}` : ""}`}
         </p>
       </div>
     </>
@@ -146,7 +153,7 @@ type ProfileDashboardProps = {
   themeMode: Theme;
   equippedId: BackgroundThemeId | null;
   onEquip: (themeId: BackgroundThemeId) => void;
-  onOpenRanks: () => void;
+  onOpenRanks: (category?: QuestionCategory) => void;
   onOpenAchievements: () => void;
   onOpenUnlocks: () => void;
   onSignOut: () => void;
@@ -226,7 +233,7 @@ export function ProfileDashboard({
               <h2>Subjects</h2>
               <span>{progress.categories.length} ladders</span>
             </div>
-            <button type="button" onClick={onOpenRanks}>
+            <button type="button" onClick={() => onOpenRanks()}>
               Rank details
             </button>
           </div>
@@ -242,28 +249,35 @@ export function ProfileDashboard({
                   className={entry.questionsAnswered === 0 ? "is-unplayed" : ""}
                   style={{ animationDelay: `${index * 45}ms` }}
                 >
-                  <div className="profile-rank-head">
-                    <strong>{labels[entry.category].title}</strong>
-                    <span>{entry.rank}</span>
-                  </div>
-                  <span className="profile-rank-title">{entry.title}</span>
-                  <div
-                    className="profile-rank-bar"
-                    role="progressbar"
-                    aria-label={`${labels[entry.category].title} progress to rank ${entry.rank + 1}`}
-                    aria-valuemin={entry.rankFloorXp}
-                    aria-valuemax={entry.nextRankXp}
-                    aria-valuenow={entry.xp}
+                  <button
+                    type="button"
+                    className="profile-rank-button"
+                    onClick={() => onOpenRanks(entry.category)}
+                    aria-label={`Open ${labels[entry.category].title} ranks, currently rank ${entry.rank}, ${entry.title}`}
                   >
-                    <span style={{ width: `${entry.fraction * 100}%` }} />
-                  </div>
-                  <p>
-                    {entry.questionsAnswered === 0
-                      ? gatedTheme
-                        ? `Never played · unlocks ${gatedTheme.name} at rank ${gatedTheme.gate.rank}`
-                        : "Never played"
-                      : `${formatPoints(entry.xp)} XP · ${formatPoints(remaining)} to rank ${entry.rank + 1}`}
-                  </p>
+                    <div className="profile-rank-head">
+                      <strong>{labels[entry.category].title}</strong>
+                      <span>{entry.rank}</span>
+                    </div>
+                    <span className="profile-rank-title">{entry.title}</span>
+                    <div
+                      className="profile-rank-bar"
+                      role="progressbar"
+                      aria-label={`${labels[entry.category].title} progress to rank ${entry.rank + 1}`}
+                      aria-valuemin={entry.rankFloorXp}
+                      aria-valuemax={entry.nextRankXp}
+                      aria-valuenow={entry.xp}
+                    >
+                      <span style={{ width: `${entry.fraction * 100}%` }} />
+                    </div>
+                    <p>
+                      {entry.questionsAnswered === 0
+                        ? gatedTheme
+                          ? `Never played · unlocks ${gatedTheme.name} at rank ${gatedTheme.gate.rank}`
+                          : "Never played"
+                        : `${formatPoints(entry.xp)} XP · ${formatPoints(remaining)} to rank ${entry.rank + 1}`}
+                    </p>
+                  </button>
                 </li>
               );
             })}
@@ -390,59 +404,209 @@ type RankPanelProps = {
   progress: PlayerProgress;
   /** Subject labels and icons, borrowed from the mode chooser so the two agree. */
   labels: Record<QuestionCategory, { title: string; icon: ReactNode }>;
+  selectedCategory: QuestionCategory;
+  onSelectCategory: (category: QuestionCategory) => void;
 };
 
-/** The eight subject ladders, on their own screen. */
-export function RankPanel({ progress, labels }: RankPanelProps) {
-  return (
-    <div className="progress-panel">
-      <div className="progress-summary">
-        <div>
-          <p className="progress-eyebrow">Total XP</p>
-          <strong className="progress-total">
-            {formatPoints(progress.totalXp)}
-          </strong>
-        </div>
-        <p className="progress-summary-note">
-          Every question you answer earns XP for its own subject, whichever
-          mode asked it.
-        </p>
-      </div>
+function badgeStatus(badge: RankBadge): "Current" | "Earned" | "Locked" {
+  if (badge.current) return "Current";
+  return badge.earned ? "Earned" : "Locked";
+}
 
-      <ul className="rank-grid">
-        {progress.categories.map((entry) => (
-          <li key={entry.category} className="rank-card">
-            <div className="rank-card-head">
-              <span className="mode-icon">{labels[entry.category].icon}</span>
-              <div className="rank-card-name">
-                <strong>{labels[entry.category].title}</strong>
-                <span className="rank-card-title">{entry.title}</span>
+/** One subject ladder and the six medallions that belong to it. */
+export function RankPanel({
+  progress,
+  labels,
+  selectedCategory,
+  onSelectCategory,
+}: RankPanelProps) {
+  const selected =
+    progress.categories.find((entry) => entry.category === selectedCategory) ??
+    progress.categories[0];
+  if (!selected) return null;
+
+  const badges = progress.badges.filter(
+    (badge) => badge.category === selected.category,
+  );
+  const currentBadge = badges.find((badge) => badge.current) ?? null;
+  const earnedCount = badges.filter((badge) => badge.earned).length;
+  const remaining = Math.max(0, selected.nextRankXp - selected.xp);
+
+  return (
+    <div className="progress-panel rank-collection-panel">
+      <div className="rank-overview">
+        <div className="rank-overview-toolbar">
+          <div className="rank-total-compact">
+            <span>Total XP</span>
+            <strong>{formatPoints(progress.totalXp)}</strong>
+          </div>
+          <label className="rank-subject-select">
+            <span>Choose a subject</span>
+            <select
+              value={selected.category}
+              onChange={(event) =>
+                onSelectCategory(event.target.value as QuestionCategory)
+              }
+            >
+              {progress.categories.map((entry) => (
+                <option key={entry.category} value={entry.category}>
+                  {labels[entry.category].title} — Rank {entry.rank}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <section
+          className="rank-subject-hero"
+          aria-labelledby="selected-rank-subject"
+        >
+          <div className="rank-subject-copy">
+            <div className="rank-subject-heading">
+              <span className="mode-icon">{labels[selected.category].icon}</span>
+              <div>
+                <p>{labels[selected.category].title}</p>
+                <h2 id="selected-rank-subject">{selected.title}</h2>
               </div>
-              <span className="rank-card-number">
+              <span className="rank-subject-number">
                 <span>Rank</span>
-                <strong>{entry.rank}</strong>
+                <strong>{selected.rank}</strong>
               </span>
             </div>
 
             <div
-              className="rank-bar"
+              className="rank-subject-bar"
               role="progressbar"
-              aria-label={`${labels[entry.category].title} progress to rank ${entry.rank + 1}`}
-              aria-valuemin={entry.rankFloorXp}
-              aria-valuemax={entry.nextRankXp}
-              aria-valuenow={entry.xp}
+              aria-label={`${labels[selected.category].title} progress to rank ${selected.rank + 1}`}
+              aria-valuemin={selected.rankFloorXp}
+              aria-valuemax={selected.nextRankXp}
+              aria-valuenow={selected.xp}
             >
-              <span style={{ width: `${entry.fraction * 100}%` }} />
+              <span style={{ width: `${selected.fraction * 100}%` }} />
             </div>
-
-            <p className="rank-card-foot">
-              {formatPoints(entry.xp)} XP ·{" "}
-              {formatPoints(Math.max(0, entry.nextRankXp - entry.xp))} to rank{" "}
-              {entry.rank + 1}
+            <p className="rank-subject-progress-copy">
+              <strong>{formatPoints(selected.xp)} XP</strong>
+              <span>
+                {formatPoints(remaining)} XP to rank {selected.rank + 1}
+              </span>
             </p>
-          </li>
-        ))}
-      </ul>
+          </div>
+
+          <div className="rank-current-badge">
+            <RankBadgeArtwork
+              badgeKey={currentBadge?.badgeKey}
+              eager
+            />
+            <span>
+              {!progress.badgeCatalogueAvailable
+                ? "Badges temporarily unavailable"
+                : currentBadge
+                  ? "Current badge"
+                  : "First badge at rank 5"}
+            </span>
+          </div>
+
+          <dl className="rank-subject-stats">
+            <div>
+              <dt>Subject XP</dt>
+              <dd>{formatPoints(selected.xp)}</dd>
+            </div>
+            <div>
+              <dt>Questions answered</dt>
+              <dd>{formatPoints(selected.questionsAnswered)}</dd>
+            </div>
+            <div>
+              <dt>Perfect answers</dt>
+              <dd>{formatPoints(selected.perfectAnswers)}</dd>
+            </div>
+          </dl>
+        </section>
+      </div>
+
+      <section
+        className="badge-collection"
+        aria-labelledby="badge-collection-heading"
+      >
+        <div className="badge-collection-heading">
+          <div>
+            <p className="progress-eyebrow">Rank titles</p>
+            <h2 id="badge-collection-heading">
+              {labels[selected.category].title} collection
+            </h2>
+          </div>
+          <span>
+            {progress.badgeCatalogueAvailable
+              ? `${earnedCount} of 6 earned`
+              : "Catalogue unavailable"}
+          </span>
+        </div>
+
+        {progress.badgeCatalogueAvailable ? (
+          <ul className="badge-collection-grid">
+            {badges.map((badge) => {
+              const status = badgeStatus(badge);
+              const locked = !badge.earned;
+              return (
+                <li
+                  key={badge.badgeKey}
+                  className={[
+                    "badge-collection-card",
+                    badge.current ? "is-current" : "",
+                    badge.earned ? "is-earned" : "is-locked",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  aria-label={
+                    locked
+                      ? `Rank ${badge.rankFloor}, locked title`
+                      : `Rank ${badge.rankFloor}, ${badge.title}, ${status.toLowerCase()}`
+                  }
+                >
+                  <div className="badge-collection-artwork">
+                    <RankBadgeArtwork
+                      badgeKey={badge.badgeKey}
+                    />
+                    {locked && (
+                      <span className="badge-lock-overlay" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <rect x="6" y="10" width="12" height="10" rx="2" />
+                          <path d="M8.5 10V7.5a3.5 3.5 0 0 1 7 0V10" />
+                        </svg>
+                      </span>
+                    )}
+                  </div>
+                  <span className="badge-required-rank">
+                    Rank {badge.rankFloor}
+                  </span>
+                  {locked ? (
+                    <>
+                      <strong
+                        className="badge-collection-title is-blurred"
+                        aria-hidden="true"
+                      >
+                        {badge.title}
+                      </strong>
+                      <span className="sr-only">Hidden title</span>
+                    </>
+                  ) : (
+                    <strong className="badge-collection-title">
+                      {badge.title}
+                    </strong>
+                  )}
+                  <span className="badge-collection-status">
+                    {badge.current ? "Current title" : status}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="badge-collection-empty" role="status">
+            Your ranks and XP are still available. Badge artwork will return
+            when the title catalogue can be loaded.
+          </p>
+        )}
+      </section>
     </div>
   );
 }
@@ -564,12 +728,39 @@ export function ProgressRibbon({
   labels: Record<QuestionCategory, { title: string }>;
 }) {
   if (!change) return null;
-  const { rankUps, unlocked } = change;
-  if (rankUps.length === 0 && unlocked.length === 0) return null;
+  const { rankUps, unlocked, badgesUnlocked } = change;
+  if (
+    rankUps.length === 0 &&
+    unlocked.length === 0 &&
+    badgesUnlocked.length === 0
+  ) {
+    return null;
+  }
+  const announcedBadgeRanks = new Set(
+    badgesUnlocked.map((badge) => `${badge.category}:${badge.rankFloor}`),
+  );
+  const remainingRankUps = rankUps.filter(
+    (up) => !announcedBadgeRanks.has(`${up.category}:${up.rank}`),
+  );
 
   return (
     <div className="progress-ribbon" role="status">
-      {rankUps.map((up) => (
+      {badgesUnlocked.map((badge) => (
+        <div className="progress-ribbon-badge" key={badge.badgeKey}>
+          <RankBadgeArtwork
+            badgeKey={badge.badgeKey}
+            eager
+          />
+          <p>
+            Badge unlocked ·{" "}
+            <strong>
+              {labels[badge.category].title} · {badge.title} · Rank{" "}
+              {badge.rankFloor}
+            </strong>
+          </p>
+        </div>
+      ))}
+      {remainingRankUps.map((up) => (
         <p key={up.category}>
           <strong>{labels[up.category].title} rank {up.rank}</strong>
           {hasEarnedTitle(up.title) ? ` · ${up.title}` : ""}

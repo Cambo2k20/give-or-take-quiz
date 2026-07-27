@@ -272,6 +272,7 @@ async function copyText(text: string) {
 
 export default function Game() {
   const [phase, setPhase] = useState<Phase>("category");
+  const [rankSubject, setRankSubject] = useState<QuestionCategory | null>(null);
   const [mode, setMode] = useState<GameMode>("mixed");
   const [gameQuestions, setGameQuestions] = useState<Question[]>([]);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -338,6 +339,17 @@ export default function Game() {
       ),
     [progress.progress],
   );
+  const highestRankSubject = useMemo(() => {
+    const categories = progress.progress?.categories;
+    if (!categories || categories.length === 0) return "population";
+    return categories.reduce((best, entry) =>
+      entry.rank > best.rank ? entry : best,
+    ).category;
+  }, [progress.progress]);
+  const openRanks = (category?: QuestionCategory) => {
+    setRankSubject(category ?? highestRankSubject);
+    setPhase("ranks");
+  };
   // One publish per finished round, whatever React does with effects.
   const publishedRef = useRef(false);
 
@@ -1318,7 +1330,7 @@ export default function Game() {
               themeMode={theme}
               equippedId={bgTheme}
               onEquip={toggleBackgroundTheme}
-              onOpenRanks={() => setPhase("ranks")}
+              onOpenRanks={openRanks}
               onOpenAchievements={() => setPhase("achievements")}
               onOpenUnlocks={() => setPhase("unlocks")}
               onSignOut={() => {
@@ -1382,8 +1394,8 @@ export default function Game() {
       {(activePhase === "ranks" ||
         activePhase === "achievements" ||
         activePhase === "unlocks") && (
-        <section className="account-screen">
-          <div className="results-hero">
+        <section className="account-screen progress-screen">
+          <div className="results-hero progress-screen-hero">
             <p className="eyebrow">Your progress</p>
             <h1 ref={focusHeadingRef} tabIndex={-1}>
               {activePhase === "ranks"
@@ -1399,6 +1411,8 @@ export default function Game() {
               <RankPanel
                 progress={progress.progress}
                 labels={categoryLabels}
+                selectedCategory={rankSubject ?? highestRankSubject}
+                onSelectCategory={setRankSubject}
               />
             ) : activePhase === "achievements" ? (
               <AchievementPanel progress={progress.progress} />

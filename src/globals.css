@@ -2000,6 +2000,18 @@ h1[tabindex="-1"]:focus {
   font-weight: 700;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .progress-panel {
   margin: 22px 0;
   padding-top: 20px;
@@ -2124,6 +2136,418 @@ h1[tabindex="-1"]:focus {
   font-variant-numeric: tabular-nums;
 }
 
+.progress-screen-hero {
+  padding-block: 18px;
+}
+
+.progress-screen-hero .eyebrow {
+  margin-bottom: 4px;
+}
+
+.progress-screen-hero h1 {
+  font-size: clamp(27px, 4vw, 34px);
+}
+
+.rank-collection-panel {
+  margin-top: 14px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.rank-overview {
+  overflow: hidden;
+  border: 1.5px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.rank-overview-toolbar {
+  display: grid;
+  grid-template-columns: auto minmax(240px, 1fr);
+  align-items: end;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--sunk);
+}
+
+.rank-total-compact {
+  min-width: 126px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-right: 16px;
+  border-right: 1px solid var(--line);
+}
+
+.rank-total-compact span,
+.rank-subject-select > span {
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.rank-total-compact strong {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.rank-subject-select {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.rank-subject-select select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 38px 0 13px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 13px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.rank-subject-select select:focus-visible {
+  outline: 3px solid var(--accent-wash);
+  outline-offset: 2px;
+  border-color: var(--accent);
+}
+
+.rank-subject-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 132px;
+  gap: 16px 20px;
+  padding: 18px 20px 16px;
+}
+
+.rank-subject-copy {
+  min-width: 0;
+  align-self: center;
+}
+
+.rank-subject-heading {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+}
+
+.rank-subject-heading .mode-icon {
+  width: 46px;
+  height: 46px;
+}
+
+.rank-subject-heading p {
+  margin: 0 0 1px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.rank-subject-heading h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(21px, 3.4vw, 28px);
+  line-height: 1.08;
+}
+
+.rank-subject-number {
+  min-width: 50px;
+  display: grid;
+  justify-items: end;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.rank-subject-number strong {
+  color: var(--ink);
+  font-size: 26px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.rank-subject-bar {
+  height: 8px;
+  margin-top: 15px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--rail);
+}
+
+.rank-subject-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--accent-ink));
+  transform-origin: left;
+  animation: board-fill 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.rank-subject-progress-copy {
+  margin: 7px 0 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rank-subject-progress-copy strong {
+  color: var(--ink-soft);
+}
+
+.rank-current-badge {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 3px;
+  text-align: center;
+}
+
+.rank-current-badge .rank-badge-artwork {
+  width: 112px;
+  height: 112px;
+}
+
+.rank-current-badge > span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.rank-badge-artwork {
+  display: block;
+  object-fit: contain;
+  object-position: center;
+}
+
+.rank-badge-artwork.is-placeholder {
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 36% 28%, var(--accent-wash), transparent 42%),
+    var(--sunk);
+  color: var(--muted);
+}
+
+.rank-badge-artwork.is-placeholder svg {
+  width: 46%;
+  height: 46%;
+  stroke: currentColor;
+  stroke-width: 2.2;
+}
+
+.rank-subject-stats {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.rank-subject-stats > div {
+  min-width: 0;
+  padding: 0 14px;
+  border-right: 1px solid var(--line);
+}
+
+.rank-subject-stats > div:first-child {
+  padding-left: 0;
+}
+
+.rank-subject-stats > div:last-child {
+  padding-right: 0;
+  border-right: 0;
+}
+
+.rank-subject-stats dt {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.rank-subject-stats dd {
+  margin: 2px 0 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge-collection {
+  margin-top: 22px;
+}
+
+.badge-collection-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.badge-collection-heading h2 {
+  margin: 2px 0 0;
+  font-size: clamp(21px, 3.5vw, 27px);
+}
+
+.badge-collection-heading > span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.badge-collection-grid {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 11px;
+}
+
+.badge-collection-card {
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  padding: 12px 10px 11px;
+  border: 1.5px solid var(--line);
+  border-radius: 18px;
+  background: var(--sunk);
+  text-align: center;
+}
+
+.badge-collection-card.is-earned {
+  background: var(--surface);
+}
+
+.badge-collection-card.is-current {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 3px var(--accent-wash),
+    var(--shadow-card);
+}
+
+.badge-collection-artwork {
+  position: relative;
+  width: min(100%, 138px);
+  aspect-ratio: 1;
+}
+
+.badge-collection-artwork .rank-badge-artwork {
+  width: 100%;
+  height: 100%;
+}
+
+.badge-collection-card.is-locked .rank-badge-artwork {
+  filter: grayscale(0.9) saturate(0.35) brightness(0.62);
+  opacity: 0.52;
+}
+
+.badge-lock-overlay {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--ink-soft);
+  transform: translate(-50%, -50%);
+  box-shadow: var(--shadow-card);
+}
+
+.badge-lock-overlay svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.badge-required-rank {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.badge-collection-title {
+  max-width: 100%;
+  min-height: 2.5em;
+  margin-top: 3px;
+  display: grid;
+  place-items: start center;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 15px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.badge-collection-title.is-blurred {
+  color: transparent;
+  text-shadow: 0 0 7px color-mix(in srgb, var(--muted) 72%, transparent);
+  filter: blur(5px);
+  user-select: none;
+  pointer-events: none;
+}
+
+.badge-collection-status {
+  margin-top: 7px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badge-collection-card.is-locked .badge-collection-status {
+  background: var(--rail);
+  color: var(--muted);
+}
+
+.badge-collection-empty {
+  margin: 12px 0 0;
+  padding: 18px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 16px;
+  background: var(--sunk);
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .achievement {
   padding: 14px 16px;
   border: 1.5px solid var(--line);
@@ -2197,6 +2621,24 @@ h1[tabindex="-1"]:focus {
 
 .progress-ribbon p + p {
   margin-top: 6px;
+}
+
+.progress-ribbon-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-ribbon-badge + .progress-ribbon-badge,
+.progress-ribbon-badge + p,
+.progress-ribbon > p + .progress-ribbon-badge {
+  margin-top: 8px;
+}
+
+.progress-ribbon-badge .rank-badge-artwork {
+  width: 64px;
+  height: 64px;
+  flex: none;
 }
 
 .achievement-pip {
@@ -2859,12 +3301,39 @@ h1[tabindex="-1"]:focus {
 }
 
 .profile-rank-grid li {
-  padding: 13px 14px;
+  padding: 0;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 15px;
   background: color-mix(in srgb, var(--surface) 90%, transparent);
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink) 7%, transparent);
   animation: board-rise 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.profile-rank-button {
+  width: 100%;
+  min-height: 100%;
+  padding: 13px 14px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.profile-rank-button:hover {
+  background: var(--accent-wash);
+}
+
+.profile-rank-button:active {
+  background: color-mix(in srgb, var(--accent-wash) 78%, var(--sunk));
+}
+
+.profile-rank-button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
 }
 
 .profile-rank-grid li.is-unplayed {
@@ -3317,6 +3786,60 @@ h1[tabindex="-1"]:focus {
     width: 100%;
   }
 
+  .rank-overview-toolbar {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .rank-total-compact {
+    min-width: 0;
+    justify-content: space-between;
+    padding: 0 0 10px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .rank-subject-hero {
+    grid-template-columns: minmax(0, 1fr) 100px;
+    gap: 14px 12px;
+    padding: 16px;
+  }
+
+  .rank-subject-heading {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .rank-subject-heading .mode-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .rank-subject-heading h2 {
+    font-size: 20px;
+  }
+
+  .rank-subject-number strong {
+    font-size: 23px;
+  }
+
+  .rank-current-badge .rank-badge-artwork {
+    width: 92px;
+    height: 92px;
+  }
+
+  .rank-subject-stats > div {
+    padding-inline: 9px;
+  }
+
+  .rank-subject-stats dd {
+    font-size: 18px;
+  }
+
+  .badge-collection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .mode-grid {
     grid-template-columns: 1fr;
   }
@@ -3415,6 +3938,48 @@ h1[tabindex="-1"]:focus {
 
   .progress-dots span {
     width: 16px;
+  }
+
+  .rank-subject-select {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  .rank-subject-hero {
+    grid-template-columns: minmax(0, 1fr) 84px;
+  }
+
+  .rank-current-badge .rank-badge-artwork {
+    width: 78px;
+    height: 78px;
+  }
+
+  .rank-subject-stats dt {
+    font-size: 8.5px;
+  }
+
+  .badge-collection-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 359px) {
+  .badge-collection-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rank-subject-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .rank-current-badge {
+    grid-row: 2;
+  }
+
+  .rank-subject-stats {
+    grid-row: 3;
   }
 }
 

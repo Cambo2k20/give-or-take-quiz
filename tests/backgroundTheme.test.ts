@@ -155,7 +155,7 @@ function modeFixture(
     id,
     name: id,
     description: "Theme contract fixture",
-    gate: { category: "geography", rank: 5, title: "Cartographer" },
+    gate: { category: "geography", rank: 5 },
     modes,
   });
 }
@@ -192,9 +192,9 @@ describe("background theme mode contract", () => {
         id: "empty-fixture",
         name: "Empty fixture",
         description: "Invalid runtime fixture",
-        gate: { category: "geography", rank: 5, title: "Cartographer" },
+        gate: { category: "geography", rank: 5 },
         modes: {},
-      } as BackgroundThemeMetadata),
+      } as unknown as BackgroundThemeMetadata),
     ).toThrow(/must support at least one mode/i);
 
     expect(() =>
