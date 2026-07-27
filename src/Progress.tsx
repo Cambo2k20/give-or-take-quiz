@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ReactNode, RefObject } from "react";
 import {
   DEFAULT_RANK_TITLE,
   type Achievement,
@@ -26,6 +26,7 @@ function ThemeCard({
   mode,
   equipped,
   onEquip,
+  compact = false,
 }: {
   theme: BackgroundTheme;
   progress: PlayerProgress;
@@ -34,6 +35,7 @@ function ThemeCard({
   equipped: boolean;
   /** Absent for a locked theme: there is nothing a click could do yet. */
   onEquip?: (themeId: BackgroundThemeId) => void;
+  compact?: boolean;
 }) {
   const unlocked = isThemeUnlocked(progress, theme);
   const temporarilyUnlocked = isThemeTemporarilyUnlocked(theme);
@@ -92,7 +94,10 @@ function ThemeCard({
   // button that would do nothing when pressed.
   if (!unlocked || !onEquip) {
     return (
-      <li className="theme-card" aria-label={`${theme.name}, locked`}>
+      <li
+        className={`theme-card${compact ? " is-compact" : ""}`}
+        aria-label={`${theme.name}, locked`}
+      >
         {body}
       </li>
     );
@@ -105,6 +110,7 @@ function ThemeCard({
         "is-unlocked",
         equipped ? "is-equipped" : "",
         equipped && !active ? "is-inactive" : "",
+        compact ? "is-compact" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -125,6 +131,253 @@ function ThemeCard({
         </span>
       </button>
     </li>
+  );
+}
+
+type ProfileDashboardProps = {
+  progress: PlayerProgress;
+  labels: Record<
+    QuestionCategory,
+    { title: string; icon: ReactNode }
+  >;
+  displayName: string;
+  email: string | null;
+  emailConfirmed: boolean;
+  themeMode: Theme;
+  equippedId: BackgroundThemeId | null;
+  onEquip: (themeId: BackgroundThemeId) => void;
+  onOpenRanks: () => void;
+  onOpenAchievements: () => void;
+  onOpenUnlocks: () => void;
+  onSignOut: () => void;
+  headingRef: RefObject<HTMLHeadingElement | null>;
+};
+
+/**
+ * The signed-in profile is a dashboard rather than a menu. Subjects, earned
+ * achievements and background unlocks all stay visible, while the longer
+ * collection screens remain available through the section actions.
+ */
+export function ProfileDashboard({
+  progress,
+  labels,
+  displayName,
+  email,
+  emailConfirmed,
+  themeMode,
+  equippedId,
+  onEquip,
+  onOpenRanks,
+  onOpenAchievements,
+  onOpenUnlocks,
+  onSignOut,
+  headingRef,
+}: ProfileDashboardProps) {
+  const highest = progress.categories.reduce(
+    (best, entry) => (entry.rank > best.rank ? entry : best),
+    progress.categories[0],
+  );
+  const earned = progress.achievements.filter((item) => item.earned);
+  const featuredAchievements = [
+    ...earned,
+    ...progress.achievements.filter((item) => !item.earned),
+  ].slice(0, 4);
+  const unlockedCount = BACKGROUND_THEMES.filter((theme) =>
+    isThemeUnlocked(progress, theme),
+  ).length;
+  const initial = displayName.trim().charAt(0).toUpperCase() || "?";
+
+  return (
+    <div className="profile-dashboard">
+      <section className="profile-hero" aria-labelledby="profile-name">
+        <span className="profile-hero-sheen" aria-hidden="true" />
+        <div className="profile-identity">
+          <span className="profile-avatar" aria-hidden="true">
+            {initial}
+          </span>
+          <div>
+            <h1 id="profile-name" ref={headingRef} tabIndex={-1}>
+              {displayName}
+            </h1>
+            <p>
+              {highest
+                ? `${highest.title} · highest rank in ${labels[highest.category].title}`
+                : "Newcomer"}
+            </p>
+          </div>
+        </div>
+        <div className="profile-total">
+          <span>Total XP</span>
+          <strong>{formatPoints(progress.totalXp)}</strong>
+        </div>
+        <div className="profile-facts">
+          <span>{progress.categories.length} subject ladders</span>
+          <span>
+            {earned.length} of {progress.achievements.length} achievements
+          </span>
+          <span>{emailConfirmed ? "Email confirmed" : "Email not confirmed"}</span>
+        </div>
+      </section>
+
+      <div className="profile-dashboard-grid">
+        <section className="profile-section profile-subjects">
+          <div className="profile-section-title">
+            <div>
+              <h2>Subjects</h2>
+              <span>{progress.categories.length} ladders</span>
+            </div>
+            <button type="button" onClick={onOpenRanks}>
+              Rank details
+            </button>
+          </div>
+          <ul className="profile-rank-grid">
+            {progress.categories.map((entry, index) => {
+              const remaining = Math.max(0, entry.nextRankXp - entry.xp);
+              const gatedTheme = BACKGROUND_THEMES.find(
+                (theme) => theme.gate.category === entry.category,
+              );
+              return (
+                <li
+                  key={entry.category}
+                  className={entry.questionsAnswered === 0 ? "is-unplayed" : ""}
+                  style={{ animationDelay: `${index * 45}ms` }}
+                >
+                  <div className="profile-rank-head">
+                    <strong>{labels[entry.category].title}</strong>
+                    <span>{entry.rank}</span>
+                  </div>
+                  <span className="profile-rank-title">{entry.title}</span>
+                  <div
+                    className="profile-rank-bar"
+                    role="progressbar"
+                    aria-label={`${labels[entry.category].title} progress to rank ${entry.rank + 1}`}
+                    aria-valuemin={entry.rankFloorXp}
+                    aria-valuemax={entry.nextRankXp}
+                    aria-valuenow={entry.xp}
+                  >
+                    <span style={{ width: `${entry.fraction * 100}%` }} />
+                  </div>
+                  <p>
+                    {entry.questionsAnswered === 0
+                      ? gatedTheme
+                        ? `Never played · unlocks ${gatedTheme.name} at rank ${gatedTheme.gate.rank}`
+                        : "Never played"
+                      : `${formatPoints(entry.xp)} XP · ${formatPoints(remaining)} to rank ${entry.rank + 1}`}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+
+        <aside className="profile-collection">
+          <section className="profile-section">
+            <div className="profile-section-title">
+              <div>
+                <h2>Achievements</h2>
+                <span>
+                  {earned.length} of {progress.achievements.length}
+                </span>
+              </div>
+            </div>
+            <ul className="profile-achievements">
+              {featuredAchievements.map((item) => (
+                <li
+                  key={item.id}
+                  className={[
+                    `tier-${item.tier}`,
+                    item.earned ? "is-earned" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  <span
+                    className={`achievement-pip tier-${item.tier}`}
+                    aria-hidden="true"
+                  />
+                  <div>
+                    <strong>{item.name}</strong>
+                    <span>{item.description}</span>
+                  </div>
+                  {item.earned ? (
+                    <span className="achievement-tick" aria-label="Earned">
+                      ✓
+                    </span>
+                  ) : (
+                    <span className="profile-achievement-count">
+                      {formatPoints(item.progress)} / {formatPoints(item.threshold)}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <button
+              className="profile-section-action"
+              type="button"
+              onClick={onOpenAchievements}
+            >
+              See all {progress.achievements.length}
+            </button>
+          </section>
+
+          <section className="profile-section">
+            <div className="profile-section-title">
+              <div>
+                <h2>Backgrounds</h2>
+                <span>
+                  {unlockedCount} of {BACKGROUND_THEMES.length}
+                </span>
+              </div>
+            </div>
+            <ul className="theme-list profile-theme-list">
+              {BACKGROUND_THEMES.map((theme) => (
+                <ThemeCard
+                  key={theme.id}
+                  theme={theme}
+                  progress={progress}
+                  categoryLabel={labels[theme.gate.category].title}
+                  mode={themeMode}
+                  equipped={equippedId === theme.id}
+                  onEquip={
+                    isThemeUnlocked(progress, theme) ? onEquip : undefined
+                  }
+                  compact
+                />
+              ))}
+            </ul>
+            <button
+              className="profile-section-action"
+              type="button"
+              onClick={onOpenUnlocks}
+            >
+              Manage backgrounds
+            </button>
+          </section>
+        </aside>
+      </div>
+
+      <section className="profile-account-strip" aria-label="Account details">
+        <dl>
+          <div>
+            <dt>Signed in as</dt>
+            <dd>{email ?? "Unknown"}</dd>
+          </div>
+          <div>
+            <dt>Leaderboard name</dt>
+            <dd>{displayName}</dd>
+          </div>
+          <div>
+            <dt>Email confirmed</dt>
+            <dd className={emailConfirmed ? "is-confirmed" : undefined}>
+              {emailConfirmed ? "Yes" : "Not yet"}
+            </dd>
+          </div>
+        </dl>
+        <button type="button" onClick={onSignOut}>
+          Sign out
+        </button>
+      </section>
+    </div>
   );
 }
 

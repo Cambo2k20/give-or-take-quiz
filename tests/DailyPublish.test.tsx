@@ -103,6 +103,11 @@ describe("publishing a finished round", () => {
     const user = userEvent.setup();
     render(<Game />);
 
+    expect(
+      screen.getAllByRole("button", { name: /play today's daily/i }),
+    ).toHaveLength(1);
+    expect(document.querySelector(".daily-strip")).not.toBeInTheDocument();
+
     await user.click(
       screen.getByRole("button", { name: /play today's daily/i }),
     );
@@ -148,5 +153,32 @@ describe("publishing a finished round", () => {
     );
     expect(api.publish.mock.calls[0]?.[1]).toHaveLength(10);
     expect(api.publishDaily).not.toHaveBeenCalled();
+  });
+
+  it("uses the merged daily header only on the home screen", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date("2026-08-01T09:00:00"));
+
+    const user = userEvent.setup();
+    render(<Game />);
+
+    expect(
+      screen.getByRole("button", { name: /play today's daily/i }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Ada" }));
+
+    expect(
+      screen.queryByRole("button", { name: /play today's daily/i }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Give or Take home" }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Give or Take home" }));
+
+    expect(
+      screen.getByRole("button", { name: /play today's daily/i }),
+    ).toBeInTheDocument();
   });
 });
