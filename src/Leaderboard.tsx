@@ -12,6 +12,7 @@ export function LeaderboardPanel({
   error,
   profile,
   unit = "points",
+  openLabel,
 }: {
   rows: readonly LeaderboardRow[];
   loading: boolean;
@@ -19,6 +20,8 @@ export function LeaderboardPanel({
   profile: PlayerProfile | null;
   /** What the number means: points on a classic board, questions on survival. */
   unit?: string;
+  /** Optional open place below the live rows. */
+  openLabel?: string;
 }) {
   if (loading) {
     return (
@@ -45,24 +48,57 @@ export function LeaderboardPanel({
   }
 
   return (
-    <ol className="board-list">
-      {rows.map((row) => (
-        <li
-          key={row.playerId}
-          className={row.playerId === profile?.id ? "is-you" : undefined}
-        >
-          <span className="board-rank">{row.rank}</span>
-          <span className="board-name">
-            {row.displayName}
-            {row.playerId === profile?.id && (
-              <span className="board-you"> you</span>
-            )}
-          </span>
-          <strong className="board-score">{formatPoints(row.bestScore)}</strong>
-          <span className="board-unit">{unit}</span>
-        </li>
-      ))}
-    </ol>
+    <div className="board-table">
+      <div className="board-list-head" aria-hidden="true">
+        <span>#</span>
+        <span>Player</span>
+        <span>Form</span>
+        <span>Rounds</span>
+        <span>Best</span>
+      </div>
+      <ol className="board-list">
+        {rows.map((row) => {
+          const isYou = row.playerId === profile?.id;
+          return (
+            <li
+              key={row.playerId}
+              className={[
+                isYou ? "is-you" : "",
+                row.rank <= 3 ? `is-podium is-rank-${row.rank}` : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              <span className="board-rank">{row.rank}</span>
+              <span className="board-name">
+                <strong>{row.displayName}</strong>
+                {isYou && <span className="board-you">You</span>}
+              </span>
+              <span
+                className="board-form-slot"
+                aria-label="Recent form will appear here"
+              >
+                <span aria-hidden="true">—</span>
+              </span>
+              <span className="board-rounds">{row.roundsPlayed}</span>
+              <span className="board-best">
+                <strong className="board-score">
+                  {formatPoints(row.bestScore)}
+                </strong>
+                <span className="board-unit">{unit}</span>
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+      {openLabel && (
+        <div className="board-open-row">
+          <span className="board-rank">{rows.length + 1}</span>
+          <span>{openLabel}</span>
+          <span aria-hidden="true">—</span>
+        </div>
+      )}
+    </div>
   );
 }
 

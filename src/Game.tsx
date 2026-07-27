@@ -50,9 +50,11 @@ import {
 } from "../lib/backgroundTheme";
 import type { BackgroundThemeId } from "../lib/themes";
 import { ThemeArtwork } from "./themes/ThemeArtwork";
-import { DailyArchive, DailyStrip } from "./Daily";
+import { DailyArchive } from "./Daily";
+import { HomeHeader } from "./HomeHeader";
 import {
   AchievementPanel,
+  ProfileDashboard,
   ProgressRibbon,
   RankPanel,
   UnlocksPanel,
@@ -694,7 +696,29 @@ export default function Game() {
         mode={theme}
         variant="backdrop"
       />
-      <header className="site-header">
+      {activePhase === "category" && todaysDaily ? (
+        <HomeHeader
+          date={todaysDaily.date}
+          streak={streak}
+          playedToday={playedToday}
+          score={dailyProgress.scores[today] ?? null}
+          archiveCount={archiveDates.length}
+          leaderboardEnabled={leaderboard.enabled}
+          accountLabel={
+            auth.status === "signed-in"
+              ? (player?.displayName ?? auth.user?.email ?? "Account")
+              : "Sign in"
+          }
+          theme={theme}
+          onHome={() => setPhase("category")}
+          onPlayDaily={() => startDaily(todaysDaily.date)}
+          onOpenArchive={() => setPhase("daily-archive")}
+          onOpenLeaderboard={openLeaderboard}
+          onOpenAccount={() => setPhase("account")}
+          onToggleTheme={toggleTheme}
+        />
+      ) : (
+        <header className="site-header">
         <button
           className="wordmark"
           type="button"
@@ -774,27 +798,11 @@ export default function Game() {
             )}
           </button>
         </div>
-      </header>
+        </header>
+      )}
 
       {activePhase === "category" && (
         <section className="category-screen">
-          {/*
-            Today's puzzle sits above the fold as a banner: it is the one thing
-            with a deadline on this page, and it reads as a standing invitation
-            rather than competing with the subject grid for a card slot.
-          */}
-          {todaysDaily && (
-            <DailyStrip
-              set={todaysDaily}
-              streak={streak}
-              playedToday={playedToday}
-              score={dailyProgress.scores[today] ?? null}
-              archiveCount={archiveDates.length}
-              onPlay={() => startDaily(todaysDaily.date)}
-              onOpenArchive={() => setPhase("daily-archive")}
-            />
-          )}
-
           <div className="hero-copy">
             <p className="eyebrow">A game of informed guesses</p>
             <h1>How close can you get?</h1>
@@ -1274,22 +1282,51 @@ export default function Game() {
       )}
 
       {activePhase === "account" && (
-        <section className="account-screen">
-          <div className="results-hero">
-            <p className="eyebrow">
-              {auth.status === "signed-in" ? "Your account" : "Optional"}
-            </p>
-            <h1 ref={focusHeadingRef} tabIndex={-1}>
-              {auth.status === "signed-in" ? "Account" : "Sign in"}
-            </h1>
-            <p className="account-lede">
-              You never need an account to play. Signing in only puts your
-              scores on the leaderboard under a name of your choosing.
-            </p>
-          </div>
+        <section
+          className={`account-screen${
+            auth.status === "signed-in" && progress.progress
+              ? " account-screen-profile"
+              : ""
+          }`}
+        >
+          {(!progress.progress || auth.status !== "signed-in") && (
+            <div className="results-hero">
+              <p className="eyebrow">
+                {auth.status === "signed-in" ? "Your account" : "Optional"}
+              </p>
+              <h1 ref={focusHeadingRef} tabIndex={-1}>
+                {auth.status === "signed-in" ? "Account" : "Sign in"}
+              </h1>
+              <p className="account-lede">
+                You never need an account to play. Signing in only puts your
+                scores on the leaderboard under a name of your choosing.
+              </p>
+            </div>
+          )}
 
           {auth.recovering ? (
             <NewPasswordForm onDone={auth.endRecovery} />
+          ) : auth.status === "signed-in" &&
+            progress.progress &&
+            player ? (
+            <ProfileDashboard
+              progress={progress.progress}
+              labels={categoryLabels}
+              displayName={player.displayName}
+              email={auth.user?.email ?? null}
+              emailConfirmed={Boolean(auth.user?.emailConfirmed)}
+              themeMode={theme}
+              equippedId={bgTheme}
+              onEquip={toggleBackgroundTheme}
+              onOpenRanks={() => setPhase("ranks")}
+              onOpenAchievements={() => setPhase("achievements")}
+              onOpenUnlocks={() => setPhase("unlocks")}
+              onSignOut={() => {
+                void signOut();
+                setPhase("category");
+              }}
+              headingRef={focusHeadingRef}
+            />
           ) : auth.status === "signed-in" ? (
             <div className="account-detail">
               <dl className="account-facts">
@@ -1313,50 +1350,6 @@ export default function Game() {
 
               {auth.canUseLeaderboard && !player && (
                 <JoinLeaderboardForm onJoin={(name) => leaderboard.join(name)} />
-              )}
-
-              {/*
-                Three doors rather than three stacked panels: ranks,
-                achievements and unlocks are each long enough to bury whatever
-                follows them on this screen.
-              */}
-              {progress.progress && (
-                <div className="account-nav" aria-label="Your progress">
-                  <button
-                    className="account-nav-item"
-                    type="button"
-                    onClick={() => setPhase("ranks")}
-                  >
-                    <strong>Ranks</strong>
-                    <span>
-                      {formatPoints(progress.progress.totalXp)} XP across eight
-                      subjects
-                    </span>
-                  </button>
-                  <button
-                    className="account-nav-item"
-                    type="button"
-                    onClick={() => setPhase("achievements")}
-                  >
-                    <strong>Achievements</strong>
-                    <span>
-                      {
-                        progress.progress.achievements.filter(
-                          (item) => item.earned,
-                        ).length
-                      }{" "}
-                      of {progress.progress.achievements.length} earned
-                    </span>
-                  </button>
-                  <button
-                    className="account-nav-item"
-                    type="button"
-                    onClick={() => setPhase("unlocks")}
-                  >
-                    <strong>Unlocks</strong>
-                    <span>Background themes</span>
-                  </button>
-                </div>
               )}
 
               <button

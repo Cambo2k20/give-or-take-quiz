@@ -99,7 +99,7 @@ beforeEach(() => {
 
 async function openAccount(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: "Ada" }));
-  return screen.findByRole("heading", { name: /^account$/i });
+  return screen.findByRole("heading", { name: /^ada$/i });
 }
 
 describe("progression screens", () => {
@@ -107,19 +107,20 @@ describe("progression screens", () => {
     window.localStorage.clear();
   });
 
-  it("splits progress behind three doors rather than stacking it", async () => {
+  it("opens a profile dashboard with subjects, achievements and backgrounds", async () => {
     const user = userEvent.setup();
     render(<Game />);
     await openAccount(user);
 
-    // The account screen itself stays short: three buttons, no panels.
-    expect(screen.getByRole("button", { name: /ranks/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /subjects/i })).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /achievements/i }),
+      screen.getByRole("heading", { name: /achievements/i }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /unlocks/i })).toBeInTheDocument();
-    expect(screen.queryByText("Crowd Counter")).not.toBeInTheDocument();
-    expect(screen.queryByText("First Steps")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /backgrounds/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Crowd Counter")).toBeInTheDocument();
+    expect(screen.getByText("First Steps")).toBeInTheDocument();
   });
 
   it("opens ranks on its own screen", async () => {
@@ -127,7 +128,7 @@ describe("progression screens", () => {
     render(<Game />);
     await openAccount(user);
 
-    await user.click(screen.getByRole("button", { name: /ranks/i }));
+    await user.click(screen.getByRole("button", { name: /rank details/i }));
 
     expect(
       await screen.findByRole("heading", { name: /^ranks$/i }),
@@ -139,7 +140,7 @@ describe("progression screens", () => {
 
     await user.click(screen.getByRole("button", { name: /back to account/i }));
     expect(
-      await screen.findByRole("heading", { name: /^account$/i }),
+      await screen.findByRole("heading", { name: /^ada$/i }),
     ).toBeInTheDocument();
   });
 
@@ -148,7 +149,7 @@ describe("progression screens", () => {
     render(<Game />);
     await openAccount(user);
 
-    await user.click(screen.getByRole("button", { name: /achievements/i }));
+    await user.click(screen.getByRole("button", { name: /see all 2/i }));
 
     expect(
       await screen.findByRole("heading", { name: /^achievements$/i }),
@@ -165,7 +166,9 @@ describe("progression screens", () => {
     render(<Game />);
     await openAccount(user);
 
-    await user.click(screen.getByRole("button", { name: /unlocks/i }));
+    await user.click(
+      screen.getByRole("button", { name: /manage backgrounds/i }),
+    );
 
     expect(
       await screen.findByRole("heading", { name: /^unlocks$/i }),
@@ -197,7 +200,9 @@ describe("progression screens", () => {
     render(<Game />);
     await openAccount(user);
 
-    await user.click(screen.getByRole("button", { name: /unlocks/i }));
+    await user.click(
+      screen.getByRole("button", { name: /manage backgrounds/i }),
+    );
 
     expect(
       await screen.findByText(/Unlocked · Space rank 5 · Stargazer/),
@@ -223,7 +228,9 @@ describe("progression screens", () => {
     const user = userEvent.setup();
     render(<Game />);
     await openAccount(user);
-    await user.click(screen.getByRole("button", { name: /unlocks/i }));
+    await user.click(
+      screen.getByRole("button", { name: /manage backgrounds/i }),
+    );
 
     const card = await screen.findByRole("button", { name: /Deep Space/i });
     const modeToggle = screen.getByRole("button", {

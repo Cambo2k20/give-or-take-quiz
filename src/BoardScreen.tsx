@@ -97,6 +97,9 @@ export function BoardScreen({
     ? rows.find((row) => row.playerId === profile.id) ?? null
     : null;
   const above = profile ? rowAbove(rows, profile.id) : null;
+  const below = you
+    ? rows.find((row) => row.rank > you.rank) ?? null
+    : null;
 
   function gapLine(): string {
     if (!you) return "";
@@ -110,39 +113,53 @@ export function BoardScreen({
     return `${formatPoints(gap)} off ${ordinal(above.rank)} place`;
   }
 
+  const standingDetail = gapLine();
+  const standingDelta =
+    you && below
+      ? survival
+        ? `${formatPoints(you.bestScore - below.bestScore)} ahead`
+        : `${formatPoints(you.bestScore - below.bestScore)} point lead`
+      : above && you
+        ? survival
+          ? `${formatPoints(above.bestScore - you.bestScore)} to move up`
+          : `${formatPoints(above.bestScore - you.bestScore)} points to move up`
+        : null;
+
   return (
     <section className="board-screen">
-      <div className="results-hero">
-        <h1 ref={headingRef} tabIndex={-1}>
-          Leaderboard
-        </h1>
-        <p className="board-blurb">{blurb}</p>
-      </div>
+      <div className="board-titlebar">
+        <div>
+          <h1 ref={headingRef} tabIndex={-1}>
+            Leaderboard
+          </h1>
+          <p className="board-blurb">{blurb}</p>
+        </div>
 
-      {/* Format is the primary axis: how you played, not what about. */}
-      <div className="board-formats" role="group" aria-label="Choose a format">
-        <button
-          type="button"
-          className={`board-format${survival ? "" : " is-current"}`}
-          aria-pressed={!survival}
-          onClick={() =>
-            onScopeChange(
-              todaysDailyDate
-                ? { kind: "daily", date: todaysDailyDate }
-                : { kind: "category", mode: "mixed" },
-            )
-          }
-        >
-          Classic
-        </button>
-        <button
-          type="button"
-          className={`board-format${survival ? " is-current" : ""}`}
-          aria-pressed={survival}
-          onClick={() => onScopeChange({ kind: "survival" })}
-        >
-          Survival
-        </button>
+        {/* Format is the primary axis: how you played, not what about. */}
+        <div className="board-formats" role="group" aria-label="Choose a format">
+          <button
+            type="button"
+            className={`board-format${survival ? "" : " is-current"}`}
+            aria-pressed={!survival}
+            onClick={() =>
+              onScopeChange(
+                todaysDailyDate
+                  ? { kind: "daily", date: todaysDailyDate }
+                  : { kind: "category", mode: "mixed" },
+              )
+            }
+          >
+            Classic
+          </button>
+          <button
+            type="button"
+            className={`board-format${survival ? " is-current" : ""}`}
+            aria-pressed={survival}
+            onClick={() => onScopeChange({ kind: "survival" })}
+          >
+            Survival
+          </button>
+        </div>
       </div>
 
       <div className="board-scope">
@@ -222,16 +239,35 @@ export function BoardScreen({
 
       {you && (
         <div className="board-standing">
-          <div>
+          <span className="board-standing-sheen" aria-hidden="true" />
+          <div className="board-standing-score">
             <span className="board-standing-label">Your standing</span>
-            <p>
-              {survival
-                ? `Best run ${formatPoints(you.bestScore)}`
-                : formatPoints(you.bestScore)}
-              {gapLine() && ` · ${gapLine()}`}
+            <p className="board-standing-number">
+              <strong>{formatPoints(you.bestScore)}</strong>
+              <span>{survival ? "in a row" : "points"}</span>
             </p>
+            <p className="board-standing-copy">{standingDetail}</p>
           </div>
-          <strong className="board-standing-rank">{ordinal(you.rank)}</strong>
+          <div className="board-standing-progress">
+            {standingDelta && (
+              <>
+                <div className="board-standing-progress-label">
+                  <span>{above ? "Next place" : "Lead over next place"}</span>
+                  <strong>{standingDelta}</strong>
+                </div>
+                <div className="board-standing-bar" aria-hidden="true">
+                  <span />
+                </div>
+              </>
+            )}
+            <div className="board-standing-chips">
+              <span>{you.roundsPlayed} rounds</span>
+              <span>{scopeLabel}</span>
+            </div>
+          </div>
+          <div className="board-standing-rank">
+            <strong>{ordinal(you.rank)}</strong>
+          </div>
         </div>
       )}
 
@@ -241,6 +277,11 @@ export function BoardScreen({
         error={error}
         profile={profile}
         unit={survival ? "in a row" : "points"}
+        openLabel={
+          scope.kind === "daily"
+            ? "Open until midnight"
+            : "The next place is open"
+        }
       />
 
       <p className="board-footnote">{footer}</p>
