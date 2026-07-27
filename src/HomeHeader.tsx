@@ -67,77 +67,43 @@ export function HomeHeader({
 }: HomeHeaderProps) {
   return (
     <header className="home-header">
-      <div className="home-header-daily-controls">
-        <button
-          className="home-header-daily"
-          type="button"
-          onClick={onPlayDaily}
-          aria-label={dailyActionLabel({ date, playedToday, score })}
-        >
-          <span className="home-header-daily-flag">
-            <span className="home-header-daily-dot" aria-hidden="true" />
-            Daily
-          </span>
-          <time dateTime={date}>{compactReadableDate(date)}</time>
-          <span
-            className={`home-header-streak${streak > 0 ? " is-lit" : ""}`}
-          >
-            <FlameIcon />
-            {streak > 0
-              ? `${streak} day${streak === 1 ? "" : "s"}`
-              : "No streak"}
-          </span>
-        </button>
-
-        {archiveCount > 0 && (
+      <div className="home-header-lower">
+        <div className="home-header-daily-controls">
           <button
-            className="home-header-past"
+            className="home-header-daily"
             type="button"
-            onClick={onOpenArchive}
-            aria-label="Past dailies"
+            onClick={onPlayDaily}
+            aria-label={dailyActionLabel({ date, playedToday, score })}
           >
-            Past
+            <span className="home-header-daily-flag">
+              <span className="home-header-daily-dot" aria-hidden="true" />
+              Daily
+            </span>
+            <time dateTime={date}>{compactReadableDate(date)}</time>
+            <span
+              className={`home-header-streak${streak > 0 ? " is-lit" : ""}`}
+            >
+              <FlameIcon />
+              {streak > 0
+                ? `${streak} day${streak === 1 ? "" : "s"}`
+                : "No streak"}
+            </span>
           </button>
-        )}
-      </div>
 
-      <button
-        className="wordmark home-header-wordmark"
-        type="button"
-        onClick={onHome}
-        aria-label="Give or Take home"
-      >
-        <BrandMark />
-        <span>Give or Take</span>
-      </button>
-
-      <div className="home-header-side">
-        {leaderboardEnabled && (
-          <>
+          {archiveCount > 0 && (
             <button
-              className="board-button home-header-board"
+              className="home-header-past"
               type="button"
-              onClick={onOpenLeaderboard}
-              aria-label="Leaderboard"
+              onClick={onOpenArchive}
+              aria-label="Past dailies"
             >
-              <span className="home-header-board-full">Leaderboard</span>
-              <span className="home-header-board-short" aria-hidden="true">
-                Board
-              </span>
+              Past
             </button>
-            <button
-              className="board-button home-header-account"
-              type="button"
-              onClick={onOpenAccount}
-              title={accountLabel}
-            >
-              <span>{accountLabel}</span>
-            </button>
-          </>
-        )}
+          )}
+        </div>
 
         <button
-          className="theme-toggle"
+          className="theme-toggle home-header-theme-toggle"
           type="button"
           onClick={onToggleTheme}
           aria-label={
@@ -175,6 +141,43 @@ export function HomeHeader({
             </svg>
           )}
         </button>
+      </div>
+
+      <button
+        className="wordmark home-header-wordmark"
+        type="button"
+        onClick={onHome}
+        aria-label="Give or Take home"
+      >
+        <BrandMark />
+        <span>Give or Take</span>
+      </button>
+
+      <div className="home-header-side">
+        {leaderboardEnabled && (
+          <>
+            <button
+              className="board-button home-header-board"
+              type="button"
+              onClick={onOpenLeaderboard}
+              aria-label="Leaderboard"
+            >
+              <span className="home-header-board-full">Leaderboard</span>
+              <span className="home-header-board-short" aria-hidden="true">
+                Board
+              </span>
+            </button>
+            <button
+              className="board-button home-header-account"
+              type="button"
+              onClick={onOpenAccount}
+              title={accountLabel}
+            >
+              <span>{accountLabel}</span>
+            </button>
+          </>
+        )}
+
       </div>
     </header>
   );

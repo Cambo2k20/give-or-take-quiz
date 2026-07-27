@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -46,6 +46,18 @@ describe("HomeHeader", () => {
     expect(screen.getByText("Mon 27 Jul")).toBeInTheDocument();
     expect(screen.getByText("No streak")).toBeInTheDocument();
     expect(screen.queryByText("Play")).not.toBeInTheDocument();
+    const lowerRow = document.querySelector(".home-header-lower");
+    expect(lowerRow).not.toBeNull();
+    expect(
+      within(lowerRow as HTMLElement).getByRole("button", {
+        name: "Past dailies",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(lowerRow as HTMLElement).getByRole("button", {
+        name: "Switch to light mode",
+      }),
+    ).toBeInTheDocument();
 
     await user.click(daily);
     await user.click(screen.getByRole("button", { name: "Past dailies" }));
@@ -103,4 +115,5 @@ describe("HomeHeader", () => {
       screen.getByRole("button", { name: "Sign in" }),
     ).toBeInTheDocument();
   });
+
 });

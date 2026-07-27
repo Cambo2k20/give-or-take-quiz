@@ -406,6 +406,7 @@ type RankPanelProps = {
   labels: Record<QuestionCategory, { title: string; icon: ReactNode }>;
   selectedCategory: QuestionCategory;
   onSelectCategory: (category: QuestionCategory) => void;
+  headingRef: RefObject<HTMLHeadingElement | null>;
 };
 
 function badgeStatus(badge: RankBadge): "Current" | "Earned" | "Locked" {
@@ -419,6 +420,7 @@ export function RankPanel({
   labels,
   selectedCategory,
   onSelectCategory,
+  headingRef,
 }: RankPanelProps) {
   const selected =
     progress.categories.find((entry) => entry.category === selectedCategory) ??
@@ -435,11 +437,15 @@ export function RankPanel({
   return (
     <div className="progress-panel rank-collection-panel">
       <div className="rank-overview">
+        <span className="rank-overview-sheen" aria-hidden="true" />
         <div className="rank-overview-toolbar">
-          <div className="rank-total-compact">
-            <span>Total XP</span>
-            <strong>{formatPoints(progress.totalXp)}</strong>
-          </div>
+          <h1
+            className="rank-overview-title"
+            ref={headingRef}
+            tabIndex={-1}
+          >
+            Ranks
+          </h1>
           <label className="rank-subject-select">
             <span>Choose a subject</span>
             <select
@@ -455,6 +461,10 @@ export function RankPanel({
               ))}
             </select>
           </label>
+          <div className="rank-total-compact">
+            <span>Total XP</span>
+            <strong>{formatPoints(progress.totalXp)}</strong>
+          </div>
         </div>
 
         <section

@@ -271,14 +271,13 @@ h1[tabindex="-1"]:focus {
   height: 18px;
 }
 
-/* The homepage handoff combines the daily invitation and global navigation
- * into one anchored object. The balanced grid keeps the wordmark centred even
- * when the live account label is wider than the daily status. */
+/* Shared site navigation combines the daily invitation and global navigation.
+ * The balanced grid keeps the wordmark centred even when the live account
+ * label is wider than the daily status. */
 .home-header {
-  position: sticky;
+  position: relative;
   z-index: 20;
-  top: 12px;
-  width: min(calc(100% - 48px), 1000px);
+  width: min(calc(100% - 48px), var(--wide));
   min-height: 60px;
   margin: 12px auto 0;
   padding: 8px 9px 8px 15px;
@@ -300,6 +299,10 @@ h1[tabindex="-1"]:focus {
   align-items: center;
   gap: 6px;
   justify-self: start;
+}
+
+.home-header-lower {
+  display: contents;
 }
 
 .home-header-daily {
@@ -398,8 +401,8 @@ h1[tabindex="-1"]:focus {
 }
 
 .home-header-wordmark .wordmark-mark {
-  width: 32px;
-  height: 24px;
+    width: 42px;
+    height: 32px;
 }
 
 .home-header-side {
@@ -409,6 +412,7 @@ h1[tabindex="-1"]:focus {
   align-items: center;
   justify-self: end;
   gap: 6px;
+  margin-right: 50px;
 }
 
 .home-header .board-button {
@@ -436,6 +440,11 @@ h1[tabindex="-1"]:focus {
 .home-header .theme-toggle {
   width: 44px;
   height: 44px;
+}
+
+.home-header-theme-toggle {
+  grid-area: nav;
+  justify-self: end;
 }
 
 .home-header-board-short {
@@ -536,7 +545,7 @@ h1[tabindex="-1"]:focus {
 /* ── Daily challenge ────────────────────────────────────────────────────── */
 
 .daily-archive {
-  width: min(100%, var(--content));
+  width: min(100%, var(--wide));
   margin: 20px auto 0;
   padding: 0;
   list-style: none;
@@ -676,7 +685,7 @@ h1[tabindex="-1"]:focus {
 /* ── Game screen ────────────────────────────────────────────────────────── */
 
 .game-screen {
-  width: min(100%, var(--content));
+  width: min(100%, var(--wide));
   flex: 1;
   margin-inline: auto;
   padding: 4px 24px 48px;
@@ -1076,7 +1085,7 @@ h1[tabindex="-1"]:focus {
 /* ── Results screen ─────────────────────────────────────────────────────── */
 
 .results-screen {
-  width: min(100%, var(--content));
+  width: min(100%, var(--wide));
   flex: 1;
   margin-inline: auto;
   padding: 4px 24px 56px;
@@ -1263,7 +1272,7 @@ h1[tabindex="-1"]:focus {
 }
 
 .board-screen {
-  width: min(100%, var(--content));
+  width: min(100%, var(--wide));
   flex: 1;
   margin-inline: auto;
   padding: 4px 24px 56px;
@@ -1737,7 +1746,7 @@ h1[tabindex="-1"]:focus {
 /* ── Accounts ───────────────────────────────────────────────────────────── */
 
 .account-screen {
-  width: min(100%, var(--content));
+  width: min(100%, var(--wide));
   flex: 1;
   margin-inline: auto;
   padding: 4px 24px 56px;
@@ -2161,6 +2170,47 @@ h1[tabindex="-1"]:focus {
   padding-block: 18px;
 }
 
+.progress-screen-hero-achievements {
+  position: relative;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--accent) 44%, transparent);
+  background:
+    linear-gradient(
+      120deg,
+      color-mix(in srgb, var(--accent) 30%, transparent),
+      transparent 62%
+    ),
+    color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--ink) 15%, transparent),
+    0 10px 28px color-mix(in srgb, var(--accent) 12%, transparent),
+    var(--shadow-card);
+  animation: board-rise 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.progress-screen-hero-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in srgb, var(--ink) 14%, transparent) 46%,
+    transparent 62%
+  );
+  background-size: 220% 100%;
+  background-position: 170% 0;
+}
+
+.progress-screen-hero-sheen.is-active {
+  animation: board-sheen 2.6s ease-out both;
+}
+
+.progress-screen-hero-achievements > .eyebrow,
+.progress-screen-hero-achievements > h1 {
+  position: relative;
+}
+
 .progress-screen-hero .eyebrow {
   margin-bottom: 4px;
 }
@@ -2176,16 +2226,43 @@ h1[tabindex="-1"]:focus {
 }
 
 .rank-overview {
+  position: relative;
   overflow: hidden;
-  border: 1.5px solid var(--line);
+  border: 1px solid color-mix(in srgb, var(--accent) 44%, transparent);
   border-radius: 22px;
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
+  background:
+    linear-gradient(
+      120deg,
+      color-mix(in srgb, var(--accent) 30%, transparent),
+      transparent 62%
+    ),
+    color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--ink) 15%, transparent),
+    0 10px 28px color-mix(in srgb, var(--accent) 12%, transparent),
+    var(--shadow-card);
+  animation: board-rise 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.rank-overview-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in srgb, var(--ink) 14%, transparent) 46%,
+    transparent 62%
+  );
+  background-size: 220% 100%;
+  animation: board-sheen 2.6s ease-out 400ms both;
 }
 
 .rank-overview-toolbar {
+  position: relative;
   display: grid;
-  grid-template-columns: auto minmax(240px, 1fr);
+  grid-template-columns: max-content minmax(0, 376px) 1fr max-content;
+  grid-template-areas: "title picker . total";
   align-items: end;
   gap: 16px;
   padding: 12px 16px;
@@ -2193,13 +2270,23 @@ h1[tabindex="-1"]:focus {
   background: var(--sunk);
 }
 
+.rank-overview-title {
+  grid-area: title;
+  width: max-content;
+  margin: 0;
+  font-size: clamp(27px, 4vw, 34px);
+  line-height: 1;
+}
+
 .rank-total-compact {
+  grid-area: total;
   min-width: 126px;
   display: flex;
   align-items: baseline;
   gap: 8px;
-  padding-right: 16px;
-  border-right: 1px solid var(--line);
+  justify-content: flex-end;
+  padding-left: 16px;
+  border-left: 1px solid var(--line);
 }
 
 .rank-total-compact span,
@@ -2220,6 +2307,8 @@ h1[tabindex="-1"]:focus {
 }
 
 .rank-subject-select {
+  grid-area: picker;
+  width: min(100%, 376px);
   min-width: 0;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -2248,6 +2337,7 @@ h1[tabindex="-1"]:focus {
 }
 
 .rank-subject-hero {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 132px;
   gap: 16px 20px;
@@ -2622,7 +2712,7 @@ h1[tabindex="-1"]:focus {
 .achievement.tier-gold { border-left-width: 8px; }
 
 .progress-ribbon {
-  width: min(100%, var(--content));
+  width: min(100%, var(--wide));
   margin: 18px auto 0;
   padding: 14px 18px;
   border: 1.5px solid var(--accent);
@@ -3618,6 +3708,63 @@ h1[tabindex="-1"]:focus {
 
 /* ── Narrow screens ─────────────────────────────────────────────────────── */
 
+@media (max-width: 850px) {
+  .home-header {
+    top: 8px;
+    width: calc(100% - 32px);
+    margin-top: 8px;
+    padding: 9px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand nav"
+      "lower lower";
+    gap: 8px 10px;
+    border-radius: 22px;
+  }
+
+  .home-header-wordmark {
+    justify-self: start;
+    font-size: 19px;
+  }
+
+  .home-header-wordmark .wordmark-mark {
+    width: 42px;
+    height: 32px;
+  }
+
+  .home-header-lower {
+    grid-area: lower;
+    min-width: 0;
+    padding-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-top: 1px solid var(--line);
+  }
+
+  .home-header-daily-controls {
+    width: auto;
+    flex: 1;
+  }
+
+  .home-header-side {
+    margin-right: 0;
+  }
+
+  .home-header-theme-toggle {
+    flex: none;
+  }
+
+  .home-header-daily {
+    flex: 1;
+    justify-content: flex-start;
+  }
+
+  .home-header-account {
+    max-width: 92px;
+  }
+}
+
 @media (max-width: 720px) {
   .site-header,
   .category-screen,
@@ -3629,49 +3776,14 @@ h1[tabindex="-1"]:focus {
     padding-inline: 16px;
   }
 
-  .home-header {
-    top: 8px;
-    width: calc(100% - 32px);
-    margin-top: 8px;
-    padding: 9px;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "brand nav"
-      "daily daily";
-    gap: 8px 10px;
-    border-radius: 22px;
-  }
-
-  .home-header-wordmark {
-    justify-self: start;
-    font-size: 17px;
-  }
-
-  .home-header-wordmark .wordmark-mark {
-    width: 28px;
-    height: 21px;
-  }
-
-  .home-header-daily-controls {
-    width: 100%;
-    padding-top: 8px;
-    justify-self: stretch;
-    border-top: 1px solid var(--line);
-  }
-
-  .home-header-daily {
-    flex: 1;
-    justify-content: flex-start;
-  }
-
-  .home-header-account {
-    max-width: 92px;
-  }
-
   .board-titlebar {
     align-items: stretch;
     flex-direction: column;
     gap: 16px;
+  }
+
+  .board-titlebar > div:first-child {
+    padding-top: 26px;
   }
 
   .board-titlebar .board-formats {
@@ -3747,7 +3859,12 @@ h1[tabindex="-1"]:focus {
   .profile-hero {
     grid-template-columns: 1fr auto;
     gap: 16px;
+    margin-top: 12px;
     padding: 18px 16px;
+  }
+
+  .progress-screen-hero-achievements {
+    margin-top: 18px;
   }
 
   .profile-identity {
@@ -3789,6 +3906,41 @@ h1[tabindex="-1"]:focus {
     grid-template-columns: 1fr;
   }
 
+  .profile-subjects .profile-section-title {
+    min-height: 37px;
+    align-items: center;
+  }
+
+  .profile-subjects .profile-section-title h2 {
+    font-size: 23.5px;
+    line-height: 1;
+  }
+
+  .profile-subjects .profile-section-title span {
+    display: none;
+  }
+
+  .profile-subjects .profile-section-title button {
+    height: 37px;
+    padding: 0 12px;
+    display: inline-flex;
+    align-items: center;
+    border: 1.5px solid var(--line-strong);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    box-shadow: inset 0 1px 0
+      color-mix(in srgb, var(--ink) 12%, transparent);
+    color: var(--ink);
+    font-size: 23.5px;
+    line-height: 1;
+  }
+
+  .profile-subjects .profile-section-title button:hover,
+  .profile-subjects .profile-section-title button:active {
+    border-color: var(--accent);
+    background: var(--accent-wash);
+  }
+
   .profile-achievements li > div span {
     white-space: normal;
   }
@@ -3809,15 +3961,24 @@ h1[tabindex="-1"]:focus {
 
   .rank-overview-toolbar {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "title"
+      "picker"
+      "total";
     gap: 10px;
+    align-items: stretch;
   }
 
   .rank-total-compact {
     min-width: 0;
     justify-content: space-between;
-    padding: 0 0 10px;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
+    padding: 10px 0 0;
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .rank-subject-select {
+    width: 100%;
   }
 
   .rank-subject-hero {
@@ -3950,6 +4111,7 @@ h1[tabindex="-1"]:focus {
   }
 
   .home-header-streak {
+    gap: 0;
     font-size: 11px;
   }
 
@@ -3983,6 +4145,12 @@ h1[tabindex="-1"]:focus {
     align-items: start;
     flex-direction: column;
     gap: 4px;
+  }
+}
+
+@media (max-width: 380px) {
+  .home-header-streak {
+    font-size: 0;
   }
 }
 

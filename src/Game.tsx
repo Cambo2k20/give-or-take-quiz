@@ -96,6 +96,51 @@ type Phase =
   | "unlocks";
 type RoundResult = { question: Question; guess: number; points: number };
 
+const SHIMMER_DURATION_MS = 2600;
+const SHIMMER_MIN_PAUSE_MS = 6000;
+const SHIMMER_PAUSE_RANGE_MS = 16000;
+
+function AchievementShimmer() {
+  const [active, setActive] = useState(false);
+
+  useEffect(() => {
+    if (
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+
+    let startTimer: number | undefined;
+    let stopTimer: number | undefined;
+
+    const schedule = () => {
+      const pause =
+        SHIMMER_MIN_PAUSE_MS + Math.random() * SHIMMER_PAUSE_RANGE_MS;
+      startTimer = window.setTimeout(() => {
+        setActive(true);
+        stopTimer = window.setTimeout(() => {
+          setActive(false);
+          schedule();
+        }, SHIMMER_DURATION_MS);
+      }, pause);
+    };
+
+    schedule();
+    return () => {
+      window.clearTimeout(startTimer);
+      window.clearTimeout(stopTimer);
+    };
+  }, []);
+
+  return (
+    <span
+      className={`progress-screen-hero-sheen${active ? " is-active" : ""}`}
+      aria-hidden="true"
+    />
+  );
+}
+
 /**
  * How a round is played, as opposed to what it is about. Deliberately not a
  * GameMode: subjects, best scores and question history are a separate axis,
@@ -709,7 +754,7 @@ export default function Game() {
         mode={theme}
         variant="backdrop"
       />
-      {activePhase === "category" && todaysDaily ? (
+      {todaysDaily ? (
         <HomeHeader
           date={todaysDaily.date}
           streak={streak}
@@ -1396,16 +1441,17 @@ export default function Game() {
         activePhase === "achievements" ||
         activePhase === "unlocks") && (
         <section className="account-screen progress-screen">
-          <div className="results-hero progress-screen-hero">
-            <p className="eyebrow">Your progress</p>
-            <h1 ref={focusHeadingRef} tabIndex={-1}>
-              {activePhase === "ranks"
-                ? "Ranks"
-                : activePhase === "achievements"
-                  ? "Achievements"
-                  : "Unlocks"}
-            </h1>
-          </div>
+          {activePhase !== "ranks" && (
+            <div
+              className={`results-hero progress-screen-hero progress-screen-hero-${activePhase}`}
+            >
+              {activePhase === "achievements" && <AchievementShimmer />}
+              <p className="eyebrow">Your progress</p>
+              <h1 ref={focusHeadingRef} tabIndex={-1}>
+                {activePhase === "achievements" ? "Achievements" : "Unlocks"}
+              </h1>
+            </div>
+          )}
 
           {progress.progress ? (
             activePhase === "ranks" ? (
@@ -1414,6 +1460,7 @@ export default function Game() {
                 labels={categoryLabels}
                 selectedCategory={rankSubject ?? highestRankSubject}
                 onSelectCategory={setRankSubject}
+                headingRef={focusHeadingRef}
               />
             ) : activePhase === "achievements" ? (
               <AchievementPanel progress={progress.progress} />

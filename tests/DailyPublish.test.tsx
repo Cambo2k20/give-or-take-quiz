@@ -155,7 +155,7 @@ describe("publishing a finished round", () => {
     expect(api.publishDaily).not.toHaveBeenCalled();
   });
 
-  it("uses the merged daily header only on the home screen", async () => {
+  it("keeps the merged daily header on the account screen", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.setSystemTime(new Date("2026-08-01T09:00:00"));
 
@@ -169,8 +169,8 @@ describe("publishing a finished round", () => {
     await user.click(screen.getByRole("button", { name: "Ada" }));
 
     expect(
-      screen.queryByRole("button", { name: /play today's daily/i }),
-    ).toBeNull();
+      screen.getByRole("button", { name: /play today's daily/i }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Give or Take home" }),
     ).toBeInTheDocument();

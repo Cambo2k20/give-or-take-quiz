@@ -188,4 +188,102 @@
 - `npm test` — 15 files and 209 tests passed.
 - `npm run build` — passed, including data validation, TypeScript and production Vite output.
 
+## Mobile home-header annotation
+
+### Evidence
+
+- Source visual truth: `C:\Users\Cambo\Documents\Codex\2026-07-27\https-supabase-com-dashboard-project-zwovdyyuacuipfhtycxw\animated-space-background-options\audit\home-header-before.png`.
+- Browser-rendered implementation: `C:\Users\Cambo\Documents\Codex\2026-07-27\https-supabase-com-dashboard-project-zwovdyyuacuipfhtycxw\animated-space-background-options\audit\home-header-after-371.png`.
+- Combined comparison: `C:\Users\Cambo\Documents\Codex\2026-07-27\https-supabase-com-dashboard-project-zwovdyyuacuipfhtycxw\animated-space-background-options\audit\home-header-before-vs-final-light.png` (source left, implementation right).
+- Source pixels: 424 x 881. Implementation pixels and exact child CSS viewport: 371 x 877 at device scale 1. No scaling, stretching or density conversion was applied; the implementation is intentionally narrower to verify the responsive stress state.
+- State: signed-in `Cambo`, light theme, homepage and Classic warm-up. The warm-up question differs because that content is selected dynamically; the header comparison is unaffected.
+
+### Full-view comparison
+
+- The two-row rounded header shell is now the shared site header.
+- The brand now has clear top-row priority through a 42 x 32 mark and a 19 px wordmark.
+- `Past` moves left into the lower controls, while the 44 x 44 theme toggle follows it on the lower row.
+- At the narrower 371 px implementation width, the header has no overlap or clipping and retains the complete `Mon 27 Jul` date.
+
+### Focused fidelity review
+
+- **Fonts and typography:** the existing Nunito family, weight and tracking are unchanged. The mobile wordmark increases from 17 px to 19 px and does not wrap.
+- **Spacing and layout rhythm:** the lower row keeps the daily controls flexible, then places `Past` and the theme toggle as fixed 44 px targets. The resulting mobile header is 124 px tall.
+- **Colors and tokens:** all existing semantic header tokens are unchanged. Both the light theme and Aurora Drift dark theme were checked in-browser.
+- **Image quality and asset fidelity:** the existing `BrandMark` raster masks are reused at their native aspect ratio. No new substitute asset, scaling halo or compression artifact was introduced.
+- **Copy and content:** visible copy is unchanged except that, at 380 px and below, the redundant visible `No streak` label collapses to its flame icon so the full date fits. The screen-reader text remains in the DOM.
+
+### Interaction, accessibility and browser checks
+
+- `Past` opens the archive and the home control returns to the quiz.
+- The same header remains present on Past, Leaderboard, Account and rank-detail screens.
+- A 416 px account-page scroll moved the header to `y: -404px`, confirming it leaves the viewport instead of sticking.
+- The theme button switches modes and updates its accessible label.
+- Existing semantic buttons and labels are retained, and the moved controls remain 44 x 44 touch targets.
+- The exact 371 px child viewport rendered without a console event or page error.
+
+### Findings and comparison history
+
+- Initial P2: the theme toggle sat in the top row, `Past` was pinned to the far right and the brand was undersized. The responsive grid and control grouping now match the annotation.
+- First narrow light capture at 371 px showed the date truncating. A 380 px compact streak treatment was added; the post-fix exact-width capture shows the full `Mon 27 Jul` date while retaining the streak icon.
+- No actionable P0, P1 or P2 differences remain.
+
+### Verification
+
+- `npm.cmd run lint` — passed.
+- `npm.cmd test` — 15 files and 210 tests passed.
+- `npm.cmd test -- --run tests/HomeHeader.test.tsx` — 1 file and 4 tests passed.
+- `npm.cmd run build` — passed, including validation of 272 questions and 20 daily sets, TypeScript and production Vite output. The existing large-chunk advisory remains.
+
+## Shared page width and Ranks toolbar annotations
+
+### Browser comparison
+
+- At the 1677 x 1272 annotated viewport, the home header and home body both measure 880 px.
+- Past, Leaderboard, Account and Ranks now use the same 880 px outer width and matching horizontal position as the shared header.
+- The separate Ranks hero container is absent. Its `Ranks` heading now sits inside the rank overview toolbar.
+- The revised toolbar measurements are: heading 100.6 px, subject label 376 px, select 252 px and Total XP 147.4 px at the right edge. These match the annotated targets without hard-coding the select independently from its label.
+
+### Responsive and interaction checks
+
+- The subject label is capped at 376 px on desktop and its select fills the remaining 252 px after the existing label and gap.
+- At 720 px and below, the toolbar stacks as heading, picker and Total XP; the picker returns to full available width and Total XP uses a top divider rather than forcing a cramped desktop row.
+- Switching the compact picker from Space to Population updated the selected category, title and collection, then returned correctly to Space.
+- The Ranks overview now uses the same accent gradient, inset highlight, soft glow, rise motion and 2.6-second one-pass sheen as the profile and leaderboard feature panels.
+- The sheen is decorative and pointer-transparent; the global reduced-motion rule reduces it to a near-instant single pass.
+- The shared header remains 880 px on every desktop page and retains its existing mobile width rule.
+- No P0, P1 or P2 differences remain against the annotations.
+
+### Verification
+
+- `npm.cmd run lint` — passed.
+- `npm.cmd test` — 15 files and 210 tests passed.
+- `npm.cmd run build` — passed, including question and daily-set validation, TypeScript and production Vite output. The existing large-chunk advisory remains.
+
+## Mobile profile Subjects annotations
+
+- All four changes are scoped to the existing 720 px mobile breakpoint; the desktop profile remains unchanged.
+- The Subjects-only ladder count is hidden on mobile. Achievement and other section counts remain visible.
+- At the narrower 371 px QA viewport, `Rank details` measures 164.3 x 37 px with a 23.5 px font and zero vertical padding.
+- The Subjects heading and Rank details button share the same vertical centre at 407 px, with no clipping or overlap.
+- The profile hero has the requested 12 px mobile top margin.
+- The Rank details control retains its existing button semantics and now has a visible border, pill background, inset highlight and pressed/hover treatment.
+- The shared header now switches to its two-row grid at 850 px and below, while all other page-level mobile rules remain at 720 px.
+- The 371 px stress check renders the expected `"brand nav" / "lower lower"` rows at 124 px tall.
+- The Achievements hero keeps its gradient but no longer shimmers automatically on mount. Each pass waits a random 6–22 seconds, runs for 2.6 seconds, then schedules a new random pause.
+- The browser idle-state check reports `animation-name: none` with the sheen parked off-panel; reduced-motion preferences skip the shimmer schedule entirely.
+
+### Verification
+
+- `npm.cmd run lint` — passed.
+- `npm.cmd test` — 15 files and 210 tests passed.
+- `npm.cmd run build` — passed, including question and daily-set validation, TypeScript and production Vite output. The existing large-chunk advisory remains.
+
+## Mobile Leaderboard title spacing
+
+- At the existing 720 px mobile breakpoint, the Leaderboard intro now receives a 26 px top inset beneath the doubled header.
+- The inset is owned by the intro wrapper rather than a fixed heading height, so the title remains unclipped under text scaling and at narrower widths.
+- Browser verification at 678 px confirmed the 26 px inset, a 42.7 px auto-height heading and clear separation before the format controls.
+- Desktop Leaderboard spacing remains unchanged.
+
 final result: passed

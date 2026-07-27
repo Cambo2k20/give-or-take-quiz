@@ -225,6 +225,20 @@ describe("progression screens", () => {
     window.localStorage.clear();
   });
 
+  it("keeps the shared home header across account and rank pages", async () => {
+    const user = userEvent.setup();
+    render(<Game />);
+
+    await openAccount(user);
+    expect(document.querySelector(".home-header")).toBeInTheDocument();
+    expect(document.querySelector(".site-header")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /rank details/i }));
+    await screen.findByRole("heading", { name: /^ranks$/i });
+    expect(document.querySelector(".home-header")).toBeInTheDocument();
+    expect(document.querySelector(".site-header")).not.toBeInTheDocument();
+  });
+
   it("opens a profile dashboard with subjects, achievements and backgrounds", async () => {
     const user = userEvent.setup();
     render(<Game />);
@@ -251,6 +265,16 @@ describe("progression screens", () => {
     expect(
       await screen.findByRole("heading", { name: /^ranks$/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /^ranks$/i }).closest(
+        ".rank-overview-toolbar",
+      ),
+    ).not.toBeNull();
+    expect(document.querySelector(".progress-screen-hero")).toBeNull();
+    expect(document.querySelector(".rank-overview-sheen")).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
     expect(screen.getByRole("combobox", { name: /choose a subject/i })).toHaveValue(
       "population",
     );
@@ -367,6 +391,11 @@ describe("progression screens", () => {
     expect(
       await screen.findByRole("heading", { name: /^achievements$/i }),
     ).toBeInTheDocument();
+    const shimmer = document.querySelector(
+      ".progress-screen-hero-achievements .progress-screen-hero-sheen",
+    );
+    expect(shimmer).toHaveAttribute("aria-hidden", "true");
+    expect(shimmer).not.toHaveClass("is-active");
     expect(screen.getByText("First Steps")).toBeInTheDocument();
     expect(screen.getByText("Regular")).toBeInTheDocument();
     // Unearned ones show how far off they are.
