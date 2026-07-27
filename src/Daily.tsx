@@ -35,7 +35,10 @@ export function DailyArchive({ dates, progress, onPlay }: DailyArchiveProps) {
   return (
     <ol className="daily-archive">
       {dates.map((date) => {
-        const score = progress.scores[date];
+        // The official score is the one worth showing, if there is one — it
+        // is what the day is actually recorded as. A practice-only date still
+        // reads as unplayed here, matching what the archive is for.
+        const score = progress.dates[date]?.officialScore ?? undefined;
         return (
           <li key={date}>
             <div className="daily-archive-date">

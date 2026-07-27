@@ -63,15 +63,17 @@ describe("submitDailyRound", () => {
 });
 
 describe("fetchDailyLeaderboard", () => {
-  it("reads one day's board and counts attempts as rounds", async () => {
+  it("reads one day's official board and counts attempts as rounds", async () => {
     query.limit.mockResolvedValue({
       data: [
         {
+          puzzle_date: "2026-08-01",
           player_id: "p-1",
           display_name: "Ada",
-          best_score: 4200,
+          score: 4200,
           attempts: 2,
           rank: 1,
+          completed_at: "2026-08-01T09:14:00Z",
         },
       ],
       error: null,
@@ -81,13 +83,18 @@ describe("fetchDailyLeaderboard", () => {
 
     expect(query.from).toHaveBeenCalledWith("daily_leaderboard");
     expect(query.eq).toHaveBeenCalledWith("puzzle_date", "2026-08-01");
+    // The view decides the tie-break; the client must not re-sort and undo it.
+    expect(query.order).toHaveBeenCalledWith("rank", { ascending: true });
     expect(rows).toEqual([
       {
+        puzzleDate: "2026-08-01",
         playerId: "p-1",
         displayName: "Ada",
+        // The official attempt's score, not the best of the two attempts.
         bestScore: 4200,
         roundsPlayed: 2,
         rank: 1,
+        completedAt: "2026-08-01T09:14:00Z",
       },
     ]);
   });

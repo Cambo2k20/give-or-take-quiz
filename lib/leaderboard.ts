@@ -40,6 +40,18 @@ export type ClassicLeaderboardRow = LeaderboardRow & {
   bestDate: string;
 };
 
+/**
+ * One official daily result. `bestScore` carries the official score — the first
+ * attempt inside the puzzle's window — rather than the best of several tries,
+ * because a fixed set of five questions must not reward replaying it.
+ * `roundsPlayed` counts every attempt, official and practice alike.
+ */
+export type DailyLeaderboardRow = LeaderboardRow & {
+  puzzleDate: string;
+  /** When the official attempt was filed; the tie-break above equal scores. */
+  completedAt: string;
+};
+
 export type PlayerProfile = {
   id: string;
   displayName: string;
@@ -49,6 +61,14 @@ export type PlayerProfile = {
 export type SubmittedRound = {
   roundId: string;
   totalScore: number;
+};
+
+export type SubmittedDailyRound = SubmittedRound & {
+  /** Whether this attempt is the one that counts for its date. */
+  isOfficial: boolean;
+  /** The score that counts for the date — may belong to an earlier attempt
+   * than this one, when another attempt already claimed the official slot. */
+  officialScore: number;
 };
 
 export type SubmittedRun = {
@@ -217,7 +237,7 @@ export async function submitRound(
 export async function submitDailyRound(
   date: string,
   guesses: readonly RoundGuess[],
-): Promise<SubmittedRound> {
+): Promise<SubmittedDailyRound> {
   const { data, error } = await client().rpc("submit_daily_round", {
     p_date: date,
     p_guesses: guesses,
@@ -225,9 +245,41 @@ export async function submitDailyRound(
 
   if (error) throw new Error(error.message);
 
-  const result = data as { round_id: string; total_score: number } | null;
+  const result = data as {
+    round_id: string;
+    total_score: number;
+    is_official: boolean;
+    official_score: number;
+  } | null;
   if (!result) throw new Error("The round was not recorded.");
-  return { roundId: result.round_id, totalScore: result.total_score };
+  return {
+    roundId: result.round_id,
+    totalScore: result.total_score,
+    isOfficial: result.is_official,
+    officialScore: result.official_score,
+  };
+}
+
+/**
+ * Whether this player already has an official result for `date`, checked
+ * before they start playing. `daily_leaderboard` only ever holds official
+ * rows, so a hit here means the slot is taken — on this device or another —
+ * and the client should show the result rather than offer to play again.
+ */
+export async function fetchMyOfficialDaily(
+  playerId: string,
+  date: string,
+): Promise<{ score: number; attempts: number } | null> {
+  const { data, error } = await client()
+    .from("daily_leaderboard")
+    .select("score, attempts")
+    .eq("player_id", playerId)
+    .eq("puzzle_date", date)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  return { score: data.score, attempts: data.attempts };
 }
 
 /**
@@ -425,22 +477,28 @@ async function fetchClassicLeaderboardFromSource(
 export async function fetchDailyLeaderboard(
   date: string,
   limit = 10,
-): Promise<LeaderboardRow[]> {
+): Promise<DailyLeaderboardRow[]> {
   const { data, error } = await client()
     .from("daily_leaderboard")
-    .select("player_id, display_name, best_score, attempts, rank")
+    .select(
+      "puzzle_date, player_id, display_name, score, attempts, rank, completed_at",
+    )
     .eq("puzzle_date", date)
-    .order("best_score", { ascending: false })
+    // The view already ranks by score, then completion time, then player id.
+    // Ordering by that rank keeps the client from re-deciding the tie-break.
+    .order("rank", { ascending: true })
     .limit(limit);
 
   if (error) throw new Error(error.message);
 
   return (data ?? []).map((row) => ({
+    puzzleDate: row.puzzle_date,
     playerId: row.player_id,
     displayName: row.display_name,
-    bestScore: row.best_score,
+    bestScore: row.score,
     roundsPlayed: row.attempts,
     rank: row.rank,
+    completedAt: row.completed_at,
   }));
 }
 

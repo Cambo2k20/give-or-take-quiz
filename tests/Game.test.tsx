@@ -242,7 +242,9 @@ describe("Game", () => {
       const progress = readDailyProgress(window.localStorage);
       expect(progress.current).toBe(1);
       expect(progress.lastPlayedDate).toBe(set.date);
-      expect(progress.scores[set.date]).toEqual(expect.any(Number));
+      expect(progress.dates[set.date]?.officialScore).toEqual(
+        expect.any(Number),
+      );
 
       // The daily is scored per day and must not touch category bests.
       expect(readBestScores(window.localStorage).mixed).toBe(0);

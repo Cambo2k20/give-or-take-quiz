@@ -34,6 +34,8 @@ const api = vi.hoisted(() => ({
   publish: vi.fn().mockResolvedValue(null),
   publishDaily: vi.fn().mockResolvedValue(null),
   loadClassicBoard: vi.fn().mockResolvedValue(undefined),
+  loadDailyBoard: vi.fn().mockResolvedValue(undefined),
+  loadSurvivalBoard: vi.fn().mockResolvedValue(undefined),
   join: vi.fn(),
   resetSubmit: vi.fn(),
 }));
@@ -63,6 +65,8 @@ vi.mock("@/src/useLeaderboard", () => ({
     boardLoading: false,
     boardError: null,
     loadClassicBoard: api.loadClassicBoard,
+    loadDailyBoard: api.loadDailyBoard,
+    loadSurvivalBoard: api.loadSurvivalBoard,
   }),
 }));
 
@@ -94,7 +98,7 @@ describe("publishing a finished round", () => {
     window.localStorage.clear();
   });
 
-  it("publishes the daily but links results to the Classic board", async () => {
+  it("publishes the daily and links results to that day's Daily board", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.setSystemTime(new Date("2026-08-01T09:00:00"));
 
@@ -120,13 +124,15 @@ describe("publishing a finished round", () => {
     );
     expect(api.publish).not.toHaveBeenCalled();
 
-    // Every non-Classic result now leads to the single Classic leaderboard.
+    // A Daily result belongs on the Daily board for that day, not on Classic:
+    // the two rank different things and are not comparable.
     await user.click(
-      screen.getByRole("button", { name: /see the classic leaderboard/i }),
+      screen.getByRole("button", { name: /see today's daily board/i }),
     );
-    expect(api.loadClassicBoard).toHaveBeenCalledOnce();
+    expect(api.loadDailyBoard).toHaveBeenCalledWith("2026-08-01");
+    expect(api.loadClassicBoard).not.toHaveBeenCalled();
     expect(
-      screen.getByText(/highest classic scores across every category/i),
+      screen.getByText(/everyone answered the same five questions/i),
     ).toBeInTheDocument();
   });
 

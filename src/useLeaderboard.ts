@@ -9,6 +9,7 @@ import {
   fetchClassicLeaderboard,
   fetchDailyLeaderboard,
   fetchLeaderboard,
+  fetchMyOfficialDaily,
   fetchSurvivalLeaderboard,
   joinLeaderboard,
   submitDailyRound,
@@ -92,19 +93,28 @@ export function useLeaderboard(userId: string | null) {
 
   // Category and daily rounds go to different server calls but share the one
   // submit state: only a single round can be on the results screen at a time.
-  const record = useCallback(async (send: () => Promise<SubmittedRound>) => {
-    setSubmit({ status: "sending" });
-    try {
-      const result = await send();
-      setSubmit({ status: "sent", totalScore: result.totalScore });
-      return result;
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Could not save your score.";
-      setSubmit({ status: "failed", message });
-      return null;
-    }
-  }, []);
+  // Generic so a daily submission keeps its extra fields (isOfficial,
+  // officialScore) rather than being narrowed to the base shape.
+  const record = useCallback(
+    async <T extends SubmittedRound>(
+      send: () => Promise<T>,
+    ): Promise<T | null> => {
+      setSubmit({ status: "sending" });
+      try {
+        const result = await send();
+        setSubmit({ status: "sent", totalScore: result.totalScore });
+        return result;
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Could not save your score.";
+        setSubmit({ status: "failed", message });
+        return null;
+      }
+    },
+    [],
+  );
 
   const publish = useCallback(
     (mode: GameMode, guesses: readonly RoundGuess[]) =>
@@ -116,6 +126,15 @@ export function useLeaderboard(userId: string | null) {
     (date: string, guesses: readonly RoundGuess[]) =>
       record(() => submitDailyRound(date, guesses)),
     [record],
+  );
+
+  // Checked before a signed-in player starts today's puzzle, so a device that
+  // has not played yet finds out an official result already exists — on this
+  // device or another — instead of discovering it only after a submission
+  // loses the race for the official slot.
+  const checkDailyOfficial = useCallback(
+    (playerId: string, date: string) => fetchMyOfficialDaily(playerId, date),
+    [],
   );
 
   // The run's own count of questions survived is discarded in favour of the
@@ -178,6 +197,7 @@ export function useLeaderboard(userId: string | null) {
     updateAvatar,
     publish,
     publishDaily,
+    checkDailyOfficial,
     publishSurvival,
     submit,
     resetSubmit,

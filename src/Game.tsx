@@ -31,10 +31,11 @@ import {
 import { SurvivalOver, SurvivalRound } from "./Survival";
 import {
   activeStreak,
+  applyOfficialDailyResult,
   dailySetFor,
   playableDailyDates,
   readDailyProgress,
-  recordDailyResult,
+  recordLocalDailyResult,
   todayIso,
   todaysDailySet,
   writeDailyProgress,
@@ -66,6 +67,7 @@ import { useProgress } from "./useProgress";
 import { EstimatePanel } from "./EstimatePanel";
 import { HeroDemo } from "./HeroDemo";
 import { JoinLeaderboardForm } from "./Leaderboard";
+import type { SubmittedDailyRound } from "../lib/leaderboard";
 import {
   formatPoints,
   subtypeLabel,
@@ -503,12 +505,48 @@ export default function Game() {
     updateAvatar,
     publish,
     publishDaily,
+    checkDailyOfficial,
     publishSurvival,
     resetSubmit,
     loadClassicBoard,
+    loadDailyBoard,
     loadSurvivalBoard,
   } = leaderboard;
   const canPublish = auth.canUseLeaderboard;
+
+  // Checked once per sign-in, before the player has necessarily played today
+  // on this device. Without this, a device that has not played yet offers
+  // "Play today's Daily" even when the player already went official somewhere
+  // else, and only finds out when the submission is rejected.
+  useEffect(() => {
+    if (!player || !canPublish || !todaysDaily) return;
+    // Nothing to correct if this device already believes today is done.
+    if (dailyProgress.dates[todaysDaily.date]?.officialScore !== null) return;
+    let cancelled = false;
+    void checkDailyOfficial(player.id, todaysDaily.date)
+      .then((result) => {
+        if (cancelled || !result) return;
+        setDailyProgress((current) => {
+          const updated = applyOfficialDailyResult(
+            current,
+            todaysDaily.date,
+            result,
+          );
+          writeDailyProgress(updated);
+          return updated;
+        });
+      })
+      .catch(() => {
+        // Best-effort: local state stands, and a real submission attempt
+        // will still get the authoritative answer from the server.
+      });
+    return () => {
+      cancelled = true;
+    };
+    // dailyProgress is read for its current value above, not tracked as a
+    // dependency — including it would refire this on every local record.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [player, canPublish, todaysDaily, checkDailyOfficial]);
 
   const survivalQuestion = survivalDeck[survivalIndex];
   const survivalNumber = survivalIndex + 1;
@@ -518,6 +556,25 @@ export default function Game() {
   const survivalSurvived = survivalVerdictState?.survived
     ? survivalGuesses.length
     : Math.max(0, survivalGuesses.length - 1);
+
+  /**
+   * Folds the server's verdict on a daily submission into local progress,
+   * correcting whatever `recordLocalDailyResult` guessed when results first
+   * appeared. `isOfficial: false` here means another attempt — on this device
+   * or another — already holds the slot for the date; `officialScore` is
+   * always that attempt's score, so the record ends up right either way.
+   */
+  function applyDailyPublishResult(date: string, recorded: SubmittedDailyRound) {
+    setDailyProgress((current) => {
+      const priorAttempts = current.dates[date]?.attemptCount ?? 1;
+      const updated = applyOfficialDailyResult(current, date, {
+        score: recorded.officialScore,
+        attempts: recorded.isOfficial ? priorAttempts : priorAttempts + 1,
+      });
+      writeDailyProgress(updated);
+      return updated;
+    });
+  }
 
   // Publish the moment a round ends, but only for a player who already has a
   // name. Everyone else is offered the join form on the results screen.
@@ -532,12 +589,20 @@ export default function Game() {
       question_id: result.question.id,
       guess: result.guess,
     }));
+    if (dailyDate) {
+      const date = dailyDate;
+      void publishDaily(date, guesses).then((recorded) => {
+        if (!recorded) return;
+        applyDailyPublishResult(date, recorded);
+        void refreshProgress();
+      });
+      return;
+    }
     // Progress is re-read only once the server has actually taken the round;
     // a failed publish has moved nothing.
-    void (dailyDate ? publishDaily(dailyDate, guesses) : publish(mode, guesses))
-      .then((recorded) => {
-        if (recorded) void refreshProgress();
-      });
+    void publish(mode, guesses).then((recorded) => {
+      if (recorded) void refreshProgress();
+    });
   }, [
     phase,
     mode,
@@ -585,13 +650,29 @@ export default function Game() {
       question_id: result.question.id,
       guess: result.guess,
     }));
-    const recorded = dailyDate
-      ? await publishDaily(dailyDate, guesses)
-      : await publish(mode, guesses);
+    if (dailyDate) {
+      const recorded = await publishDaily(dailyDate, guesses);
+      if (recorded) {
+        applyDailyPublishResult(dailyDate, recorded);
+        await refreshProgress();
+      }
+      return;
+    }
+    const recorded = await publish(mode, guesses);
     if (recorded) await refreshProgress();
   }
 
-  /** Classic is the default; Survival remains a separate comparable board. */
+  /** The day the Daily board opens on: whichever puzzle was last in play. */
+  const boardDailyDate = dailyDate ?? today;
+
+  function showBoardFor(format: LeaderboardFormat) {
+    if (format === "survival") void loadSurvivalBoard();
+    else if (format === "daily") void loadDailyBoard(boardDailyDate);
+    else void loadClassicBoard();
+  }
+
+  /** Classic is the default; Daily and Survival are separate boards because
+   * they rank different things. */
   function openLeaderboard(
     formatOrEvent:
       | LeaderboardFormat
@@ -601,8 +682,7 @@ export default function Game() {
       typeof formatOrEvent === "string" ? formatOrEvent : "classic";
     setLeaderboardFormat(format);
     setPhase("leaderboard");
-    if (format === "survival") void loadSurvivalBoard();
-    else void loadClassicBoard();
+    showBoardFor(format);
   }
 
   function toggleTheme() {
@@ -731,9 +811,16 @@ export default function Game() {
     if (!locked) return;
     if (questionIndex === gameQuestions.length - 1) {
       // A daily is scored per day rather than as a personal best, so the two
-      // records never mix.
+      // records never mix. Recorded locally the instant results appear, so
+      // the streak and score show up without waiting on the network; the
+      // publish effect below corrects this once the server has the final say
+      // on which attempt is actually official.
       if (dailyDate) {
-        const updated = recordDailyResult(dailyProgress, dailyDate, totalScore);
+        const updated = recordLocalDailyResult(
+          dailyProgress,
+          dailyDate,
+          totalScore,
+        );
         setDailyProgress(updated);
         writeDailyProgress(updated);
       } else {
@@ -794,7 +881,7 @@ export default function Game() {
           date={todaysDaily.date}
           streak={streak}
           playedToday={playedToday}
-          score={dailyProgress.scores[today] ?? null}
+          score={dailyProgress.dates[today]?.officialScore ?? null}
           archiveCount={archiveDates.length}
           leaderboardEnabled={leaderboard.enabled}
           accountLabel={
@@ -1197,9 +1284,11 @@ export default function Game() {
               <button
                 className="secondary-button"
                 type="button"
-                onClick={openLeaderboard}
+                onClick={() => openLeaderboard(dailyDate ? "daily" : "classic")}
               >
-                See the Classic leaderboard
+                {dailyDate
+                  ? "See today's Daily board"
+                  : "See the Classic leaderboard"}
               </button>
             </div>
           )}
@@ -1244,10 +1333,14 @@ export default function Game() {
           error={leaderboard.boardError}
           profile={player}
           format={leaderboardFormat}
+          dailyDate={boardDailyDate}
           onFormatChange={(format) => {
             setLeaderboardFormat(format);
-            if (format === "survival") void loadSurvivalBoard();
-            else void loadClassicBoard();
+            showBoardFor(format);
+          }}
+          onPlayDaily={() => {
+            if (todaysDaily) startDaily(todaysDaily.date);
+            else setPhase("category");
           }}
           onPlay={(category) => {
             if (category === "all") {

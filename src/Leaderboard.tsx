@@ -2,6 +2,7 @@ import { type FormEvent, useState } from "react";
 import { displayNameError } from "../lib/leaderboard";
 import type {
   ClassicLeaderboardRow,
+  DailyLeaderboardRow,
   LeaderboardRow,
   PlayerProfile,
 } from "../lib/leaderboard";
@@ -180,6 +181,97 @@ export function SurvivalLeaderboardPanel({
                   {formatPoints(row.bestScore)}
                 </strong>
                 <span className="board-unit">in a row</span>
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+/** Time of day only; the board is already scoped to a single date. */
+function formatFinishTime(value: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+/**
+ * One day's puzzle. Everyone answered the same five questions, so the score
+ * needs no context — but finishing time does, because it breaks ties.
+ */
+export function DailyLeaderboardPanel({
+  rows,
+  loading,
+  error,
+  profile,
+}: {
+  rows: readonly DailyLeaderboardRow[];
+  loading: boolean;
+  error: string | null;
+  profile: PlayerProfile | null;
+}) {
+  if (loading) {
+    return (
+      <p className="board-empty" role="status">
+        Loading the board…
+      </p>
+    );
+  }
+
+  if (error) {
+    return (
+      <p className="board-empty is-error" role="status">
+        {error}
+      </p>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <p className="board-empty" role="status">
+        Nobody has finished today's Daily yet. Play it and you will be first.
+      </p>
+    );
+  }
+
+  return (
+    <div className="board-table board-table-survival">
+      <div className="board-list-head" aria-hidden="true">
+        <span>#</span>
+        <span>Player</span>
+        <span>Finished</span>
+        <span>Score</span>
+      </div>
+      <ol className="board-list">
+        {rows.map((row) => {
+          const isYou = row.playerId === profile?.id;
+          return (
+            <li
+              key={row.playerId}
+              className={[
+                "board-survival-row",
+                isYou ? "is-you" : "",
+                row.rank <= 3 ? `is-podium is-rank-${row.rank}` : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              <span className="board-rank">{row.rank}</span>
+              <span className="board-name">
+                <strong>{row.displayName}</strong>
+                {isYou && <span className="board-you">You</span>}
+              </span>
+              <span className="board-rounds">
+                {formatFinishTime(row.completedAt)}
+              </span>
+              <span className="board-best">
+                <strong className="board-score">
+                  {formatPoints(row.bestScore)}
+                </strong>
+                <span className="board-unit">of 5,000</span>
               </span>
             </li>
           );

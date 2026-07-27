@@ -73,8 +73,10 @@ function renderBoard() {
         avatarKey: "event-horizon",
       }}
       format="classic"
+      dailyDate="2026-07-27"
       onFormatChange={onFormatChange}
       onPlay={vi.fn()}
+      onPlayDaily={vi.fn()}
       onPlaySurvival={vi.fn()}
       onReturnHome={onReturnHome}
       headingRef={{ current: null }}

@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   DAILY_PROGRESS_KEY,
   activeStreak,
+  applyOfficialDailyResult,
   previousDay,
   readDailyProgress,
-  recordDailyResult,
+  recordLocalDailyResult,
   todayIso,
   writeDailyProgress,
 } from "@/lib/daily";
@@ -17,7 +18,7 @@ function progress(overrides: Partial<DailyProgress> = {}): DailyProgress {
     current: 0,
     longest: 0,
     lastPlayedDate: null,
-    scores: {},
+    dates: {},
     ...overrides,
   };
 }
@@ -40,18 +41,27 @@ describe("previousDay", () => {
   });
 });
 
-describe("recordDailyResult", () => {
+describe("recordLocalDailyResult", () => {
   it("starts a streak on a first play", () => {
-    const next = recordDailyResult(progress(), "2026-07-26", 6840, at("2026-07-26"));
+    const next = recordLocalDailyResult(
+      progress(),
+      "2026-07-26",
+      6840,
+      at("2026-07-26"),
+    );
 
     expect(next.current).toBe(1);
     expect(next.longest).toBe(1);
     expect(next.lastPlayedDate).toBe("2026-07-26");
-    expect(next.scores["2026-07-26"]).toBe(6840);
+    expect(next.dates["2026-07-26"]).toEqual({
+      officialScore: 6840,
+      practiceBest: null,
+      attemptCount: 1,
+    });
   });
 
   it("extends the streak when yesterday was played", () => {
-    const next = recordDailyResult(
+    const next = recordLocalDailyResult(
       progress({ current: 4, longest: 9, lastPlayedDate: "2026-07-25" }),
       "2026-07-26",
       5000,
@@ -63,7 +73,7 @@ describe("recordDailyResult", () => {
   });
 
   it("resets the streak when a day was missed", () => {
-    const next = recordDailyResult(
+    const next = recordLocalDailyResult(
       progress({ current: 12, longest: 12, lastPlayedDate: "2026-07-20" }),
       "2026-07-26",
       5000,
@@ -75,19 +85,51 @@ describe("recordDailyResult", () => {
   });
 
   it("does not count replaying the same day twice", () => {
-    const once = recordDailyResult(progress(), "2026-07-26", 4000, at("2026-07-26"));
-    const twice = recordDailyResult(once, "2026-07-26", 9000, at("2026-07-26"));
+    const once = recordLocalDailyResult(
+      progress(),
+      "2026-07-26",
+      4000,
+      at("2026-07-26"),
+    );
+    const twice = recordLocalDailyResult(
+      once,
+      "2026-07-26",
+      9000,
+      at("2026-07-26"),
+    );
 
     expect(twice.current).toBe(1);
-    // The better attempt is still what gets remembered for that date.
-    expect(twice.scores["2026-07-26"]).toBe(9000);
+    // The first play is the one the local heuristic calls official — a
+    // replay banks as practice, whatever it scores.
+    expect(twice.dates["2026-07-26"]).toEqual({
+      officialScore: 4000,
+      practiceBest: 9000,
+      attemptCount: 2,
+    });
   });
 
-  it("keeps the best score for a date rather than the latest", () => {
-    const high = recordDailyResult(progress(), "2026-07-26", 9000, at("2026-07-26"));
-    const low = recordDailyResult(high, "2026-07-26", 100, at("2026-07-26"));
+  it("keeps the official score fixed while practice replays vary", () => {
+    const high = recordLocalDailyResult(
+      progress(),
+      "2026-07-26",
+      9000,
+      at("2026-07-26"),
+    );
+    // The first play is official at 9000; this replay is practice at 100 —
+    // it must not touch the official score, however it scores.
+    const low = recordLocalDailyResult(high, "2026-07-26", 100, at("2026-07-26"));
+    // A better practice replay raises practiceBest, still leaving official alone.
+    const better = recordLocalDailyResult(
+      low,
+      "2026-07-26",
+      6000,
+      at("2026-07-26"),
+    );
 
-    expect(low.scores["2026-07-26"]).toBe(9000);
+    expect(low.dates["2026-07-26"].officialScore).toBe(9000);
+    expect(low.dates["2026-07-26"].practiceBest).toBe(100);
+    expect(better.dates["2026-07-26"].officialScore).toBe(9000);
+    expect(better.dates["2026-07-26"].practiceBest).toBe(6000);
   });
 
   it("records an archive replay without touching the streak", () => {
@@ -96,11 +138,98 @@ describe("recordDailyResult", () => {
       longest: 3,
       lastPlayedDate: "2026-07-25",
     });
-    const next = recordDailyResult(before, "2026-07-10", 7000, at("2026-07-26"));
+    const next = recordLocalDailyResult(
+      before,
+      "2026-07-10",
+      7000,
+      at("2026-07-26"),
+    );
 
     expect(next.current).toBe(3);
     expect(next.lastPlayedDate).toBe("2026-07-25");
-    expect(next.scores["2026-07-10"]).toBe(7000);
+    expect(next.dates["2026-07-10"].officialScore).toBe(7000);
+  });
+});
+
+describe("applyOfficialDailyResult", () => {
+  it("does nothing when the server has no result to report", () => {
+    const before = progress({ current: 2, lastPlayedDate: "2026-07-25" });
+    expect(applyOfficialDailyResult(before, "2026-07-26", null, at("2026-07-26"))).toBe(
+      before,
+    );
+  });
+
+  it("credits the streak for today from server truth alone", () => {
+    // Nothing was recorded locally yet — this is the on-load reconciliation
+    // path, where another device already went official today.
+    const next = applyOfficialDailyResult(
+      progress({ current: 3, lastPlayedDate: "2026-07-25" }),
+      "2026-07-26",
+      { score: 4200, attempts: 1 },
+      at("2026-07-26"),
+    );
+
+    expect(next.current).toBe(4);
+    expect(next.lastPlayedDate).toBe("2026-07-26");
+    expect(next.dates["2026-07-26"]).toEqual({
+      officialScore: 4200,
+      practiceBest: null,
+      attemptCount: 1,
+    });
+  });
+
+  it("corrects a wrong local guess without double-crediting the streak", () => {
+    // This device optimistically recorded itself as official...
+    const optimistic = recordLocalDailyResult(
+      progress({ current: 3, lastPlayedDate: "2026-07-25" }),
+      "2026-07-26",
+      1000,
+      at("2026-07-26"),
+    );
+    expect(optimistic.current).toBe(4);
+
+    // ...but the server says a different attempt actually won the slot.
+    const corrected = applyOfficialDailyResult(
+      optimistic,
+      "2026-07-26",
+      { score: 4200, attempts: 2 },
+      at("2026-07-26"),
+    );
+
+    expect(corrected.current).toBe(4);
+    expect(corrected.dates["2026-07-26"].officialScore).toBe(4200);
+    expect(corrected.dates["2026-07-26"].attemptCount).toBe(2);
+  });
+
+  it("leaves the streak alone for a date other than today", () => {
+    const before = progress({ current: 5, lastPlayedDate: "2026-07-26" });
+    const next = applyOfficialDailyResult(
+      before,
+      "2026-07-10",
+      { score: 3000, attempts: 1 },
+      at("2026-07-26"),
+    );
+
+    expect(next.current).toBe(5);
+    expect(next.lastPlayedDate).toBe("2026-07-26");
+    expect(next.dates["2026-07-10"].officialScore).toBe(3000);
+  });
+
+  it("uses the larger of the local and server attempt counts", () => {
+    const local = recordLocalDailyResult(
+      progress(),
+      "2026-07-26",
+      1000,
+      at("2026-07-26"),
+    );
+    const reconciled = applyOfficialDailyResult(
+      local,
+      "2026-07-26",
+      { score: 1000, attempts: 1 },
+      at("2026-07-26"),
+    );
+
+    expect(reconciled.dates["2026-07-26"].attemptCount).toBe(1);
   });
 });
 
@@ -131,7 +260,13 @@ describe("daily progress storage", () => {
       current: 2,
       longest: 5,
       lastPlayedDate: "2026-07-26",
-      scores: { "2026-07-26": 8100 },
+      dates: {
+        "2026-07-26": {
+          officialScore: 8100,
+          practiceBest: null,
+          attemptCount: 1,
+        },
+      },
     });
     writeDailyProgress(saved, window.localStorage);
 
@@ -151,16 +286,39 @@ describe("daily progress storage", () => {
     expect(readDailyProgress(window.localStorage).current).toBe(0);
   });
 
-  it("drops malformed dates and scores rather than trusting them", () => {
+  it("discards the old v1 shape rather than misreading it", () => {
+    // v1 stored a flat scores map; there is no migration because there was
+    // nothing worth carrying forward (confirmed: no streaks existed yet).
     window.localStorage.setItem(
       DAILY_PROGRESS_KEY,
       JSON.stringify({
         version: 1,
         progress: {
+          current: 5,
+          longest: 5,
+          lastPlayedDate: "2026-07-26",
+          scores: { "2026-07-26": 8100 },
+        },
+      }),
+    );
+
+    expect(readDailyProgress(window.localStorage)).toEqual(progress());
+  });
+
+  it("drops malformed dates and entries rather than trusting them", () => {
+    window.localStorage.setItem(
+      DAILY_PROGRESS_KEY,
+      JSON.stringify({
+        version: 2,
+        progress: {
           current: -3,
           longest: "many",
           lastPlayedDate: "yesterday",
-          scores: { "2026-07-26": 900, "not-a-date": 10, "2026-07-25": -5 },
+          dates: {
+            "2026-07-26": { officialScore: 900, practiceBest: null, attemptCount: 2 },
+            "not-a-date": { officialScore: 100, practiceBest: null, attemptCount: 1 },
+            "2026-07-25": { officialScore: -5, practiceBest: null, attemptCount: 1 },
+          },
         },
       }),
     );
@@ -170,7 +328,12 @@ describe("daily progress storage", () => {
     expect(read.current).toBe(0);
     expect(read.longest).toBe(0);
     expect(read.lastPlayedDate).toBeNull();
-    expect(read.scores).toEqual({ "2026-07-26": 900 });
+    expect(read.dates).toEqual({
+      "2026-07-26": { officialScore: 900, practiceBest: null, attemptCount: 2 },
+      // A negative score is dropped, but the rest of that date's entry is
+      // still worth keeping rather than discarding the whole record.
+      "2026-07-25": { officialScore: null, practiceBest: null, attemptCount: 1 },
+    });
   });
 
   it("survives unparseable storage", () => {

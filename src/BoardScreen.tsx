@@ -1,19 +1,71 @@
 import { useMemo, useState } from "react";
 import type {
   ClassicLeaderboardRow,
+  DailyLeaderboardRow,
   LeaderboardRow,
   PlayerProfile,
 } from "../lib/leaderboard";
 import { rowAbove } from "../lib/leaderboard";
 import type { GameMode } from "../lib/types";
 import {
+  DailyLeaderboardPanel,
   LeaderboardPanel,
   SurvivalLeaderboardPanel,
 } from "./Leaderboard";
 import { formatPoints } from "./questionText";
 
 type CategoryFilter = GameMode | "all";
-export type LeaderboardFormat = "classic" | "survival";
+export type LeaderboardFormat = "classic" | "daily" | "survival";
+
+const FORMAT_ORDER: readonly LeaderboardFormat[] = [
+  "classic",
+  "daily",
+  "survival",
+];
+
+/**
+ * The words each board needs. Three formats measure three different things —
+ * points in a category, points on one shared puzzle, questions survived — and
+ * spelling that out here keeps it out of the markup.
+ */
+const COPY: Record<
+  LeaderboardFormat,
+  {
+    label: string;
+    blurb: string;
+    unit: string;
+    attemptNoun: string;
+    nobodyAbove: string;
+    footnote: string;
+  }
+> = {
+  classic: {
+    label: "Classic",
+    blurb: "Highest Classic scores across every category.",
+    unit: "points",
+    attemptNoun: "rounds",
+    nobodyAbove: "Nobody has scored higher.",
+    footnote:
+      "Each row is one player's best Classic round in that category. Correct counts near-perfect answers worth at least 980 points.",
+  },
+  daily: {
+    label: "Daily",
+    blurb: "Everyone answered the same five questions.",
+    unit: "points",
+    attemptNoun: "attempts",
+    nobodyAbove: "Nobody has scored higher today.",
+    footnote:
+      "Your first attempt on the day is the one that counts. Replays and archive runs are practice: they never reach this board.",
+  },
+  survival: {
+    label: "Survival",
+    blurb: "Longest run, all nine subjects in the draw.",
+    unit: "in a row",
+    attemptNoun: "attempts",
+    nobodyAbove: "Nobody has gone further.",
+    footnote: "Runs are ranked by questions survived, not points.",
+  },
+};
 
 function ordinal(rank: number): string {
   const tens = rank % 100;
@@ -40,6 +92,22 @@ function isClassicRow(row: LeaderboardRow): row is ClassicLeaderboardRow {
   );
 }
 
+function isDailyRow(row: LeaderboardRow): row is DailyLeaderboardRow {
+  const candidate = row as Partial<DailyLeaderboardRow>;
+  return (
+    typeof candidate.puzzleDate === "string" &&
+    typeof candidate.completedAt === "string"
+  );
+}
+
+function readableDate(date: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(new Date(`${date}T12:00:00`));
+}
+
 type BoardScreenProps = {
   modes: ReadonlyArray<{ mode: GameMode; title: string }>;
   modeLabels: Record<GameMode, string>;
@@ -48,8 +116,11 @@ type BoardScreenProps = {
   error: string | null;
   profile: PlayerProfile | null;
   format: LeaderboardFormat;
+  /** Which day the Daily board is showing, as ISO `YYYY-MM-DD`. */
+  dailyDate: string;
   onFormatChange: (format: LeaderboardFormat) => void;
   onPlay: (category: CategoryFilter) => void;
+  onPlayDaily: () => void;
   onPlaySurvival: () => void;
   onReturnHome: () => void;
   headingRef: React.RefObject<HTMLHeadingElement | null>;
@@ -58,7 +129,7 @@ type BoardScreenProps = {
 /**
  * Classic has one useful board rather than a picker full of mostly empty
  * boards. Every row is a player's best round in one category; the select only
- * filters that already-loaded list.
+ * filters that already-loaded list. Daily and Survival each rank one number.
  */
 export function BoardScreen({
   modes,
@@ -68,14 +139,20 @@ export function BoardScreen({
   error,
   profile,
   format,
+  dailyDate,
   onFormatChange,
   onPlay,
+  onPlayDaily,
   onPlaySurvival,
   onReturnHome,
   headingRef,
 }: BoardScreenProps) {
   const [categoryFilter, setCategoryFilter] =
     useState<CategoryFilter>("all");
+
+  const classic = format === "classic";
+  const daily = format === "daily";
+  const copy = COPY[format];
 
   const visibleRows = useMemo(() => {
     const classicRows = rows
@@ -99,10 +176,7 @@ export function BoardScreen({
     categoryFilter === "all"
       ? "All categories"
       : modeLabels[categoryFilter];
-  const survival = format === "survival";
-  const standingRows: readonly LeaderboardRow[] = survival
-    ? rows
-    : visibleRows;
+  const standingRows: readonly LeaderboardRow[] = classic ? visibleRows : rows;
   const you = profile
     ? standingRows.find((row) => row.playerId === profile.id) ?? null
     : null;
@@ -111,24 +185,26 @@ export function BoardScreen({
     ? standingRows.find((row) => row.rank > you.rank) ?? null
     : null;
 
+  const gapTo = (other: LeaderboardRow) =>
+    formatPoints(Math.abs(other.bestScore - you!.bestScore));
+
   const standingDetail = !you
     ? ""
     : !above
-      ? survival
-        ? "Nobody has gone further."
-        : "Nobody has scored higher."
-      : survival
-        ? `${formatPoints(above.bestScore - you.bestScore)} more to catch ${ordinal(above.rank)}`
-        : `${formatPoints(above.bestScore - you.bestScore)} off ${ordinal(above.rank)} place`;
+      ? copy.nobodyAbove
+      : format === "survival"
+        ? `${gapTo(above)} more to catch ${ordinal(above.rank)}`
+        : `${gapTo(above)} off ${ordinal(above.rank)} place`;
+
   const standingDelta =
     you && below
-      ? survival
-        ? `${formatPoints(you.bestScore - below.bestScore)} ahead`
-        : `${formatPoints(you.bestScore - below.bestScore)} point lead`
+      ? format === "survival"
+        ? `${gapTo(below)} ahead`
+        : `${gapTo(below)} point lead`
       : above && you
-        ? survival
-          ? `${formatPoints(above.bestScore - you.bestScore)} to move up`
-          : `${formatPoints(above.bestScore - you.bestScore)} points to move up`
+        ? format === "survival"
+          ? `${gapTo(above)} to move up`
+          : `${gapTo(above)} points to move up`
         : null;
 
   return (
@@ -138,11 +214,7 @@ export function BoardScreen({
           <h1 ref={headingRef} tabIndex={-1}>
             Leaderboard
           </h1>
-          <p className="board-blurb">
-            {survival
-              ? "Longest run, all nine subjects in the draw."
-              : "Highest Classic scores across every category."}
-          </p>
+          <p className="board-blurb">{copy.blurb}</p>
         </div>
 
         <div
@@ -150,29 +222,22 @@ export function BoardScreen({
           role="group"
           aria-label="Leaderboard format"
         >
-          <button
-            type="button"
-            className={`board-format${survival ? "" : " is-current"}`}
-            aria-pressed={!survival}
-            onClick={() => onFormatChange("classic")}
-          >
-            Classic
-          </button>
-          <button
-            type="button"
-            className={`board-format${survival ? " is-current" : ""}`}
-            aria-pressed={survival}
-            onClick={() => onFormatChange("survival")}
-          >
-            Survival
-          </button>
+          {FORMAT_ORDER.map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={`board-format${option === format ? " is-current" : ""}`}
+              aria-pressed={option === format}
+              onClick={() => onFormatChange(option)}
+            >
+              {COPY[option].label}
+            </button>
+          ))}
         </div>
       </div>
 
       <div className="board-scope">
-        {survival ? (
-          <span className="board-scope-static">All subjects</span>
-        ) : (
+        {classic ? (
           <label className="board-category-filter">
             <span>Category</span>
             <select
@@ -189,6 +254,10 @@ export function BoardScreen({
               ))}
             </select>
           </label>
+        ) : (
+          <span className="board-scope-static">
+            {daily ? readableDate(dailyDate) : "All subjects"}
+          </span>
         )}
       </div>
 
@@ -199,7 +268,7 @@ export function BoardScreen({
             <span className="board-standing-label">Your standing</span>
             <p className="board-standing-number">
               <strong>{formatPoints(you.bestScore)}</strong>
-              <span>{survival ? "in a row" : "points"}</span>
+              <span>{copy.unit}</span>
             </p>
             <p className="board-standing-copy">{standingDetail}</p>
           </div>
@@ -217,9 +286,15 @@ export function BoardScreen({
             )}
             <div className="board-standing-chips">
               <span>
-                {you.roundsPlayed} {survival ? "attempts" : "rounds"}
+                {you.roundsPlayed} {copy.attemptNoun}
               </span>
-              <span>{survival ? "All subjects" : categoryLabel}</span>
+              <span>
+                {classic
+                  ? categoryLabel
+                  : daily
+                    ? readableDate(dailyDate)
+                    : "All subjects"}
+              </span>
             </div>
           </div>
           <div className="board-standing-rank">
@@ -228,14 +303,7 @@ export function BoardScreen({
         </div>
       )}
 
-      {survival ? (
-        <SurvivalLeaderboardPanel
-          rows={rows}
-          loading={loading}
-          error={error}
-          profile={profile}
-        />
-      ) : (
+      {classic ? (
         <LeaderboardPanel
           rows={visibleRows}
           loading={loading}
@@ -243,13 +311,23 @@ export function BoardScreen({
           profile={profile}
           modeLabels={modeLabels}
         />
+      ) : daily ? (
+        <DailyLeaderboardPanel
+          rows={rows.filter(isDailyRow)}
+          loading={loading}
+          error={error}
+          profile={profile}
+        />
+      ) : (
+        <SurvivalLeaderboardPanel
+          rows={rows}
+          loading={loading}
+          error={error}
+          profile={profile}
+        />
       )}
 
-      <p className="board-footnote">
-        {survival
-          ? "Runs are ranked by questions survived, not points."
-          : "Each row is one player's best Classic round in that category. Correct counts near-perfect answers worth at least 980 points."}
-      </p>
+      <p className="board-footnote">{copy.footnote}</p>
 
       <div className="result-actions board-result-actions">
         <button
@@ -263,15 +341,21 @@ export function BoardScreen({
           className="primary-button board-action-button"
           type="button"
           onClick={() =>
-            survival ? onPlaySurvival() : onPlay(categoryFilter)
+            daily
+              ? onPlayDaily()
+              : format === "survival"
+                ? onPlaySurvival()
+                : onPlay(categoryFilter)
           }
         >
           <span>
-            {survival
-              ? "Start a run"
-              : categoryFilter === "all"
-                ? "Choose a category"
-                : `Play ${modeLabels[categoryFilter]}`}
+            {daily
+              ? "Play today's Daily"
+              : format === "survival"
+                ? "Start a run"
+                : categoryFilter === "all"
+                  ? "Choose a category"
+                  : `Play ${modeLabels[categoryFilter]}`}
           </span>
         </button>
       </div>
