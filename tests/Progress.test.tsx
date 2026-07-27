@@ -8,6 +8,10 @@ import {
 import { BACKGROUND_THEMES } from "@/lib/themes";
 import type { QuestionCategory } from "@/lib/types";
 
+const avatarApi = vi.hoisted(() => ({
+  updateAvatar: vi.fn(),
+}));
+
 // A player mid-ladder: two subjects titled, the rest still Newcomer, and a
 // mix of earned and unearned achievements.
 const fixtureCategories: PlayerProgress["categories"] = [
@@ -166,8 +170,13 @@ vi.mock("@/src/useLeaderboard", () => ({
   useLeaderboard: () => ({
     enabled: true,
     ready: true,
-    profile: { id: "user-1", displayName: "Ada" },
+    profile: {
+      id: "user-1",
+      displayName: "Ada",
+      avatarKey: "event-horizon" as const,
+    },
     join: vi.fn(),
+    updateAvatar: avatarApi.updateAvatar,
     publish: vi.fn().mockResolvedValue(null),
     publishDaily: vi.fn().mockResolvedValue(null),
     publishSurvival: vi.fn().mockResolvedValue(null),
@@ -212,6 +221,7 @@ import { ProgressRibbon } from "@/src/Progress";
 import { useProgress } from "@/src/useProgress";
 
 beforeEach(() => {
+  avatarApi.updateAvatar.mockReset().mockResolvedValue(undefined);
   vi.mocked(useProgress).mockImplementation(defaultProgress);
 });
 
@@ -253,6 +263,38 @@ describe("progression screens", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Crowd Counter")).toBeInTheDocument();
     expect(screen.getByText("First Steps")).toBeInTheDocument();
+  });
+
+  it("changes the profile avatar to an earned rank badge", async () => {
+    const user = userEvent.setup();
+    render(<Game />);
+    await openAccount(user);
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /change avatar, currently event horizon/i,
+      }),
+    );
+
+    expect(
+      screen.getByRole("heading", { name: /choose your avatar/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /people watcher/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /volcano/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /census scout/i }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /people watcher/i }));
+
+    expect(avatarApi.updateAvatar).toHaveBeenCalledWith("population-05");
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Avatar updated.",
+    );
   });
 
   it("opens ranks on its own screen", async () => {

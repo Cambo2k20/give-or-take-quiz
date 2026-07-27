@@ -1,5 +1,29 @@
 import { supabase } from "./supabase";
-import type { GameMode } from "./types";
+import type { GameMode, QuestionCategory } from "./types";
+
+export const DEFAULT_PROFILE_AVATAR = "event-horizon" as const;
+export const VOLCANO_PROFILE_AVATAR = "volcano" as const;
+export const BUILT_IN_PROFILE_AVATARS = [
+  DEFAULT_PROFILE_AVATAR,
+  VOLCANO_PROFILE_AVATAR,
+] as const;
+
+type PaddedBadgeRank = "05" | "10" | "15" | "20" | "25" | "30";
+export type ProfileAvatarKey =
+  | (typeof BUILT_IN_PROFILE_AVATARS)[number]
+  | `${QuestionCategory}-${PaddedBadgeRank}`;
+
+const PROFILE_AVATAR_PATTERN =
+  /^(population|history|geography|science|animals|space|technology|movies)-(05|10|15|20|25|30)$/;
+
+export function isProfileAvatarKey(value: unknown): value is ProfileAvatarKey {
+  return (
+    BUILT_IN_PROFILE_AVATARS.includes(
+      value as (typeof BUILT_IN_PROFILE_AVATARS)[number],
+    ) ||
+    (typeof value === "string" && PROFILE_AVATAR_PATTERN.test(value))
+  );
+}
 
 export type LeaderboardRow = {
   playerId: string;
@@ -19,6 +43,7 @@ export type ClassicLeaderboardRow = LeaderboardRow & {
 export type PlayerProfile = {
   id: string;
   displayName: string;
+  avatarKey: ProfileAvatarKey;
 };
 
 export type SubmittedRound = {
@@ -83,13 +108,19 @@ export async function currentProfile(): Promise<PlayerProfile | null> {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, display_name")
+    .select("id, display_name, avatar_key")
     .eq("id", userId)
     .maybeSingle();
 
   if (error) throw new Error(error.message);
   if (!data) return null;
-  return { id: data.id, displayName: data.display_name };
+  return {
+    id: data.id,
+    displayName: data.display_name,
+    avatarKey: isProfileAvatarKey(data.avatar_key)
+      ? data.avatar_key
+      : DEFAULT_PROFILE_AVATAR,
+  };
 }
 
 /**
@@ -128,7 +159,34 @@ export async function joinLeaderboard(name: string): Promise<PlayerProfile> {
     throw new Error(error.message);
   }
 
-  return { id: userId, displayName };
+  return {
+    id: userId,
+    displayName,
+    avatarKey: DEFAULT_PROFILE_AVATAR,
+  };
+}
+
+/** Saves one of the built-in profile avatars on the signed-in player's row. */
+export async function updateProfileAvatar(
+  avatarKey: ProfileAvatarKey,
+): Promise<void> {
+  const supabaseClient = client();
+  const { data: sessionData } = await supabaseClient.auth.getSession();
+  const userId = sessionData.session?.user.id;
+
+  if (!userId) {
+    throw new Error("Sign in to change your avatar.");
+  }
+
+  const { error } = await supabaseClient
+    .from("profiles")
+    .update({
+      avatar_key: avatarKey,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId);
+
+  if (error) throw new Error(error.message);
 }
 
 /**

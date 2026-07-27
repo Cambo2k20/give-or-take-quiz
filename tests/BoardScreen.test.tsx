@@ -67,7 +67,11 @@ function renderBoard() {
       rows={rows}
       loading={false}
       error={null}
-      profile={{ id: "ada", displayName: "Ada" }}
+      profile={{
+        id: "ada",
+        displayName: "Ada",
+        avatarKey: "event-horizon",
+      }}
       format="classic"
       onFormatChange={onFormatChange}
       onPlay={vi.fn()}

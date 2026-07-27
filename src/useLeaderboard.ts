@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   type LeaderboardRow,
   type PlayerProfile,
+  type ProfileAvatarKey,
   type RoundGuess,
   type SubmittedRound,
   currentProfile,
@@ -13,6 +14,7 @@ import {
   submitDailyRound,
   submitRound,
   submitSurvivalRun,
+  updateProfileAvatar,
 } from "../lib/leaderboard";
 import { leaderboardEnabled } from "../lib/supabase";
 import type { GameMode } from "../lib/types";
@@ -71,6 +73,22 @@ export function useLeaderboard(userId: string | null) {
     setLoaded({ userId: joined.id, profile: joined });
     return joined;
   }, []);
+
+  const updateAvatar = useCallback(
+    async (avatarKey: ProfileAvatarKey) => {
+      if (!userId) throw new Error("Sign in to change your avatar.");
+      await updateProfileAvatar(avatarKey);
+      setLoaded((current) =>
+        current?.userId === userId && current.profile
+          ? {
+              ...current,
+              profile: { ...current.profile, avatarKey },
+            }
+          : current,
+      );
+    },
+    [userId],
+  );
 
   // Category and daily rounds go to different server calls but share the one
   // submit state: only a single round can be on the results screen at a time.
@@ -157,6 +175,7 @@ export function useLeaderboard(userId: string | null) {
     ready,
     profile,
     join,
+    updateAvatar,
     publish,
     publishDaily,
     publishSurvival,

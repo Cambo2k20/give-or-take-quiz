@@ -1,4 +1,10 @@
-import type { ReactNode, RefObject } from "react";
+import { useState, type ReactNode, type RefObject } from "react";
+import {
+  DEFAULT_PROFILE_AVATAR,
+  isProfileAvatarKey,
+  VOLCANO_PROFILE_AVATAR,
+  type ProfileAvatarKey,
+} from "../lib/leaderboard";
 import {
   DEFAULT_RANK_TITLE,
   type Achievement,
@@ -16,6 +22,8 @@ import {
   supportedModesForTheme,
 } from "../lib/themes";
 import type { QuestionCategory } from "../lib/types";
+import eventHorizonAvatarUrl from "./assets/avatars/event-horizon.webp";
+import volcanoAvatarUrl from "./assets/avatars/volcano.png";
 import { formatPoints } from "./questionText";
 import { RankBadgeArtwork } from "./RankBadgeArtwork";
 import type { Theme } from "./theme";
@@ -148,11 +156,13 @@ type ProfileDashboardProps = {
     { title: string; icon: ReactNode }
   >;
   displayName: string;
+  avatarKey: ProfileAvatarKey;
   email: string | null;
   emailConfirmed: boolean;
   themeMode: Theme;
   equippedId: BackgroundThemeId | null;
   onEquip: (themeId: BackgroundThemeId) => void;
+  onSelectAvatar: (avatarKey: ProfileAvatarKey) => Promise<void>;
   onOpenRanks: (category?: QuestionCategory) => void;
   onOpenAchievements: () => void;
   onOpenUnlocks: () => void;
@@ -169,17 +179,22 @@ export function ProfileDashboard({
   progress,
   labels,
   displayName,
+  avatarKey,
   email,
   emailConfirmed,
   themeMode,
   equippedId,
   onEquip,
+  onSelectAvatar,
   onOpenRanks,
   onOpenAchievements,
   onOpenUnlocks,
   onSignOut,
   headingRef,
 }: ProfileDashboardProps) {
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
+  const [avatarSaving, setAvatarSaving] = useState(false);
+  const [avatarMessage, setAvatarMessage] = useState("");
   const highest = progress.categories.reduce(
     (best, entry) => (entry.rank > best.rank ? entry : best),
     progress.categories[0],
@@ -192,16 +207,74 @@ export function ProfileDashboard({
   const unlockedCount = BACKGROUND_THEMES.filter((theme) =>
     isThemeUnlocked(progress, theme),
   ).length;
-  const initial = displayName.trim().charAt(0).toUpperCase() || "?";
+  const badgeAvatarOptions = progress.badges.flatMap((badge) =>
+    badge.earned && isProfileAvatarKey(badge.badgeKey)
+      ? [
+          {
+            key: badge.badgeKey,
+            name: badge.title,
+            detail: `${labels[badge.category].title} · Rank ${badge.rankFloor}`,
+          },
+        ]
+      : [],
+  );
+  const avatarOptions: Array<{
+    key: ProfileAvatarKey;
+    name: string;
+    detail: string;
+  }> = [
+    {
+      key: DEFAULT_PROFILE_AVATAR,
+      name: "Event Horizon",
+      detail: "Default avatar",
+    },
+    {
+      key: VOLCANO_PROFILE_AVATAR,
+      name: "Volcano",
+      detail: "Built-in avatar",
+    },
+    ...badgeAvatarOptions,
+  ];
+  const currentAvatar =
+    avatarOptions.find((option) => option.key === avatarKey) ?? avatarOptions[0];
+
+  async function selectAvatar(nextAvatar: ProfileAvatarKey) {
+    if (nextAvatar === avatarKey || avatarSaving) return;
+    setAvatarSaving(true);
+    setAvatarMessage("");
+    try {
+      await onSelectAvatar(nextAvatar);
+      setAvatarMessage("Avatar updated.");
+    } catch (error) {
+      setAvatarMessage(
+        error instanceof Error ? error.message : "Could not update your avatar.",
+      );
+    } finally {
+      setAvatarSaving(false);
+    }
+  }
 
   return (
     <div className="profile-dashboard">
       <section className="profile-hero" aria-labelledby="profile-name">
         <span className="profile-hero-sheen" aria-hidden="true" />
         <div className="profile-identity">
-          <span className="profile-avatar" aria-hidden="true">
-            {initial}
-          </span>
+          <button
+            className="profile-avatar"
+            type="button"
+            onClick={() => {
+              setAvatarPickerOpen((open) => !open);
+              setAvatarMessage("");
+            }}
+            aria-label={`Change avatar, currently ${currentAvatar.name}`}
+            aria-expanded={avatarPickerOpen}
+            aria-controls="profile-avatar-picker"
+          >
+            <ProfileAvatarArtwork
+              avatarKey={avatarKey}
+              className="profile-avatar-image"
+            />
+          </button>
           <div>
             <h1 id="profile-name" ref={headingRef} tabIndex={-1}>
               {displayName}
@@ -225,6 +298,69 @@ export function ProfileDashboard({
           <span>{emailConfirmed ? "Email confirmed" : "Email not confirmed"}</span>
         </div>
       </section>
+
+      {avatarPickerOpen && (
+        <section
+          className="profile-avatar-picker"
+          id="profile-avatar-picker"
+          aria-labelledby="profile-avatar-picker-title"
+        >
+          <div className="profile-avatar-picker-head">
+            <div>
+              <p className="eyebrow">Profile icon</p>
+              <h2 id="profile-avatar-picker-title">Choose your avatar</h2>
+            </div>
+            <button
+              type="button"
+              className="profile-avatar-picker-close"
+              onClick={() => setAvatarPickerOpen(false)}
+            >
+              Close
+            </button>
+          </div>
+          <p className="profile-avatar-picker-lede">
+            Use the default artwork or any subject badge you have earned.
+          </p>
+          <div className="profile-avatar-options">
+            {avatarOptions.map((option) => {
+              const selected = option.key === avatarKey;
+              return (
+                <button
+                  key={option.key}
+                  type="button"
+                  className={`profile-avatar-option${
+                    selected ? " is-selected" : ""
+                  }`}
+                  onClick={() => void selectAvatar(option.key)}
+                  aria-pressed={selected}
+                  disabled={avatarSaving}
+                >
+                  <span className="profile-avatar-option-artwork">
+                    <ProfileAvatarArtwork avatarKey={option.key} />
+                  </span>
+                  <span className="profile-avatar-option-copy">
+                    <strong>{option.name}</strong>
+                    <span>{option.detail}</span>
+                  </span>
+                  <span className="profile-avatar-option-state">
+                    {selected ? "Selected" : "Choose"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <p
+            className={`profile-avatar-message${
+              avatarMessage && !avatarMessage.endsWith("updated.")
+                ? " is-error"
+                : ""
+            }`}
+            role="status"
+          >
+            {avatarSaving ? "Saving avatar…" : avatarMessage}
+          </p>
+        </section>
+      )}
 
       <div className="profile-dashboard-grid">
         <section className="profile-section profile-subjects">
@@ -408,6 +544,40 @@ type RankPanelProps = {
   onSelectCategory: (category: QuestionCategory) => void;
   headingRef: RefObject<HTMLHeadingElement | null>;
 };
+
+function ProfileAvatarArtwork({
+  avatarKey,
+  className,
+}: {
+  avatarKey: ProfileAvatarKey;
+  className?: string;
+}) {
+  if (avatarKey === DEFAULT_PROFILE_AVATAR) {
+    return (
+      <img
+        className={className}
+        src={eventHorizonAvatarUrl}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+      />
+    );
+  }
+
+  if (avatarKey === VOLCANO_PROFILE_AVATAR) {
+    return (
+      <img
+        className={className}
+        src={volcanoAvatarUrl}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+      />
+    );
+  }
+
+  return <RankBadgeArtwork badgeKey={avatarKey} className={className} eager />;
+}
 
 function badgeStatus(badge: RankBadge): "Current" | "Earned" | "Locked" {
   if (badge.current) return "Current";

@@ -500,6 +500,7 @@ export default function Game() {
 
   const {
     profile: player,
+    updateAvatar,
     publish,
     publishDaily,
     publishSurvival,
@@ -1410,11 +1411,13 @@ export default function Game() {
               progress={progress.progress}
               labels={categoryLabels}
               displayName={player.displayName}
+              avatarKey={player.avatarKey}
               email={auth.user?.email ?? null}
               emailConfirmed={Boolean(auth.user?.emailConfirmed)}
               themeMode={theme}
               equippedId={bgTheme}
               onEquip={toggleBackgroundTheme}
+              onSelectAvatar={updateAvatar}
               onOpenRanks={openRanks}
               onOpenAchievements={() => setPhase("achievements")}
               onOpenUnlocks={() => setPhase("unlocks")}

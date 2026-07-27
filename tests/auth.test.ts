@@ -265,6 +265,7 @@ describe("leaderboard identity requires a confirmed account", () => {
     await expect(joinLeaderboard("Cartographer")).resolves.toEqual({
       id: "user-1",
       displayName: "Cartographer",
+      avatarKey: "event-horizon",
     });
     expect(fromApi.upsert).toHaveBeenCalledWith(
       { id: "user-1", display_name: "Cartographer" },
