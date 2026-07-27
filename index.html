@@ -38,14 +38,21 @@
     <meta name="twitter:image" content="https://cambo2k20.github.io/give-or-take-quiz/og.png" />
 
     <!--
-      Applied before first paint so a saved dark preference never flashes light.
-      Mirrors readTheme() in src/theme.ts; keep the storage key and values in sync.
+      Applied before first paint so saved display choices are present when the
+      app mounts. Mode compatibility and palette activation are still validated
+      by the typed registry before custom artwork is shown.
     -->
     <script>
       try {
         var saved = localStorage.getItem("give-or-take:theme");
         if (saved === "dark" || saved === "light") {
           document.documentElement.dataset.theme = saved;
+        }
+        var savedBackground = localStorage.getItem(
+          "give-or-take:background:v1",
+        );
+        if (savedBackground) {
+          document.documentElement.dataset.bgTheme = savedBackground;
         }
       } catch (error) {
         // Blocked storage just means we fall back to prefers-color-scheme.

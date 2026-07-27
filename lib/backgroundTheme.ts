@@ -1,21 +1,16 @@
 import {
-  BACKGROUND_THEME_TOKEN_NAMES,
+  BACKGROUND_THEME_UI_TOKEN_NAMES,
   BACKGROUND_THEMES,
+  getThemeModeVariant,
   type BackgroundTheme,
   type BackgroundThemeId,
-  type BackgroundThemePalettes,
+  type BackgroundThemeMode,
 } from "./themes";
 
 /**
- * Which unlocked background is currently applied behind the whole app, if
- * any. Mirrors theme.ts's read/apply pair: same storage pattern and the same
- * DOM-attribute mechanism. A custom theme supplies a palette for both modes,
- * so `data-theme` and `data-bg-theme` remain independent, live axes.
- *
- * Deliberately a local device preference, not a server one. Whether a theme
- * is *unlocked* is derived from rank (see lib/themes.ts) and lives on the
- * server; which one is *equipped* right now is cosmetic UI state, same tier
- * as the light/dark toggle, so it costs nothing to keep it local.
+ * The selected background is a local cosmetic preference. Selection and
+ * activation are deliberately separate: a light-only or dark-only theme
+ * remains selected while the app is in its unsupported mode.
  */
 export const BACKGROUND_THEME_STORAGE_KEY = "give-or-take:background:v1";
 
@@ -23,19 +18,30 @@ const KNOWN_THEME_IDS: ReadonlySet<string> = new Set(
   BACKGROUND_THEMES.map((theme) => theme.id),
 );
 
-export type BackgroundThemeMode = keyof BackgroundThemePalettes;
-
-function normaliseThemeId(themeId: string | null): BackgroundThemeId | null {
+export function normaliseBackgroundThemeId(
+  themeId: string | null,
+): BackgroundThemeId | null {
   return themeId && KNOWN_THEME_IDS.has(themeId)
     ? (themeId as BackgroundThemeId)
     : null;
 }
 
-function themeById(themeId: BackgroundThemeId): BackgroundTheme {
+export function backgroundThemeById(
+  themeId: BackgroundThemeId,
+): BackgroundTheme {
   return BACKGROUND_THEMES.find((theme) => theme.id === themeId)!;
 }
 
-function currentMode(): BackgroundThemeMode {
+/**
+ * One source of truth for resolving the active application mode when a caller
+ * does not already have it. An explicit mode wins, followed by the pre-paint
+ * root attribute, then the system preference.
+ */
+export function resolveThemeMode(
+  mode?: BackgroundThemeMode,
+): BackgroundThemeMode {
+  if (mode) return mode;
+
   if (typeof document !== "undefined") {
     const applied = document.documentElement.dataset.theme;
     if (applied === "light" || applied === "dark") return applied;
@@ -48,60 +54,69 @@ function currentMode(): BackgroundThemeMode {
     : "light";
 }
 
-function clearTokenPalette() {
+function clearUiTokenPalette() {
   if (typeof document === "undefined") return;
 
-  for (const name of BACKGROUND_THEME_TOKEN_NAMES) {
-    document.documentElement.style.removeProperty(name);
+  const rootStyle = document.documentElement.style;
+  for (const name of BACKGROUND_THEME_UI_TOKEN_NAMES) {
+    rootStyle.removeProperty(name);
+  }
+
+  // Clean up artwork properties written by the pre-v2 implementation. New
+  // artwork tokens live only on component wrappers.
+  for (let index = rootStyle.length - 1; index >= 0; index -= 1) {
+    const name = rootStyle.item(index);
+    if (name.startsWith("--artwork-")) rootStyle.removeProperty(name);
   }
 }
 
 /**
- * Replaces the complete inline palette in one synchronous task. Clearing first
- * prevents a removed or future theme with different values leaving stale
- * custom properties behind; the registry type ensures the next palette is
- * complete before it can compile.
+ * Synchronizes only semantic UI tokens. Artwork tokens are component-local
+ * inline properties and never leak onto the root element.
  */
 export function syncBackgroundThemePalette(
-  mode: BackgroundThemeMode = currentMode(),
+  mode: BackgroundThemeMode = resolveThemeMode(),
 ) {
   if (typeof document === "undefined") return;
 
-  clearTokenPalette();
-  const themeId = normaliseThemeId(
-    document.documentElement.dataset.bgTheme ?? null,
-  );
-  if (!themeId) return;
+  const root = document.documentElement;
+  clearUiTokenPalette();
+  delete root.dataset.bgThemeActive;
 
-  const palette = themeById(themeId).tokens[mode];
-  for (const name of BACKGROUND_THEME_TOKEN_NAMES) {
-    document.documentElement.style.setProperty(name, palette[name]);
+  const selectedId = normaliseBackgroundThemeId(root.dataset.bgTheme ?? null);
+  if (!selectedId) return;
+
+  const variant = getThemeModeVariant(
+    backgroundThemeById(selectedId),
+    mode,
+  );
+  if (!variant) return;
+
+  for (const name of BACKGROUND_THEME_UI_TOKEN_NAMES) {
+    root.style.setProperty(name, variant.ui[name]);
   }
+  root.dataset.bgThemeActive = selectedId;
 }
 
 export function readEquippedBackgroundTheme(): BackgroundThemeId | null {
   if (typeof document !== "undefined") {
-    const applied = normaliseThemeId(
-      document.documentElement.dataset.bgTheme ?? null,
-    );
-    if (applied) {
+    const root = document.documentElement;
+    const selected = normaliseBackgroundThemeId(root.dataset.bgTheme ?? null);
+    if (selected) {
       syncBackgroundThemePalette();
-      return applied;
+      return selected;
     }
 
-    // Do not leave an unknown value on the root if markup or another script
-    // supplied one. CSS ignores it, but the DOM should still reflect reality.
-    delete document.documentElement.dataset.bgTheme;
-    clearTokenPalette();
+    delete root.dataset.bgTheme;
+    delete root.dataset.bgThemeActive;
+    clearUiTokenPalette();
   }
 
   try {
-    const saved = normaliseThemeId(
+    const saved = normaliseBackgroundThemeId(
       window.localStorage.getItem(BACKGROUND_THEME_STORAGE_KEY),
     );
     if (saved) {
-      // Restore the visual state as well as the React state. Without this,
-      // reloads showed "Applied" on the card while the artwork stayed hidden.
       if (typeof document !== "undefined") {
         document.documentElement.dataset.bgTheme = saved;
         syncBackgroundThemePalette();
@@ -117,17 +132,25 @@ export function readEquippedBackgroundTheme(): BackgroundThemeId | null {
   return null;
 }
 
+export function readActiveBackgroundTheme(): BackgroundThemeId | null {
+  if (typeof document === "undefined") return null;
+  return normaliseBackgroundThemeId(
+    document.documentElement.dataset.bgThemeActive ?? null,
+  );
+}
+
 export function applyBackgroundTheme(
   themeId: string | null,
-  mode: BackgroundThemeMode = currentMode(),
+  mode: BackgroundThemeMode = resolveThemeMode(),
 ) {
-  const next = normaliseThemeId(themeId);
+  const next = normaliseBackgroundThemeId(themeId);
 
   if (typeof document !== "undefined") {
+    const root = document.documentElement;
     if (next) {
-      document.documentElement.dataset.bgTheme = next;
+      root.dataset.bgTheme = next;
     } else {
-      delete document.documentElement.dataset.bgTheme;
+      delete root.dataset.bgTheme;
     }
     syncBackgroundThemePalette(mode);
   }

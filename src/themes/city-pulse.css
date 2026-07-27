@@ -1,0 +1,190 @@
+.city-pulse {
+  --svg-artwork-bg: var(--artwork-city-sky);
+  --svg-artwork-wash-one: var(--artwork-city-wash-cyan);
+  --svg-artwork-wash-two: var(--artwork-city-wash-coral);
+  --svg-artwork-wash-three: var(--artwork-city-wash-blue);
+  --svg-artwork-vignette-inner: var(
+    --artwork-city-vignette-inner
+  );
+  --svg-artwork-vignette-middle: var(
+    --artwork-city-vignette-middle
+  );
+  --svg-artwork-vignette-outer: var(
+    --artwork-city-vignette-outer
+  );
+  --svg-artwork-lock-ink: var(--artwork-city-lock-ink);
+  --svg-artwork-lock-bg: var(--artwork-city-lock-bg);
+  --svg-artwork-veil: var(--artwork-city-veil);
+}
+
+.city-pulse__window-cycle {
+  animation: city-pulse-window-one 11s ease-in-out infinite alternate;
+}
+
+.city-pulse__window-cycle--2 {
+  animation-name: city-pulse-window-two;
+  animation-duration: 13s;
+}
+
+.city-pulse__window-cycle--3 {
+  animation-name: city-pulse-window-three;
+  animation-duration: 17s;
+}
+
+.city-pulse__window-cycle--4 {
+  animation-name: city-pulse-window-four;
+  animation-duration: 19s;
+}
+
+.city-pulse__window-cycle--5 {
+  animation-name: city-pulse-window-five;
+  animation-duration: 23s;
+}
+
+.city-pulse__window-cycle--6 {
+  animation-name: city-pulse-window-six;
+  animation-duration: 21s;
+}
+
+.city-pulse__skyline-far-motion {
+  animation: city-pulse-parallax-far 109s ease-in-out infinite
+    alternate;
+}
+
+.city-pulse__skyline-near-motion {
+  animation: city-pulse-parallax-near 83s ease-in-out infinite
+    alternate;
+}
+
+.city-pulse__rare-accent-cycle {
+  animation: city-pulse-rare-window 47s ease-in-out infinite;
+  filter: drop-shadow(
+    0 0 5px var(--artwork-city-window-coral)
+  );
+}
+
+.city-pulse.svg-theme-artwork--backdrop .city-pulse__window-cycle,
+.city-pulse.svg-theme-artwork--backdrop .city-pulse__rare-accent-cycle {
+  will-change: opacity;
+}
+
+.city-pulse.svg-theme-artwork--backdrop
+  :is(
+    .city-pulse__skyline-far-motion,
+    .city-pulse__skyline-near-motion
+  ) {
+  will-change: transform;
+}
+
+.city-pulse.svg-theme-artwork--backdrop
+  .city-pulse__traffic-point {
+  filter: drop-shadow(
+    0 0 4px var(--artwork-city-window-cyan)
+  );
+  will-change: opacity, transform;
+}
+
+@keyframes city-pulse-window-one {
+  from {
+    opacity: 0.62;
+  }
+
+  to {
+    opacity: 0.92;
+  }
+}
+
+@keyframes city-pulse-window-two {
+  from {
+    opacity: 0.68;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes city-pulse-window-three {
+  from {
+    opacity: 0.58;
+  }
+
+  to {
+    opacity: 0.9;
+  }
+}
+
+@keyframes city-pulse-window-four {
+  from {
+    opacity: 0.7;
+  }
+
+  to {
+    opacity: 0.96;
+  }
+}
+
+@keyframes city-pulse-window-five {
+  from {
+    opacity: 0.64;
+  }
+
+  to {
+    opacity: 0.94;
+  }
+}
+
+@keyframes city-pulse-window-six {
+  from {
+    opacity: 0.66;
+  }
+
+  to {
+    opacity: 0.95;
+  }
+}
+
+@keyframes city-pulse-parallax-far {
+  from {
+    transform: translateX(-1.5px);
+  }
+
+  to {
+    transform: translateX(1.5px);
+  }
+}
+
+@keyframes city-pulse-parallax-near {
+  from {
+    transform: translateX(-4px);
+  }
+
+  to {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes city-pulse-rare-window {
+  0%,
+  88%,
+  100% {
+    opacity: 0.42;
+  }
+
+  92% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .city-pulse__window-cycle,
+  .city-pulse__skyline-far-motion,
+  .city-pulse__skyline-near-motion,
+  .city-pulse__rare-accent-cycle {
+    animation: none;
+  }
+
+  .city-pulse__traffic-point {
+    display: none;
+  }
+}

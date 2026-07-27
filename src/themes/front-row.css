@@ -1,0 +1,72 @@
+.front-row {
+  --svg-artwork-bg: var(--artwork-auditorium-bg);
+  --svg-artwork-wash-one: color-mix(
+    in srgb,
+    var(--artwork-screen-light) 10%,
+    transparent
+  );
+  --svg-artwork-wash-two: color-mix(
+    in srgb,
+    var(--artwork-screen-gold) 20%,
+    transparent
+  );
+  --svg-artwork-wash-three: color-mix(
+    in srgb,
+    var(--artwork-seat-far) 35%,
+    transparent
+  );
+  --svg-artwork-vignette-inner: var(
+    --artwork-auditorium-vignette-inner
+  );
+  --svg-artwork-vignette-middle: var(
+    --artwork-auditorium-vignette-middle
+  );
+  --svg-artwork-vignette-outer: var(
+    --artwork-auditorium-vignette-outer
+  );
+  --svg-artwork-lock-ink: var(--artwork-auditorium-lock-ink);
+  --svg-artwork-lock-bg: var(--artwork-auditorium-lock-bg);
+  --svg-artwork-veil: var(--artwork-auditorium-veil);
+}
+
+.front-row .svg-theme-artwork__wash {
+  animation: none;
+}
+
+.front-row.svg-theme-artwork--backdrop
+  .svg-theme-artwork__wash {
+  will-change: auto;
+}
+
+.front-row__screen-glow {
+  animation: front-row-screen-shift 23s ease-in-out infinite alternate;
+}
+
+.front-row.svg-theme-artwork--backdrop .front-row__screen-glow {
+  will-change: opacity;
+}
+
+@keyframes front-row-screen-shift {
+  0% {
+    opacity: 0.72;
+  }
+
+  31% {
+    opacity: 0.82;
+  }
+
+  67% {
+    opacity: 0.76;
+  }
+
+  100% {
+    opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .front-row__screen-glow {
+    animation: none;
+    opacity: 0.8;
+  }
+}

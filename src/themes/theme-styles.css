@@ -8,7 +8,7 @@
   overflow: hidden;
   isolation: isolate;
   pointer-events: none;
-  background: var(--artwork-bg);
+  background: var(--svg-artwork-bg);
 }
 
 .svg-theme-artwork--preview {
@@ -35,13 +35,16 @@
 .svg-theme-artwork__wash {
   z-index: -2;
   inset: -18%;
+}
+
+.svg-theme-artwork--backdrop .svg-theme-artwork__wash {
   will-change: transform;
 }
 
 .svg-theme-artwork__wash--one {
   background: radial-gradient(
     ellipse 42% 48% at 8% 76%,
-    var(--artwork-glow-cool),
+    var(--svg-artwork-wash-one),
     transparent 72%
   );
   filter: blur(72px);
@@ -51,7 +54,7 @@
 .svg-theme-artwork__wash--two {
   background: radial-gradient(
     ellipse 38% 42% at 93% 72%,
-    var(--artwork-glow-warm),
+    var(--svg-artwork-wash-two),
     transparent 74%
   );
   filter: blur(84px);
@@ -61,7 +64,7 @@
 .svg-theme-artwork__wash--three {
   background: radial-gradient(
     ellipse 48% 34% at 50% 103%,
-    var(--artwork-glow-primary),
+    var(--svg-artwork-wash-three),
     transparent 76%
   );
   filter: blur(62px);
@@ -79,11 +82,11 @@
   background:
     radial-gradient(
       ellipse at center,
-      var(--artwork-vignette-inner) 0 44%,
-      var(--artwork-vignette-middle) 76%,
-      var(--artwork-vignette-outer) 100%
+      var(--svg-artwork-vignette-inner) 0 44%,
+      var(--svg-artwork-vignette-middle) 76%,
+      var(--svg-artwork-vignette-outer) 100%
     ),
-    var(--artwork-veil);
+    var(--svg-artwork-veil);
 }
 
 .svg-theme-artwork__lock {
@@ -93,8 +96,8 @@
   transform: translate(-50%, -50%);
   padding: 0.34rem 0.56rem;
   border-radius: 999px;
-  color: var(--artwork-lock-ink);
-  background: var(--artwork-lock-bg);
+  color: var(--svg-artwork-lock-ink);
+  background: var(--svg-artwork-lock-bg);
   font: 800 0.7rem/1 var(--font-sans);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -122,6 +125,7 @@
   from {
     transform: translate3d(-0.6%, 1%, 0) scale(1.04);
   }
+
   to {
     transform: translate3d(1%, -0.7%, 0) scale(1.08);
   }
@@ -143,10 +147,6 @@
   animation-play-state: paused !important;
 }
 
-.theme-card .city-pulse__traffic-point {
-  display: none;
-}
-
 .theme-card-button:is(:hover, :focus-visible, :active)
   :where(
     .theme-preview *,
@@ -157,11 +157,6 @@
     .svg-theme-artwork--preview *::after
   ) {
   animation-play-state: running !important;
-}
-
-.theme-card-button:is(:hover, :focus-visible, :active)
-  .city-pulse__traffic-point {
-  display: inline;
 }
 
 @media (max-width: 600px) {

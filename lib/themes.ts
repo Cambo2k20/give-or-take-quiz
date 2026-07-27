@@ -4,11 +4,11 @@ import type { QuestionCategory } from "./types";
 /**
  * Unlockable background themes.
  *
- * Each row owns its metadata and both complete semantic palettes. Artwork is
- * paired by id in src/themes/ThemeArtwork.tsx, and its dedicated stylesheet
- * consumes the same variables rather than owning another colour source.
+ * Each row owns its metadata and at least one complete mode variant. Artwork
+ * is paired by id in src/themes/ThemeArtwork.tsx. UI tokens are applied to the
+ * root; artwork tokens remain scoped to that theme's artwork wrapper.
  */
-export const BACKGROUND_THEME_TOKEN_NAMES = [
+export const BACKGROUND_THEME_UI_TOKEN_NAMES = [
   "--bg",
   "--surface",
   "--sunk",
@@ -32,116 +32,93 @@ export const BACKGROUND_THEME_TOKEN_NAMES = [
   "--bad-wash",
   "--shadow-card",
   "--shadow-press",
-  "--artwork-bg",
-  "--artwork-glow-primary",
-  "--artwork-glow-cool",
-  "--artwork-glow-warm",
-  "--artwork-glow-mint",
-  "--artwork-star",
-  "--artwork-star-bright",
-  "--artwork-shooting-star",
-  "--artwork-shooting-shadow",
-  "--artwork-vignette-inner",
-  "--artwork-vignette-middle",
-  "--artwork-vignette-outer",
-  "--artwork-orbit",
-  "--artwork-orbit-inner",
-  "--artwork-orb",
-  "--artwork-orb-shadow",
-  "--artwork-structure-near",
-  "--artwork-structure-far",
-  "--artwork-detail-cool",
-  "--artwork-detail-warm",
-  "--artwork-connection",
-  "--artwork-lock-ink",
-  "--artwork-lock-bg",
-  "--artwork-flow-mask",
-  "--artwork-veil",
 ] as const;
 
-export type BackgroundThemeTokenName =
-  (typeof BACKGROUND_THEME_TOKEN_NAMES)[number];
+export type BackgroundThemeUiTokenName =
+  (typeof BACKGROUND_THEME_UI_TOKEN_NAMES)[number];
 
-export type BackgroundThemeTokenPalette = Readonly<
-  Record<BackgroundThemeTokenName, string>
+export type BackgroundThemeUiTokenPalette = Readonly<
+  Record<BackgroundThemeUiTokenName, string>
 >;
 
-export type BackgroundThemePalettes = Readonly<{
-  light: BackgroundThemeTokenPalette;
-  dark: BackgroundThemeTokenPalette;
+export type BackgroundThemeArtworkTokenName = `--artwork-${string}`;
+export type BackgroundThemeArtworkTokenPalette = Readonly<
+  Record<BackgroundThemeArtworkTokenName, string>
+>;
+
+export type BackgroundThemeMode = "light" | "dark";
+
+export type AtLeastOne<T, Keys extends keyof T = keyof T> =
+  Keys extends keyof T
+    ? Required<Pick<T, Keys>> & Partial<Omit<T, Keys>>
+    : never;
+
+export type BackgroundThemeModeVariant<
+  Artwork extends BackgroundThemeArtworkTokenPalette =
+    BackgroundThemeArtworkTokenPalette,
+> = Readonly<{
+  ui: BackgroundThemeUiTokenPalette;
+  artwork: Artwork;
 }>;
 
-export type BackgroundThemeMetadata = {
+export type BackgroundThemeModes<
+  Artwork extends BackgroundThemeArtworkTokenPalette =
+    BackgroundThemeArtworkTokenPalette,
+> = Readonly<
+  AtLeastOne<
+    Record<BackgroundThemeMode, BackgroundThemeModeVariant<Artwork>>
+  >
+>;
+
+export type BackgroundThemeMetadata<
+  Artwork extends BackgroundThemeArtworkTokenPalette =
+    BackgroundThemeArtworkTokenPalette,
+> = {
   id: string;
   name: string;
   description: string;
   /** The rank that unlocks it, in the currency the player already earns. */
   gate: { category: QuestionCategory; rank: number; title: string };
-  /** Both modes are mandatory: an equipped theme never disables the toggle. */
-  tokens: BackgroundThemePalettes;
+  /** A theme may support one application mode or both, but never neither. */
+  modes: BackgroundThemeModes<Artwork>;
 };
 
+export function defineBackgroundTheme<
+  const ThemeDefinition extends BackgroundThemeMetadata,
+>(theme: ThemeDefinition): ThemeDefinition {
+  const { light, dark } = theme.modes;
+  if (!light && !dark) {
+    throw new Error(
+      `Background theme "${theme.id}" must support at least one mode.`,
+    );
+  }
+
+  if (light && dark) {
+    const lightKeys = Object.keys(light.artwork).sort();
+    const darkKeys = Object.keys(dark.artwork).sort();
+    const keysMatch =
+      lightKeys.length === darkKeys.length &&
+      lightKeys.every((key, index) => key === darkKeys[index]);
+    if (!keysMatch) {
+      throw new Error(
+        `Background theme "${theme.id}" must use the same artwork tokens in light and dark modes.`,
+      );
+    }
+  }
+
+  return theme;
+}
+
 export const BACKGROUND_THEMES = [
-  {
+  defineBackgroundTheme({
     id: "deep-space",
     name: "Deep Space",
     description:
       "A drifting nebula and a slow orbit behind every screen. Reduced motion holds it still.",
     gate: { category: "space", rank: 5, title: "Stargazer" },
-    tokens: {
-      light: {
-        "--bg": "#e9e6f6",
-        "--surface": "rgba(252, 250, 255, 0.88)",
-        "--sunk": "rgba(237, 233, 249, 0.84)",
-        "--rail": "rgba(91, 72, 145, 0.18)",
-        "--ink": "#1c1732",
-        "--ink-soft": "#40375f",
-        "--muted": "#71688d",
-        "--line": "rgba(73, 56, 120, 0.2)",
-        "--line-strong": "rgba(73, 56, 120, 0.34)",
-        "--accent": "#7051dc",
-        "--accent-hover": "#5e40c8",
-        "--accent-shadow": "#46309b",
-        "--accent-ink": "#5339b1",
-        "--accent-wash": "rgba(112, 73, 255, 0.14)",
-        "--on-accent": "#fff",
-        "--good": "#26775f",
-        "--good-wash": "rgba(38, 119, 95, 0.12)",
-        "--warn": "#886119",
-        "--warn-wash": "rgba(174, 126, 38, 0.13)",
-        "--bad": "#a23f63",
-        "--bad-wash": "rgba(190, 67, 112, 0.12)",
-        "--shadow-card":
-          "0 18px 48px rgba(24, 15, 64, 0.12), 0 1px 0 rgba(255, 255, 255, 0.7)",
-        "--shadow-press": "0 3px 0 var(--accent-shadow)",
-        "--artwork-bg": "#f4f2f8",
-        "--artwork-glow-primary": "rgba(46, 30, 92, 0.15)",
-        "--artwork-glow-cool": "rgba(10, 74, 96, 0.11)",
-        "--artwork-glow-warm": "rgba(112, 36, 82, 0.1)",
-        "--artwork-glow-mint": "rgba(31, 88, 72, 0.06)",
-        "--artwork-star": "rgba(28, 23, 50, 0.08)",
-        "--artwork-star-bright": "rgba(83, 57, 177, 0.08)",
-        "--artwork-shooting-star": "rgba(28, 23, 50, 0.08)",
-        "--artwork-shooting-shadow": "rgba(83, 57, 177, 0.08)",
-        "--artwork-vignette-inner": "transparent",
-        "--artwork-vignette-middle": "transparent",
-        "--artwork-vignette-outer": "transparent",
-        "--artwork-orbit": "rgba(28, 23, 50, 0.08)",
-        "--artwork-orbit-inner": "rgba(28, 23, 50, 0.04)",
-        "--artwork-orb": "rgba(52, 38, 106, 0.15)",
-        "--artwork-orb-shadow": "rgba(52, 38, 106, 0.08)",
-        "--artwork-structure-near": "rgba(52, 38, 106, 0.15)",
-        "--artwork-structure-far": "rgba(52, 38, 106, 0.08)",
-        "--artwork-detail-cool": "rgba(28, 23, 50, 0.08)",
-        "--artwork-detail-warm": "rgba(83, 57, 177, 0.08)",
-        "--artwork-connection": "rgba(28, 23, 50, 0.08)",
-        "--artwork-lock-ink": "rgba(28, 23, 50, 0.72)",
-        "--artwork-lock-bg": "rgba(28, 23, 50, 0.08)",
-        "--artwork-flow-mask":
-          "radial-gradient(ellipse at center, transparent 0 22%, rgba(0, 0, 0, 0.35) 34%, #000 52%)",
-        "--artwork-veil": "transparent",
-      },
+    modes: {
       dark: {
+        ui: {
         "--bg": "#050611",
         "--surface": "rgba(12, 14, 35, 0.86)",
         "--sunk": "rgba(20, 22, 49, 0.82)",
@@ -166,35 +143,33 @@ export const BACKGROUND_THEMES = [
         "--shadow-card":
           "0 18px 54px rgba(0, 0, 12, 0.38), 0 1px 0 rgba(255, 255, 255, 0.04)",
         "--shadow-press": "0 3px 0 var(--accent-shadow)",
-        "--artwork-bg": "#050611",
-        "--artwork-glow-primary": "rgba(112, 73, 255, 0.5)",
-        "--artwork-glow-cool": "rgba(0, 204, 255, 0.32)",
-        "--artwork-glow-warm": "rgba(255, 70, 178, 0.28)",
-        "--artwork-glow-mint": "rgba(71, 255, 204, 0.16)",
+        },
+        artwork: {
+        "--artwork-deep-space-sky": "#050611",
+        "--artwork-nebula-violet": "rgba(112, 73, 255, 0.5)",
+        "--artwork-nebula-cyan": "rgba(0, 204, 255, 0.32)",
+        "--artwork-nebula-magenta": "rgba(255, 70, 178, 0.28)",
+        "--artwork-nebula-mint": "rgba(71, 255, 204, 0.16)",
         "--artwork-star": "rgba(255, 255, 255, 0.85)",
         "--artwork-star-bright": "rgba(178, 142, 255, 0.95)",
         "--artwork-shooting-star": "rgba(255, 255, 255, 0.75)",
-        "--artwork-shooting-shadow": "rgba(130, 198, 255, 0.72)",
+        "--artwork-shooting-star-glow": "rgba(130, 198, 255, 0.72)",
         "--artwork-vignette-inner": "rgba(5, 6, 17, 0.02)",
         "--artwork-vignette-middle": "rgba(5, 6, 17, 0.4)",
         "--artwork-vignette-outer": "rgba(5, 6, 17, 0.88)",
-        "--artwork-orbit": "rgba(255, 255, 255, 0.09)",
-        "--artwork-orbit-inner": "rgba(255, 255, 255, 0.06)",
-        "--artwork-orb": "#93e9ff",
-        "--artwork-orb-shadow": "rgba(91, 216, 255, 0.55)",
-        "--artwork-structure-near": "rgba(147, 233, 255, 0.16)",
-        "--artwork-structure-far": "rgba(178, 142, 255, 0.1)",
-        "--artwork-detail-cool": "rgba(147, 233, 255, 0.85)",
-        "--artwork-detail-warm": "rgba(255, 70, 178, 0.78)",
-        "--artwork-connection": "rgba(147, 233, 255, 0.3)",
+        "--artwork-orbit-line": "rgba(255, 255, 255, 0.09)",
+        "--artwork-orbit-inner-line": "rgba(255, 255, 255, 0.06)",
+        "--artwork-orbit-body": "#93e9ff",
+        "--artwork-orbit-glow": "rgba(91, 216, 255, 0.55)",
         "--artwork-lock-ink": "rgba(255, 255, 255, 0.85)",
         "--artwork-lock-bg": "rgba(5, 6, 17, 0.35)",
         "--artwork-flow-mask": "none",
         "--artwork-veil": "rgba(5, 6, 17, 0.2)",
+        },
       },
     },
-  },
-  {
+  }),
+  defineBackgroundTheme({
     id: "city-pulse",
     name: "City Pulse",
     description:
@@ -204,59 +179,9 @@ export const BACKGROUND_THEMES = [
       rank: 5,
       title: "Grid Architect",
     },
-    tokens: {
-      light: {
-        "--bg": "#e8eff3",
-        "--surface": "rgba(250, 252, 253, 0.9)",
-        "--sunk": "rgba(225, 235, 241, 0.86)",
-        "--rail": "rgba(34, 101, 125, 0.16)",
-        "--ink": "#15212b",
-        "--ink-soft": "#334b5b",
-        "--muted": "#607786",
-        "--line": "rgba(30, 78, 99, 0.2)",
-        "--line-strong": "rgba(30, 78, 99, 0.34)",
-        "--accent": "#cf645f",
-        "--accent-hover": "#bc524f",
-        "--accent-shadow": "#8f3f3d",
-        "--accent-ink": "#9d4543",
-        "--accent-wash": "rgba(207, 100, 95, 0.13)",
-        "--on-accent": "#fff",
-        "--good": "#28745c",
-        "--good-wash": "rgba(40, 116, 92, 0.12)",
-        "--warn": "#8a641b",
-        "--warn-wash": "rgba(173, 129, 45, 0.13)",
-        "--bad": "#a2434e",
-        "--bad-wash": "rgba(185, 69, 82, 0.12)",
-        "--shadow-card":
-          "0 18px 46px rgba(16, 48, 64, 0.12), 0 1px 0 rgba(255, 255, 255, 0.7)",
-        "--shadow-press": "0 3px 0 var(--accent-shadow)",
-        "--artwork-bg": "#dfe8ee",
-        "--artwork-glow-primary": "rgba(41, 105, 132, 0.1)",
-        "--artwork-glow-cool": "rgba(34, 146, 166, 0.1)",
-        "--artwork-glow-warm": "rgba(207, 100, 95, 0.09)",
-        "--artwork-glow-mint": "rgba(73, 166, 166, 0.05)",
-        "--artwork-star": "rgba(31, 71, 89, 0.12)",
-        "--artwork-star-bright": "rgba(161, 69, 65, 0.16)",
-        "--artwork-shooting-star": "rgba(31, 71, 89, 0.12)",
-        "--artwork-shooting-shadow": "rgba(34, 146, 166, 0.12)",
-        "--artwork-vignette-inner": "transparent",
-        "--artwork-vignette-middle": "rgba(29, 56, 70, 0.02)",
-        "--artwork-vignette-outer": "rgba(29, 56, 70, 0.12)",
-        "--artwork-orbit": "rgba(31, 91, 112, 0.24)",
-        "--artwork-orbit-inner": "rgba(31, 91, 112, 0.12)",
-        "--artwork-orb": "rgba(35, 59, 73, 0.42)",
-        "--artwork-orb-shadow": "rgba(35, 59, 73, 0.2)",
-        "--artwork-structure-near": "rgba(28, 48, 61, 0.72)",
-        "--artwork-structure-far": "rgba(47, 74, 90, 0.34)",
-        "--artwork-detail-cool": "rgba(34, 126, 149, 0.7)",
-        "--artwork-detail-warm": "rgba(190, 84, 78, 0.72)",
-        "--artwork-connection": "rgba(36, 114, 136, 0.4)",
-        "--artwork-lock-ink": "rgba(21, 33, 43, 0.76)",
-        "--artwork-lock-bg": "rgba(250, 252, 253, 0.66)",
-        "--artwork-flow-mask": "none",
-        "--artwork-veil": "transparent",
-      },
+    modes: {
       dark: {
+        ui: {
         "--bg": "#080c16",
         "--surface": "rgba(13, 20, 33, 0.88)",
         "--sunk": "rgba(17, 27, 42, 0.84)",
@@ -281,35 +206,31 @@ export const BACKGROUND_THEMES = [
         "--shadow-card":
           "0 18px 54px rgba(0, 3, 10, 0.4), 0 1px 0 rgba(255, 255, 255, 0.035)",
         "--shadow-press": "0 3px 0 var(--accent-shadow)",
-        "--artwork-bg": "#080c16",
-        "--artwork-glow-primary": "rgba(36, 112, 160, 0.11)",
-        "--artwork-glow-cool": "rgba(40, 153, 186, 0.15)",
-        "--artwork-glow-warm": "rgba(238, 105, 104, 0.13)",
-        "--artwork-glow-mint": "rgba(54, 173, 176, 0.06)",
-        "--artwork-star": "rgba(117, 232, 237, 0.8)",
-        "--artwork-star-bright": "rgba(247, 127, 111, 0.84)",
-        "--artwork-shooting-star": "rgba(117, 232, 237, 0.65)",
-        "--artwork-shooting-shadow": "rgba(79, 183, 199, 0.3)",
-        "--artwork-vignette-inner": "rgba(4, 7, 13, 0.01)",
-        "--artwork-vignette-middle": "rgba(4, 7, 13, 0.1)",
-        "--artwork-vignette-outer": "rgba(3, 6, 11, 0.44)",
-        "--artwork-orbit": "rgba(108, 211, 222, 0.68)",
-        "--artwork-orbit-inner": "rgba(237, 128, 114, 0.62)",
-        "--artwork-orb": "rgba(16, 26, 40, 0.94)",
-        "--artwork-orb-shadow": "rgba(17, 28, 43, 0.48)",
-        "--artwork-structure-near": "rgba(16, 26, 40, 0.96)",
-        "--artwork-structure-far": "rgba(17, 28, 43, 0.58)",
-        "--artwork-detail-cool": "rgba(117, 232, 237, 0.86)",
-        "--artwork-detail-warm": "rgba(247, 127, 111, 0.84)",
-        "--artwork-connection": "rgba(108, 211, 222, 0.58)",
-        "--artwork-lock-ink": "rgba(243, 247, 251, 0.84)",
-        "--artwork-lock-bg": "rgba(8, 12, 22, 0.48)",
-        "--artwork-flow-mask": "none",
-        "--artwork-veil": "rgba(3, 6, 11, 0.08)",
+        },
+        artwork: {
+        "--artwork-city-sky": "#080c16",
+        "--artwork-city-wash-blue": "rgba(36, 112, 160, 0.11)",
+        "--artwork-city-wash-cyan": "rgba(40, 153, 186, 0.15)",
+        "--artwork-city-wash-coral": "rgba(238, 105, 104, 0.13)",
+        "--artwork-city-wash-teal": "rgba(54, 173, 176, 0.06)",
+        "--artwork-city-vignette-inner": "rgba(4, 7, 13, 0.01)",
+        "--artwork-city-vignette-middle": "rgba(4, 7, 13, 0.1)",
+        "--artwork-city-vignette-outer": "rgba(3, 6, 11, 0.44)",
+        "--artwork-city-rooftop-cyan": "rgba(108, 211, 222, 0.68)",
+        "--artwork-city-rooftop-coral": "rgba(237, 128, 114, 0.62)",
+        "--artwork-city-building-near": "rgba(16, 26, 40, 0.96)",
+        "--artwork-city-building-far": "rgba(17, 28, 43, 0.58)",
+        "--artwork-city-window-cyan": "rgba(117, 232, 237, 0.86)",
+        "--artwork-city-window-coral": "rgba(247, 127, 111, 0.84)",
+        "--artwork-city-connection": "rgba(108, 211, 222, 0.58)",
+        "--artwork-city-lock-ink": "rgba(243, 247, 251, 0.84)",
+        "--artwork-city-lock-bg": "rgba(8, 12, 22, 0.48)",
+        "--artwork-city-veil": "rgba(3, 6, 11, 0.08)",
+        },
       },
     },
-  },
-  {
+  }),
+  defineBackgroundTheme({
     id: "front-row",
     name: "Front Row",
     description:
@@ -319,67 +240,9 @@ export const BACKGROUND_THEMES = [
       rank: 5,
       title: "Projectionist",
     },
-    tokens: {
-      light: {
-        "--bg": "#e3d9c8",
-        "--surface": "rgba(255, 252, 246, 0.9)",
-        "--sunk": "rgba(232, 222, 207, 0.86)",
-        "--rail": "rgba(111, 76, 36, 0.18)",
-        "--ink": "#211712",
-        "--ink-soft": "#4b352b",
-        // Front Row prints the hero copy straight onto the artwork with no
-        // card behind it, so muted text is measured against the room, not a
-        // surface. That is the tighter of the two and sets this value.
-        "--muted": "#6a5a4e",
-        "--line": "rgba(74, 20, 32, 0.18)",
-        "--line-strong": "rgba(115, 77, 39, 0.34)",
-        "--accent": "#c9a24b",
-        "--accent-hover": "#b58b34",
-        "--accent-shadow": "#76591f",
-        "--accent-ink": "#74551c",
-        "--accent-wash": "rgba(201, 162, 75, 0.16)",
-        "--on-accent": "#1a1208",
-        "--good": "#2e745a",
-        "--good-wash": "rgba(46, 116, 90, 0.12)",
-        "--warn": "#8d651c",
-        "--warn-wash": "rgba(178, 129, 38, 0.14)",
-        "--bad": "#9a3f4a",
-        "--bad-wash": "rgba(154, 63, 74, 0.12)",
-        "--shadow-card":
-          "0 18px 48px rgba(52, 34, 22, 0.13), 0 1px 0 rgba(255, 255, 255, 0.72)",
-        "--shadow-press": "0 3px 0 var(--accent-shadow)",
-        // House lights up. A screen lit from behind would compete with the
-        // card surfaces for the brightest pixel and both would flatten, so
-        // light mode reads it as what it physically is with the lights on: a
-        // matte panel darker than the walls, found by its gold frame rather
-        // than by glare. Card > room > screen, in that order, always.
-        "--artwork-bg": "#e2d7c5",
-        "--artwork-glow-primary": "rgba(74, 20, 32, 0.08)",
-        "--artwork-glow-cool": "rgba(117, 87, 60, 0.05)",
-        "--artwork-glow-warm": "rgba(198, 158, 70, 0.14)",
-        "--artwork-glow-mint": "rgba(91, 110, 83, 0.02)",
-        "--artwork-star": "rgba(92, 63, 35, 0.18)",
-        "--artwork-star-bright": "rgba(129, 91, 38, 0.26)",
-        "--artwork-shooting-star": "rgba(92, 63, 35, 0.16)",
-        "--artwork-shooting-shadow": "rgba(129, 91, 38, 0.14)",
-        "--artwork-vignette-inner": "transparent",
-        "--artwork-vignette-middle": "rgba(70, 46, 33, 0.05)",
-        "--artwork-vignette-outer": "rgba(52, 33, 25, 0.18)",
-        "--artwork-orbit": "rgba(150, 109, 35, 0.3)",
-        "--artwork-orbit-inner": "rgba(142, 99, 31, 0.42)",
-        "--artwork-orb": "rgba(198, 187, 166, 0.9)",
-        "--artwork-orb-shadow": "rgba(138, 99, 39, 0.16)",
-        "--artwork-structure-near": "rgba(56, 31, 28, 0.9)",
-        "--artwork-structure-far": "rgba(96, 46, 50, 0.55)",
-        "--artwork-detail-cool": "rgba(236, 224, 198, 0.45)",
-        "--artwork-detail-warm": "rgba(173, 130, 49, 0.56)",
-        "--artwork-connection": "rgba(88, 45, 46, 0.3)",
-        "--artwork-lock-ink": "rgba(33, 23, 18, 0.82)",
-        "--artwork-lock-bg": "rgba(255, 251, 240, 0.68)",
-        "--artwork-flow-mask": "none",
-        "--artwork-veil": "transparent",
-      },
+    modes: {
       dark: {
+        ui: {
         "--bg": "#0a0806",
         "--surface": "rgba(21, 15, 12, 0.9)",
         "--sunk": "rgba(31, 20, 18, 0.86)",
@@ -404,38 +267,65 @@ export const BACKGROUND_THEMES = [
         "--shadow-card":
           "0 18px 54px rgba(0, 0, 0, 0.44), 0 1px 0 rgba(255, 239, 211, 0.035)",
         "--shadow-press": "0 3px 0 var(--accent-shadow)",
-        "--artwork-bg": "#0a0806",
-        "--artwork-glow-primary": "rgba(74, 20, 32, 0.2)",
-        "--artwork-glow-cool": "rgba(91, 65, 43, 0.06)",
-        "--artwork-glow-warm": "rgba(201, 162, 75, 0.14)",
-        "--artwork-glow-mint": "rgba(91, 110, 83, 0.03)",
-        "--artwork-star": "rgba(238, 211, 148, 0.34)",
-        "--artwork-star-bright": "rgba(255, 229, 168, 0.52)",
-        "--artwork-shooting-star": "rgba(238, 211, 148, 0.28)",
-        "--artwork-shooting-shadow": "rgba(201, 162, 75, 0.2)",
-        "--artwork-vignette-inner": "rgba(10, 8, 6, 0.02)",
-        "--artwork-vignette-middle": "rgba(10, 8, 6, 0.22)",
-        "--artwork-vignette-outer": "rgba(7, 5, 4, 0.74)",
-        "--artwork-orbit": "rgba(201, 162, 75, 0.3)",
-        "--artwork-orbit-inner": "rgba(230, 198, 126, 0.42)",
-        "--artwork-orb": "rgba(238, 227, 204, 0.32)",
-        "--artwork-orb-shadow": "rgba(201, 162, 75, 0.2)",
-        "--artwork-structure-near": "rgba(5, 4, 3, 0.99)",
-        "--artwork-structure-far": "rgba(74, 20, 32, 0.56)",
-        "--artwork-detail-cool": "rgba(238, 227, 204, 0.72)",
-        "--artwork-detail-warm": "rgba(201, 162, 75, 0.76)",
-        "--artwork-connection": "rgba(118, 54, 52, 0.42)",
-        "--artwork-lock-ink": "rgba(255, 244, 220, 0.88)",
-        "--artwork-lock-bg": "rgba(10, 8, 6, 0.64)",
-        "--artwork-flow-mask": "none",
-        "--artwork-veil": "rgba(10, 8, 6, 0.08)",
+        },
+        artwork: {
+        "--artwork-auditorium-bg": "#0a0806",
+        "--artwork-auditorium-vignette-inner": "rgba(10, 8, 6, 0.02)",
+        "--artwork-auditorium-vignette-middle": "rgba(10, 8, 6, 0.22)",
+        "--artwork-auditorium-vignette-outer": "rgba(7, 5, 4, 0.74)",
+        "--artwork-row-divider": "rgba(201, 162, 75, 0.3)",
+        "--artwork-screen-frame": "rgba(230, 198, 126, 0.42)",
+        "--artwork-screen-panel": "rgba(238, 227, 204, 0.32)",
+        "--artwork-seat-near": "rgba(5, 4, 3, 0.99)",
+        "--artwork-seat-far": "rgba(74, 20, 32, 0.56)",
+        "--artwork-screen-light": "rgba(238, 227, 204, 0.72)",
+        "--artwork-screen-gold": "rgba(201, 162, 75, 0.76)",
+        "--artwork-seat-rim": "rgba(118, 54, 52, 0.42)",
+        "--artwork-auditorium-lock-ink": "rgba(255, 244, 220, 0.88)",
+        "--artwork-auditorium-lock-bg": "rgba(10, 8, 6, 0.64)",
+        "--artwork-auditorium-veil": "rgba(10, 8, 6, 0.08)",
+        },
       },
     },
-  },
+  }),
 ] as const satisfies readonly BackgroundThemeMetadata[];
 
 export type BackgroundTheme = (typeof BACKGROUND_THEMES)[number];
 export type BackgroundThemeId = BackgroundTheme["id"];
+
+export function getThemeModeVariant(
+  theme: BackgroundThemeMetadata,
+  mode: BackgroundThemeMode,
+): BackgroundThemeModeVariant | undefined {
+  return (
+    theme.modes as Partial<
+      Record<BackgroundThemeMode, BackgroundThemeModeVariant>
+    >
+  )[mode];
+}
+
+export function supportedModesForTheme(
+  theme: BackgroundThemeMetadata,
+): readonly BackgroundThemeMode[] {
+  return (["light", "dark"] as const).filter(
+    (mode) => getThemeModeVariant(theme, mode) !== undefined,
+  );
+}
+
+export function isThemeSupportedInMode(
+  theme: BackgroundThemeMetadata,
+  mode: BackgroundThemeMode,
+): boolean {
+  return getThemeModeVariant(theme, mode) !== undefined;
+}
+
+const DEV_UNLOCKED_THEME_IDS = [
+  "city-pulse",
+  "front-row",
+] as const satisfies readonly BackgroundThemeId[];
+const DEV_UNLOCKED_THEME_ID_SET: ReadonlySet<BackgroundThemeId> = new Set(
+  DEV_UNLOCKED_THEME_IDS,
+);
 
 /**
  * Local-only shortcut for visually testing a theme before its real rank gate
@@ -445,7 +335,10 @@ export type BackgroundThemeId = BackgroundTheme["id"];
 export function isThemeTemporarilyUnlocked(
   theme: BackgroundTheme,
 ): boolean {
-  return import.meta.env.MODE === "development" && Boolean(theme.id);
+  return (
+    import.meta.env.MODE === "development" &&
+    DEV_UNLOCKED_THEME_ID_SET.has(theme.id)
+  );
 }
 
 export function isThemeUnlocked(

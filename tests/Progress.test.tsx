@@ -171,6 +171,7 @@ describe("progression screens", () => {
       await screen.findByRole("heading", { name: /^unlocks$/i }),
     ).toBeInTheDocument();
     expect(screen.getByText("Deep Space")).toBeInTheDocument();
+    expect(screen.getAllByText("Dark mode")).toHaveLength(3);
     // The fixture's Space rank is 1; the gate is rank 5 (Stargazer).
     expect(screen.getByText(/Space rank 1 \/ 5 for Stargazer/)).toBeInTheDocument();
     expect(screen.queryByText(/^Unlocked/)).not.toBeInTheDocument();
@@ -234,12 +235,28 @@ describe("progression screens", () => {
     await user.click(card);
     expect(card).toHaveAttribute("aria-pressed", "true");
     expect(document.documentElement.dataset.bgTheme).toBe("deep-space");
-    expect(screen.getByText("Applied")).toBeInTheDocument();
+    expect(document.documentElement.dataset.bgThemeActive).toBeUndefined();
+    expect(screen.getByText("Applied in dark mode")).toBeInTheDocument();
     expect(modeToggle).toBeEnabled();
+
+    // Selection and activation are separate. The selected card remains a
+    // working remove control even while its artwork is unsupported.
+    await user.click(card);
+    expect(card).toHaveAttribute("aria-pressed", "false");
+    expect(document.documentElement.dataset.bgTheme).toBeUndefined();
+    await user.click(card);
+    expect(card).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("Applied in dark mode")).toBeInTheDocument();
 
     await user.click(modeToggle);
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(document.documentElement.dataset.bgTheme).toBe("deep-space");
+    expect(document.documentElement.dataset.bgThemeActive).toBe("deep-space");
+    expect(card).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("Applied")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Applied in dark mode"),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Switch to light mode/i }),
     ).toBeEnabled();
@@ -247,6 +264,7 @@ describe("progression screens", () => {
     await user.click(card);
     expect(card).toHaveAttribute("aria-pressed", "false");
     expect(document.documentElement.dataset.bgTheme).toBeUndefined();
+    expect(document.documentElement.dataset.bgThemeActive).toBeUndefined();
     expect(screen.queryByText("Applied")).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Switch to light mode/i }),

@@ -1,20 +1,38 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   BACKGROUND_THEME_STORAGE_KEY,
   applyBackgroundTheme,
+  readActiveBackgroundTheme,
   readEquippedBackgroundTheme,
+  resolveThemeMode,
 } from "@/lib/backgroundTheme";
 import {
   BACKGROUND_THEMES,
-  BACKGROUND_THEME_TOKEN_NAMES,
+  BACKGROUND_THEME_UI_TOKEN_NAMES,
+  defineBackgroundTheme,
+  getThemeModeVariant,
+  isThemeSupportedInMode,
+  supportedModesForTheme,
+  type BackgroundThemeMetadata,
+  type BackgroundThemeModes,
+  type BackgroundThemeUiTokenPalette,
 } from "@/lib/themes";
 import {
   THEME_STORAGE_KEY,
   applyTheme,
-  type Theme,
+  subscribeToSystemTheme,
 } from "@/src/theme";
 
 type Colour = readonly [number, number, number, number];
+type TestTokens = Readonly<Record<string, string>>;
+
+const globalsCss = readFileSync(resolve("src/globals.css"), "utf8");
+const deepSpace = BACKGROUND_THEMES.find(
+  (theme) => theme.id === "deep-space",
+)!;
+const deepSpaceDark = getThemeModeVariant(deepSpace, "dark")!;
 
 function parseColour(value: string): Colour {
   if (value.startsWith("#")) {
@@ -75,208 +93,264 @@ function contrast(first: Colour, second: Colour): number {
   return (light + 0.05) / (dark + 0.05);
 }
 
-describe("background theme preference", () => {
-  beforeEach(() => {
-    window.localStorage.clear();
-    delete document.documentElement.dataset.bgTheme;
-    delete document.documentElement.dataset.theme;
-    document.documentElement.removeAttribute("style");
+function extractCssTokens(selector: string): TestTokens {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const block = globalsCss.match(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`));
+  if (!block) throw new Error(`Missing CSS token block: ${selector}`);
+
+  return Object.fromEntries(
+    [...block[1].matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((match) => [
+      match[1],
+      match[2].trim(),
+    ]),
+  );
+}
+
+function expectAccessiblePalette(
+  label: string,
+  tokens: TestTokens,
+) {
+  const background = parseColour(tokens["--bg"]);
+  const surface = composite(parseColour(tokens["--surface"]), background);
+
+  for (const name of ["--ink", "--muted"] as const) {
+    expect.soft(
+      contrast(parseColour(tokens[name]), surface),
+      `${label} ${name} on surface`,
+    ).toBeGreaterThanOrEqual(4.5);
+  }
+
+  for (const accent of ["--accent", "--accent-hover"] as const) {
+    expect.soft(
+      contrast(
+        parseColour(tokens["--on-accent"]),
+        parseColour(tokens[accent]),
+      ),
+      `${label} --on-accent on ${accent}`,
+    ).toBeGreaterThanOrEqual(4.5);
+  }
+
+  expect.soft(
+    contrast(parseColour(tokens["--accent"]), surface),
+    `${label} focus accent on surface`,
+  ).toBeGreaterThanOrEqual(3);
+
+  for (const name of ["--good", "--warn", "--bad"] as const) {
+    const wash = composite(
+      parseColour(tokens[`${name}-wash`]),
+      surface,
+    );
+    expect.soft(
+      contrast(parseColour(tokens[name]), wash),
+      `${label} ${name} on its wash`,
+    ).toBeGreaterThanOrEqual(4.5);
+  }
+}
+
+function modeFixture(
+  id: string,
+  modes: BackgroundThemeModes,
+) {
+  return defineBackgroundTheme({
+    id,
+    name: id,
+    description: "Theme contract fixture",
+    gate: { category: "geography", rank: 5, title: "Cartographer" },
+    modes,
+  });
+}
+
+describe("background theme mode contract", () => {
+  it("defines every shipped theme as dark-only for now", () => {
+    for (const theme of BACKGROUND_THEMES) {
+      expect(supportedModesForTheme(theme), theme.id).toEqual(["dark"]);
+      expect(isThemeSupportedInMode(theme, "light")).toBe(false);
+      expect(isThemeSupportedInMode(theme, "dark")).toBe(true);
+    }
   });
 
-  it.each(["light", "dark"] as const)(
-    "applies Deep Space's complete %s palette",
-    (mode) => {
-      applyTheme(mode);
-      applyBackgroundTheme("deep-space");
+  it("supports light-only and dual-mode definitions without a second mode list", () => {
+    const lightOnly = modeFixture("light-fixture", {
+      light: deepSpaceDark,
+    });
+    const dual = modeFixture("dual-fixture", {
+      light: deepSpaceDark,
+      dark: deepSpaceDark,
+    });
 
-      const expected = BACKGROUND_THEMES[0].tokens[mode];
-      expect(document.documentElement.dataset.bgTheme).toBe("deep-space");
-      expect(window.localStorage.getItem(BACKGROUND_THEME_STORAGE_KEY)).toBe(
-        "deep-space",
-      );
-      for (const name of BACKGROUND_THEME_TOKEN_NAMES) {
-        expect(
-          document.documentElement.style.getPropertyValue(name),
-          name,
-        ).toBe(expected[name]);
+    expect(supportedModesForTheme(lightOnly)).toEqual(["light"]);
+    expect(getThemeModeVariant(lightOnly, "dark")).toBeUndefined();
+    expect(isThemeSupportedInMode(lightOnly, "light")).toBe(true);
+    expect(supportedModesForTheme(dual)).toEqual(["light", "dark"]);
+    expect(getThemeModeVariant(dual, "light")).toBe(deepSpaceDark);
+    expect(getThemeModeVariant(dual, "dark")).toBe(deepSpaceDark);
+  });
+
+  it("rejects invalid runtime definitions with no mode or mismatched artwork keys", () => {
+    expect(() =>
+      defineBackgroundTheme({
+        id: "empty-fixture",
+        name: "Empty fixture",
+        description: "Invalid runtime fixture",
+        gate: { category: "geography", rank: 5, title: "Cartographer" },
+        modes: {},
+      } as BackgroundThemeMetadata),
+    ).toThrow(/must support at least one mode/i);
+
+    expect(() =>
+      modeFixture("mismatched-fixture", {
+        light: deepSpaceDark,
+        dark: {
+          ...deepSpaceDark,
+          artwork: {
+            ...deepSpaceDark.artwork,
+            "--artwork-dark-only": "#000",
+          },
+        },
+      }),
+    ).toThrow(
+      'Background theme "mismatched-fixture" must use the same artwork tokens in light and dark modes.',
+    );
+  });
+
+  it.each(BACKGROUND_THEMES)(
+    "$id supplies a complete UI palette and theme-local artwork palette for every supported mode",
+    (theme) => {
+      for (const mode of supportedModesForTheme(theme)) {
+        const variant = getThemeModeVariant(theme, mode)!;
+        expect(Object.keys(variant.ui).sort()).toEqual(
+          [...BACKGROUND_THEME_UI_TOKEN_NAMES].sort(),
+        );
+        expect(Object.keys(variant.artwork).length).toBeGreaterThan(0);
+        for (const name of Object.keys(variant.artwork)) {
+          expect(name).toMatch(/^--artwork-/);
+        }
       }
     },
   );
 
   it.each(BACKGROUND_THEMES)(
-    "defines complete light and dark token palettes for $id",
+    "$id uses matching artwork keys if it supports both modes",
     (theme) => {
-      for (const mode of ["light", "dark"] as const) {
-        expect(Object.keys(theme.tokens[mode]).sort()).toEqual(
-          [...BACKGROUND_THEME_TOKEN_NAMES].sort(),
-        );
-      }
+      const light = getThemeModeVariant(theme, "light");
+      const dark = getThemeModeVariant(theme, "dark");
+      if (!light || !dark) return;
+      expect(Object.keys(light.artwork).sort()).toEqual(
+        Object.keys(dark.artwork).sort(),
+      );
     },
   );
+});
 
-  it("gives Front Row a genuinely light, readable auditorium palette", () => {
-    const frontRow = BACKGROUND_THEMES.find(
-      (theme) => theme.id === "front-row",
-    )!;
-    const lightBackground = parseColour(
-      frontRow.tokens.light["--artwork-bg"],
-    );
-    const darkBackground = parseColour(
-      frontRow.tokens.dark["--artwork-bg"],
-    );
-
-    expect(luminance(lightBackground)).toBeGreaterThan(0.65);
-    expect(luminance(darkBackground)).toBeLessThan(0.01);
-    expect(
-      contrast(
-        parseColour(frontRow.tokens.light["--ink"]),
-        lightBackground,
-      ),
-    ).toBeGreaterThanOrEqual(4.5);
+describe("background theme preference", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    delete document.documentElement.dataset.bgTheme;
+    delete document.documentElement.dataset.bgThemeActive;
+    delete document.documentElement.dataset.theme;
+    document.documentElement.removeAttribute("style");
   });
 
-  it.each(["light", "dark"] as const)(
-    "applies City Pulse's complete %s palette",
-    (mode) => {
-      applyTheme(mode);
-      applyBackgroundTheme("city-pulse");
+  it.each(BACKGROUND_THEMES)(
+    "applies $id's complete dark UI palette without leaking artwork tokens",
+    (theme) => {
+      applyTheme("dark");
+      applyBackgroundTheme(theme.id);
+      const expected = getThemeModeVariant(theme, "dark")!;
 
-      const cityPulse = BACKGROUND_THEMES.find(
-        (theme) => theme.id === "city-pulse",
-      )!;
-      expect(document.documentElement.dataset.bgTheme).toBe("city-pulse");
-      for (const name of BACKGROUND_THEME_TOKEN_NAMES) {
+      expect(document.documentElement.dataset.bgTheme).toBe(theme.id);
+      expect(document.documentElement.dataset.bgThemeActive).toBe(theme.id);
+      expect(readActiveBackgroundTheme()).toBe(theme.id);
+      expect(window.localStorage.getItem(BACKGROUND_THEME_STORAGE_KEY)).toBe(
+        theme.id,
+      );
+      for (const name of BACKGROUND_THEME_UI_TOKEN_NAMES) {
         expect(
           document.documentElement.style.getPropertyValue(name),
           name,
-        ).toBe(cityPulse.tokens[mode][name]);
+        ).toBe(expected.ui[name]);
+      }
+      for (const name of Object.keys(expected.artwork)) {
+        expect(document.documentElement.style.getPropertyValue(name)).toBe("");
       }
     },
   );
 
-  it("switches an equipped theme between palettes without stale tokens", () => {
-    applyTheme("light");
-    applyBackgroundTheme("deep-space");
+  it.each(BACKGROUND_THEMES)(
+    "keeps $id selected but inactive in unsupported light mode",
+    (theme) => {
+      applyTheme("light");
+      applyBackgroundTheme(theme.id);
 
-    applyTheme("dark");
-
-    expect(document.documentElement.dataset.theme).toBe("dark");
-    expect(document.documentElement.dataset.bgTheme).toBe("deep-space");
-    expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
-    expect(window.localStorage.getItem(BACKGROUND_THEME_STORAGE_KEY)).toBe(
-      "deep-space",
-    );
-    for (const name of BACKGROUND_THEME_TOKEN_NAMES) {
-      expect(
-        document.documentElement.style.getPropertyValue(name),
-        name,
-      ).toBe(BACKGROUND_THEMES[0].tokens.dark[name]);
-    }
-  });
-
-  it("uses restrained, inverted artwork roles for light Deep Space", () => {
-    const light = BACKGROUND_THEMES[0].tokens.light;
-    const base = parseColour(light["--artwork-bg"]);
-
-    expect(base.slice(0, 3).every((channel) => channel >= 240)).toBe(true);
-    expect(light["--artwork-bg"]).not.toBe("#fff");
-    expect(light["--artwork-veil"]).toBe("transparent");
-    expect(light["--artwork-vignette-inner"]).toBe("transparent");
-    expect(light["--artwork-vignette-middle"]).toBe("transparent");
-    expect(light["--artwork-vignette-outer"]).toBe("transparent");
-    expect(light["--artwork-flow-mask"]).not.toBe("none");
-
-    for (const name of [
-      "--artwork-glow-primary",
-      "--artwork-glow-cool",
-      "--artwork-glow-warm",
-      "--artwork-glow-mint",
-      "--artwork-orb",
-    ] as const) {
-      const alpha = parseColour(light[name])[3];
-      expect(alpha, name).toBeGreaterThanOrEqual(0.04);
-      expect(alpha, name).toBeLessThanOrEqual(0.15);
-    }
-
-    for (const name of [
-      "--artwork-star",
-      "--artwork-star-bright",
-      "--artwork-shooting-star",
-      "--artwork-shooting-shadow",
-      "--artwork-orbit",
-      "--artwork-orbit-inner",
-      "--artwork-orb-shadow",
-    ] as const) {
-      const alpha = parseColour(light[name])[3];
-      expect(alpha, name).toBeGreaterThanOrEqual(0.02);
-      expect(alpha, name).toBeLessThanOrEqual(0.08);
-    }
-  });
-
-  it.each(["light", "dark"] as const)(
-    "keeps body and muted text above 4.5:1 over busy %s artwork",
-    (mode) => {
-      const tokens = BACKGROUND_THEMES[0].tokens[mode];
-      // Conservatively overlap the two strongest nebula forms, then composite
-      // the translucent card surface over that busiest plausible background.
-      const busyArtwork = composite(
-        parseColour(tokens["--artwork-glow-cool"]),
-        composite(
-          parseColour(tokens["--artwork-glow-primary"]),
-          parseColour(tokens["--artwork-bg"]),
-        ),
+      expect(document.documentElement.dataset.bgTheme).toBe(theme.id);
+      expect(document.documentElement.dataset.bgThemeActive).toBeUndefined();
+      expect(readActiveBackgroundTheme()).toBeNull();
+      expect(window.localStorage.getItem(BACKGROUND_THEME_STORAGE_KEY)).toBe(
+        theme.id,
       );
-      const surface = composite(
-        parseColour(tokens["--surface"]),
-        busyArtwork,
-      );
-
-      expect(contrast(parseColour(tokens["--ink"]), surface)).toBeGreaterThanOrEqual(
-        4.5,
-      );
-      expect(
-        contrast(parseColour(tokens["--muted"]), surface),
-      ).toBeGreaterThanOrEqual(4.5);
+      for (const name of BACKGROUND_THEME_UI_TOKEN_NAMES) {
+        expect(document.documentElement.style.getPropertyValue(name)).toBe("");
+      }
     },
   );
 
-  it("removes the theme and every inline theme token", () => {
+  it.each(BACKGROUND_THEMES)(
+    "restores $id automatically after crossing an unsupported mode",
+    (theme) => {
+      applyTheme("dark");
+      applyBackgroundTheme(theme.id);
+
+      applyTheme("light");
+      expect(document.documentElement.dataset.bgTheme).toBe(theme.id);
+      expect(document.documentElement.dataset.bgThemeActive).toBeUndefined();
+      for (const name of BACKGROUND_THEME_UI_TOKEN_NAMES) {
+        expect(document.documentElement.style.getPropertyValue(name)).toBe("");
+      }
+
+      applyTheme("dark");
+      expect(document.documentElement.dataset.bgTheme).toBe(theme.id);
+      expect(document.documentElement.dataset.bgThemeActive).toBe(theme.id);
+      expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
+      expect(window.localStorage.getItem(BACKGROUND_THEME_STORAGE_KEY)).toBe(
+        theme.id,
+      );
+    },
+  );
+
+  it.each(BACKGROUND_THEMES)(
+    "restores saved $id selection without activating it in light mode",
+    (theme) => {
+      applyTheme("light");
+      window.localStorage.setItem(BACKGROUND_THEME_STORAGE_KEY, theme.id);
+
+      expect(readEquippedBackgroundTheme()).toBe(theme.id);
+      expect(document.documentElement.dataset.bgTheme).toBe(theme.id);
+      expect(document.documentElement.dataset.bgThemeActive).toBeUndefined();
+
+      applyTheme("dark");
+      expect(document.documentElement.dataset.bgThemeActive).toBe(theme.id);
+    },
+  );
+
+  it("removes a selected theme and every inline UI token", () => {
     applyTheme("dark");
-    applyBackgroundTheme("deep-space");
+    applyBackgroundTheme(deepSpace.id);
 
     applyBackgroundTheme(null);
 
     expect(document.documentElement.dataset.bgTheme).toBeUndefined();
+    expect(document.documentElement.dataset.bgThemeActive).toBeUndefined();
     expect(
       window.localStorage.getItem(BACKGROUND_THEME_STORAGE_KEY),
     ).toBeNull();
-    for (const name of BACKGROUND_THEME_TOKEN_NAMES) {
-      expect(
-        document.documentElement.style.getPropertyValue(name),
-        name,
-      ).toBe("");
+    for (const name of BACKGROUND_THEME_UI_TOKEN_NAMES) {
+      expect(document.documentElement.style.getPropertyValue(name)).toBe("");
     }
   });
 
-  it.each(["light", "dark"] as readonly Theme[])(
-    "restores a saved theme with the saved %s preference",
-    (mode) => {
-      applyTheme(mode);
-      window.localStorage.setItem(
-        BACKGROUND_THEME_STORAGE_KEY,
-        "deep-space",
-      );
-
-      expect(readEquippedBackgroundTheme()).toBe("deep-space");
-      expect(document.documentElement.dataset.bgTheme).toBe("deep-space");
-      expect(document.documentElement.style.getPropertyValue("--bg")).toBe(
-        BACKGROUND_THEMES[0].tokens[mode]["--bg"],
-      );
-    },
-  );
-
   it("rejects and removes unknown theme ids", () => {
     document.documentElement.dataset.bgTheme = "invented-theme";
+    document.documentElement.dataset.bgThemeActive = "invented-theme";
     window.localStorage.setItem(
       BACKGROUND_THEME_STORAGE_KEY,
       "invented-theme",
@@ -284,14 +358,64 @@ describe("background theme preference", () => {
 
     expect(readEquippedBackgroundTheme()).toBeNull();
     expect(document.documentElement.dataset.bgTheme).toBeUndefined();
+    expect(document.documentElement.dataset.bgThemeActive).toBeUndefined();
     expect(
       window.localStorage.getItem(BACKGROUND_THEME_STORAGE_KEY),
     ).toBeNull();
 
     applyBackgroundTheme("still-invented");
     expect(document.documentElement.dataset.bgTheme).toBeUndefined();
-    expect(
-      window.localStorage.getItem(BACKGROUND_THEME_STORAGE_KEY),
-    ).toBeNull();
+  });
+
+  it("resolves root mode before system preference and follows unsaved system changes", () => {
+    const listeners: Array<(event: { matches: boolean }) => void> = [];
+    const media = {
+      matches: true,
+      addEventListener: vi.fn(
+        (_name: string, listener: (event: { matches: boolean }) => void) => {
+          listeners.push(listener);
+        },
+      ),
+      removeEventListener: vi.fn(),
+    };
+    vi.stubGlobal("matchMedia", vi.fn(() => media));
+
+    expect(resolveThemeMode()).toBe("dark");
+    document.documentElement.dataset.theme = "light";
+    expect(resolveThemeMode()).toBe("light");
+
+    const onChange = vi.fn();
+    const unsubscribe = subscribeToSystemTheme(onChange);
+    listeners[0]({ matches: false });
+    expect(onChange).toHaveBeenCalledWith("light");
+
+    window.localStorage.setItem(THEME_STORAGE_KEY, "dark");
+    listeners[0]({ matches: true });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    unsubscribe();
+    expect(media.removeEventListener).toHaveBeenCalled();
+  });
+});
+
+describe("theme palette contrast", () => {
+  it.each([
+    ["base light", extractCssTokens(":root")],
+    ["base dark", extractCssTokens(':root[data-theme="dark"]')],
+  ])("%s meets the shared text, action, focus and feedback bars", (label, tokens) => {
+    expectAccessiblePalette(label, tokens);
+  });
+
+  it.each(
+    BACKGROUND_THEMES.flatMap((theme) =>
+      supportedModesForTheme(theme).map((mode) => [
+        `${theme.id} ${mode}`,
+        getThemeModeVariant(theme, mode)!.ui,
+      ] as const),
+    ),
+  )("%s meets the shared text, action, focus and feedback bars", (label, tokens) => {
+    expectAccessiblePalette(
+      label,
+      tokens as BackgroundThemeUiTokenPalette,
+    );
   });
 });

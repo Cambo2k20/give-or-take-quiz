@@ -1,55 +1,59 @@
 # Adding a custom theme
 
-Custom themes are unlockable, full-app visual treatments. Light/dark mode and
-the equipped custom theme are independent choices: every custom theme supplies
-a complete light palette and a complete dark palette, and the mode toggle
-continues working while the theme is equipped.
+Custom themes are unlockable backgrounds. A theme may be **light-only**,
+**dark-only**, or support **both modes**. Selecting a single-mode theme does
+not disable the app's light/dark toggle:
 
-Every theme consists of three pieces:
+- In a supported mode, the theme's UI palette and artwork are active.
+- In an unsupported mode, the app uses its original default palette and no
+  custom backdrop.
+- The selected theme is still remembered, shown as “Applied in light mode” or
+  “Applied in dark mode”, and returns automatically when that mode is active
+  again.
 
-1. **Metadata and palettes** — display copy, unlock requirement, and complete
-   light and dark semantic-token sets.
-2. **Artwork** — both the card preview and the full-viewport backdrop.
-3. **Visual CSS** — token-driven layout, effects, animation, and reduced-motion
-   behaviour.
+Adding a theme requires one registry entry and one artwork component. Optional
+theme CSS is imported by that component; there is no component map or shared
+stylesheet index to edit.
 
-The theme id connects all three. Use a stable, lowercase, kebab-case id such as
-`deep-space`; changing an id later also invalidates the stored equipped value.
+## 1. Add the registry entry
 
-## 1. Add the metadata and both palettes
+Add a `defineBackgroundTheme(...)` entry to `BACKGROUND_THEMES` in
+`lib/themes.ts`. The id is stable, lowercase kebab-case and connects the
+metadata, saved selection and artwork module.
 
-Add an entry to `BACKGROUND_THEMES` in `lib/themes.ts`:
+Each supported mode contains separate `ui` and `artwork` palettes:
 
 ```ts
-{
+defineBackgroundTheme({
   id: "ocean-depths",
   name: "Ocean Depths",
-  description: "Bioluminescent currents drift behind every screen.",
+  description: "Bioluminescent currents below the game.",
   gate: {
-    category: "depth",
+    category: "geography",
     rank: 5,
     title: "Abyss Diver",
   },
-  tokens: {
-    light: {
-      "--bg": "#e7f4f4",
-      // Every name in BACKGROUND_THEME_TOKEN_NAMES is required.
-    },
+  modes: {
     dark: {
-      "--bg": "#03141b",
-      // Every name in BACKGROUND_THEME_TOKEN_NAMES is required.
+      ui: {
+        "--bg": "#03141b",
+        // Every BACKGROUND_THEME_UI_TOKEN_NAMES entry is required.
+      },
+      artwork: {
+        "--artwork-ocean-base": "#03141b",
+        "--artwork-ocean-glow": "rgba(67, 220, 205, 0.18)",
+        // Theme-local names are encouraged.
+      },
     },
   },
-},
+}),
 ```
 
-Copy Deep Space's token structure, then replace every value for both modes.
-The `BackgroundThemeTokenPalette` type is a `Record` over
-`BACKGROUND_THEME_TOKEN_NAMES`; omitting a token or either palette is a
-compile-time error. Do not use `Partial`, optional properties, casts, or
-fallback values to bypass that guarantee.
+`modes` is an `AtLeastOne` type, so omitting both modes is a compile-time
+error. A supported mode must provide every semantic UI token. Artwork tokens
+are scoped to that theme's wrapper and may use meaningful theme-local names.
 
-The shared UI consumes semantic roles rather than theme-specific colours:
+The UI palette owns:
 
 - Canvas and surfaces: `--bg`, `--surface`, `--sunk`, `--rail`
 - Text and borders: `--ink`, `--ink-soft`, `--muted`, `--line`,
@@ -58,155 +62,178 @@ The shared UI consumes semantic roles rather than theme-specific colours:
   `--accent-wash`, `--on-accent`
 - Feedback: `--good`, `--warn`, `--bad`, and their `-wash` partners
 - Depth: `--shadow-card`, `--shadow-press`
-- Artwork roles: the `--artwork-*` tokens
 
-Artwork tokens belong in both palettes too, even when their values are
-identical. This keeps colour ownership in one typed registry and lets a future
-theme intentionally adapt its illustration between light and dark.
+`category` must be a real `QuestionCategory`. The example uses `geography`;
+inventing a category such as `depth` will fail the typecheck.
 
-`category` must be a valid `QuestionCategory`. The card unlocks when the
-player's rank in that category reaches `rank`; `title` is the rank name shown
-on the locked card.
+### Light-only
 
-`BackgroundThemeId` is derived from the metadata array, so TypeScript will
-require the new id in the artwork registry in the next step.
+```ts
+modes: {
+  light: {
+    ui: { /* complete light UI palette */ },
+    artwork: { /* light artwork tokens */ },
+  },
+},
+```
 
-## 2. Add one auto-discovered artwork component
+### Dark-only
 
-Create `src/themes/OceanDepthsArtwork.tsx`. `ThemeArtwork` discovers every
-`*Artwork.tsx` module except itself and verifies that there is exactly one for
-every registry id. Do not edit a component map or stylesheet index.
+```ts
+modes: {
+  dark: {
+    ui: { /* complete dark UI palette */ },
+    artwork: { /* dark artwork tokens */ },
+  },
+},
+```
 
-New artwork uses one inline SVG for all structural geometry. Buildings,
-windows, silhouettes, paths, trees and discrete lights belong inside its
-viewBox so they cannot separate at a responsive breakpoint. Large blurred
-washes and the vignette stay in the shared CSS frame.
+Deep Space, City Pulse and Front Row are currently dark-only.
+
+### Dual-mode
+
+```ts
+modes: {
+  light: {
+    ui: { /* complete light UI palette */ },
+    artwork: {
+      "--artwork-ocean-base": "#dff4f2",
+      "--artwork-ocean-glow": "rgba(16, 105, 116, 0.12)",
+    },
+  },
+  dark: {
+    ui: { /* complete dark UI palette */ },
+    artwork: {
+      "--artwork-ocean-base": "#03141b",
+      "--artwork-ocean-glow": "rgba(67, 220, 205, 0.18)",
+    },
+  },
+},
+```
+
+For a dual-mode theme, use the same artwork-token keys in both modes. That
+lets one artwork component change colour without changing structure.
+
+## 2. Add the artwork component
+
+Create `src/themes/OceanDepthsArtwork.tsx`. `ThemeArtwork` auto-discovers
+every `*Artwork.tsx` module except itself and verifies one component exists for
+each registry id.
 
 ```tsx
 import type { BackgroundThemeId } from "../../lib/themes";
 import type { ThemeArtworkProps } from "./ThemeArtwork";
 import { SvgArtworkFrame } from "./SvgArtworkFrame";
+import "./ocean-depths.css";
 
 export const themeId = "ocean-depths" satisfies BackgroundThemeId;
 
-export default function OceanDepthsArtwork(
-  props: ThemeArtworkProps,
-) {
+export default function OceanDepthsArtwork(props: ThemeArtworkProps) {
   return (
-    <SvgArtworkFrame {...props} className="ocean-depths">
+    <SvgArtworkFrame
+      {...props}
+      className="ocean-depths"
+      washCount={2}
+    >
       <svg
-        className="svg-theme-artwork__scene"
+        className="ocean-depths__scene"
         viewBox="0 0 1600 900"
         preserveAspectRatio="xMidYMax slice"
         aria-hidden="true"
         focusable="false"
       >
-        {/* Structural artwork only; use var(--artwork-…) for colour. */}
+        {/* Use var(--artwork-ocean-...) for every colour. */}
       </svg>
     </SvgArtworkFrame>
   );
 }
 ```
 
-`xMidYMax slice` pins the scene to the bottom centre and crops its sides on
-narrow screens instead of squashing it. Keep every structural relationship in
-that same coordinate system. When one shape must contain another, use the same
-geometry in an SVG `clipPath` or `mask`.
+Put buildings, windows, silhouettes, paths, trees and discrete lights in one
+inline SVG viewBox. If one shape must contain another, share its geometry
+through an SVG `clipPath` or `mask`. `xMidYMax slice` anchors the scene to the
+bottom centre and crops it on narrow screens instead of squashing it.
 
-The component receives the complete light or dark token palette. It may include
-theme-specific SVG animation rules through `SvgArtworkFrame`'s `motionStyles`
-slot, but every colour must come from a CSS custom property and every animation
-must stop under `prefers-reduced-motion: reduce`.
+Keep large blurred washes, broad colour fields and the vignette in CSS. The
+shared frame can render zero to three atmosphere washes with `washCount`.
+Do not convert large CSS blur effects to SVG filters.
 
-The shared frame already provides:
+Import optional CSS from the artwork module itself:
 
-- CSS gradient atmosphere and vignette behind the SVG
-- preview and fixed-backdrop geometry
-- `aria-hidden="true"` and `pointer-events: none`
-- a negative backdrop z-index
-- reduced-motion handling for shared atmospheric animation
+```css
+.ocean-depths__current {
+  animation: ocean-current-drift 29s ease-in-out infinite alternate;
+}
 
-Deep Space deliberately remains on its existing CSS artwork path while City
-Pulse proves the SVG format.
+.svg-theme-artwork--preview .ocean-depths__current {
+  animation-play-state: paused;
+}
 
-## The complete diff for another theme
+.theme-card-button:is(:hover, :focus-visible, :active)
+  .ocean-depths__current {
+  animation-play-state: running;
+}
 
-After the extraction, adding a theme changes only the data registry and adds
-one component:
-
-```diff
-diff --git a/lib/themes.ts b/lib/themes.ts
-@@
-   {
-+    id: "ocean-depths",
-+    name: "Ocean Depths",
-+    description: "Bioluminescent currents below the game.",
-+    gate: { category: "geography", rank: 5, title: "Abyss Diver" },
-+    tokens: {
-+      light: { /* every required token */ },
-+      dark: { /* every required token */ },
-+    },
-+  },
-
-diff --git a/src/themes/OceanDepthsArtwork.tsx b/src/themes/OceanDepthsArtwork.tsx
-new file mode 100644
-+export const themeId = "ocean-depths" satisfies BackgroundThemeId;
-+export default function OceanDepthsArtwork(props: ThemeArtworkProps) {
-+  return (
-+    <SvgArtworkFrame {...props} className="ocean-depths">
-+      <svg
-+        className="svg-theme-artwork__scene"
-+        viewBox="0 0 1600 900"
-+        preserveAspectRatio="xMidYMax slice"
-+        aria-hidden="true"
-+        focusable="false"
-+      >
-+        {/* Structural artwork */}
-+      </svg>
-+    </SvgArtworkFrame>
-+  );
-+}
+@media (prefers-reduced-motion: reduce) {
+  .ocean-depths__current {
+    animation: none;
+  }
+}
 ```
 
-There is no third registration or CSS-index edit.
+Never render a `<style>` tag from the component. Co-located imported CSS is
+deduplicated and processed by Vite. Preview motion stays paused until hover,
+keyboard focus or press; reduced motion disables every animation.
 
-## Optional: unlock it temporarily during development
+## Performance and accessibility rules
 
-For visual development before the real rank is earned, add the new id to the
-development-only condition in `isThemeTemporarilyUnlocked` in
-`lib/themes.ts`. Keep it behind:
+- Preserve the established visual identity when hardening an existing theme.
+  Moving animation rules into co-located CSS or grouping repeated elements
+  must not silently remove signature motion, depth or atmospheric layers.
+- Animate only group-level `transform` and `opacity`, never `filter`,
+  `background-position`, SVG geometry or hundreds of individual elements.
+- Use the fewest coherent moving groups the artwork needs. City Pulse groups
+  its windows into six shared cycles; it does not animate windows one by one.
+- Put `will-change` only on actively animated backdrop groups, not static
+  previews or children.
+- Do not use `backdrop-filter` over animated artwork.
+- Below 600px, reduce blur radii and drop an atmospheric layer if necessary.
+- Artwork remains `aria-hidden="true"`, non-interactive and behind the app.
+- Keep the centre readable and verify at 390×844 and 1920×1080.
+
+## Temporary development unlock
+
+Add only the theme id being worked on to the typed development allowlist used
+by `isThemeTemporarilyUnlocked`. Do not make all non-empty ids pass:
 
 ```ts
-import.meta.env.MODE === "development"
+const DEV_UNLOCKED_THEME_IDS = ["ocean-depths"] satisfies
+  readonly BackgroundThemeId[];
 ```
 
-Never weaken `isThemeUnlocked` for production. The temporary shortcut must not
-apply in tests or production builds.
+The shortcut must remain restricted to `import.meta.env.MODE ===
+"development"` so tests and production still exercise locked cards.
 
 ## Verification checklist
 
-Before considering a theme complete:
+- Locked and unlocked cards show the correct gate and interaction state.
+- A single-mode card shows its “Light mode” or “Dark mode” badge.
+- Applying in an unsupported mode keeps the selection but renders the default
+  app palette and no custom backdrop.
+- Returning to a supported mode restores the theme without another click.
+- Tapping the selected card removes it in either supported or unsupported
+  mode and clears all inline theme tokens.
+- Refresh restores the saved selection and only activates it in a supported
+  mode.
+- Dual-mode themes update both UI and artwork tokens without stale values.
+- Card previews use the theme's real supported artwork in every app mode.
+- Text, controls, focus states, feedback colours and footer remain readable.
+- Normal and reduced-motion rendering stay smooth in Chrome and Edge.
+- `npm run lint`, `npm test` and `npm run build` pass.
 
-- The locked card shows the correct gate and cannot be equipped.
-- The unlocked card can apply and remove the theme.
-- The card preview and full-screen backdrop render in both light and dark.
-- The light/dark toggle remains enabled while the theme is equipped.
-- Switching modes updates every semantic token without removing the artwork.
-- Refreshing restores both the equipped theme and saved light/dark mode.
-- Removing the custom theme clears its inline tokens and restores the base
-  palette for the current mode.
-- Text, controls, focus states, verdict colours and disabled states remain
-  readable in both palettes.
-- Narrow mobile layouts do not overflow.
-- Reduced-motion mode removes or substantially reduces animation.
-- `tests/backgroundTheme.test.ts` covers both complete palettes.
-- `npm run lint`, `npm test` and `npm run build` all pass.
+Current SVG references:
 
-Deep Space is the reference implementation:
-
-- Metadata and palettes: `lib/themes.ts`
-- Palette application: `lib/backgroundTheme.ts`
-- Artwork: `src/themes/DeepSpaceArtwork.tsx`
-- Token-driven visual CSS: `src/themes/deep-space.css`
-- Artwork registry: `src/themes/ThemeArtwork.tsx`
-- Stylesheet registry: `src/themes/theme-styles.css`
+- Front Row: three static atmospheric washes and one screen-glow animation
+- City Pulse: shared viewBox geometry, clipped windows, six grouped light
+  cycles, backdrop-only traffic and subtle skyline parallax
+- Deep Space: legacy CSS artwork kept as a compatibility reference

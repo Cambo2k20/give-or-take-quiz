@@ -1,11 +1,13 @@
-import type { ReactElement, ReactNode } from "react";
+import type { ReactElement } from "react";
 import type { ThemeArtworkProps, ThemeArtworkStyle } from "./ThemeArtwork";
 
 type SvgArtworkFrameProps = ThemeArtworkProps & {
   children: ReactElement<SVGSVGElement>;
   className: string;
-  motionStyles?: ReactNode;
+  washCount?: 0 | 1 | 2 | 3;
 };
+
+const WASH_NAMES = ["one", "two", "three"] as const;
 
 /**
  * Shared frame for viewBox-authored themes. Atmosphere stays in CSS while the
@@ -15,11 +17,20 @@ export function SvgArtworkFrame({
   children,
   className,
   locked = false,
-  motionStyles,
   tokens,
   variant,
+  washCount = 3,
 }: SvgArtworkFrameProps) {
   const tokenStyle = tokens as ThemeArtworkStyle;
+  const washes = Array.from({ length: washCount }, (_, index) => (
+    <span
+      className={[
+        "svg-theme-artwork__wash",
+        `svg-theme-artwork__wash--${WASH_NAMES[index]}`,
+      ].join(" ")}
+      key={index}
+    />
+  ));
 
   return (
     <div
@@ -34,13 +45,10 @@ export function SvgArtworkFrame({
       aria-hidden="true"
       style={tokenStyle}
     >
-      <span className="svg-theme-artwork__wash svg-theme-artwork__wash--one" />
-      <span className="svg-theme-artwork__wash svg-theme-artwork__wash--two" />
-      <span className="svg-theme-artwork__wash svg-theme-artwork__wash--three" />
+      {washes}
       {children}
       <span className="svg-theme-artwork__vignette" />
       {locked && <span className="svg-theme-artwork__lock">Locked</span>}
-      {motionStyles}
     </div>
   );
 }
