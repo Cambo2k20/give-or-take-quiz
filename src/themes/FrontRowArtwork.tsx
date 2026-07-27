@@ -2,36 +2,9 @@ import { useId } from "react";
 import type { BackgroundThemeId } from "../../lib/themes";
 import type { ThemeArtworkProps } from "./ThemeArtwork";
 import { SvgArtworkFrame } from "./SvgArtworkFrame";
+import "./front-row.css";
 
 export const themeId = "front-row" satisfies BackgroundThemeId;
-
-const FRONT_ROW_MOTION = (
-  <style>{`
-    .front-row .svg-theme-artwork__wash {
-      animation: none;
-      will-change: auto;
-    }
-
-    .front-row__screen-glow {
-      animation: front-row-screen-shift 23s ease-in-out infinite alternate;
-      will-change: opacity;
-    }
-
-    @keyframes front-row-screen-shift {
-      0% { opacity: 0.72; }
-      31% { opacity: 0.82; }
-      67% { opacity: 0.76; }
-      100% { opacity: 0.9; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .front-row__screen-glow {
-        animation: none;
-        opacity: 0.8;
-      }
-    }
-  `}</style>
-);
 
 type SeatRowProps = {
   count: number;
@@ -77,7 +50,7 @@ export default function FrontRowArtwork(props: ThemeArtworkProps) {
     <SvgArtworkFrame
       {...props}
       className="front-row"
-      motionStyles={FRONT_ROW_MOTION}
+      washCount={3}
     >
       <svg
         className="svg-theme-artwork__scene front-row__scene"
@@ -92,7 +65,7 @@ export default function FrontRowArtwork(props: ThemeArtworkProps) {
             <path
               d="M -47 45 C -47 22 -31 12 0 12 C 31 12 47 22 47 45"
               fill="none"
-              stroke="var(--artwork-connection)"
+              stroke="var(--artwork-seat-rim)"
               strokeWidth="2"
               opacity="0.34"
             />
@@ -100,17 +73,17 @@ export default function FrontRowArtwork(props: ThemeArtworkProps) {
           <radialGradient id={screenGlowId}>
             <stop
               offset="0"
-              stopColor="var(--artwork-detail-cool)"
+              stopColor="var(--artwork-screen-light)"
               stopOpacity="0.54"
             />
             <stop
               offset="0.48"
-              stopColor="var(--artwork-detail-warm)"
+              stopColor="var(--artwork-screen-gold)"
               stopOpacity="0.2"
             />
             <stop
               offset="1"
-              stopColor="var(--artwork-detail-warm)"
+              stopColor="var(--artwork-screen-gold)"
               stopOpacity="0"
             />
           </radialGradient>
@@ -123,18 +96,22 @@ export default function FrontRowArtwork(props: ThemeArtworkProps) {
           >
             <stop
               offset="0"
-              stopColor="var(--artwork-detail-warm)"
+              stopColor="var(--artwork-screen-gold)"
               stopOpacity="0.1"
             />
             <stop
               offset="1"
-              stopColor="var(--artwork-detail-warm)"
+              stopColor="var(--artwork-screen-gold)"
               stopOpacity="0"
             />
           </linearGradient>
         </defs>
 
-        <rect width="1600" height="900" fill="var(--artwork-bg)" />
+        <rect
+          width="1600"
+          height="900"
+          fill="var(--artwork-auditorium-bg)"
+        />
 
         <g className="front-row__screen-glow">
           <ellipse
@@ -150,8 +127,8 @@ export default function FrontRowArtwork(props: ThemeArtworkProps) {
             width="740"
             height="316"
             rx="4"
-            fill="var(--artwork-orb)"
-            stroke="var(--artwork-orbit-inner)"
+            fill="var(--artwork-screen-panel)"
+            stroke="var(--artwork-screen-frame)"
             strokeWidth="2"
           />
           <rect
@@ -160,7 +137,7 @@ export default function FrontRowArtwork(props: ThemeArtworkProps) {
             width="712"
             height="288"
             rx="2"
-            fill="var(--artwork-detail-cool)"
+            fill="var(--artwork-screen-light)"
             opacity="0.24"
           />
         </g>
@@ -174,13 +151,13 @@ export default function FrontRowArtwork(props: ThemeArtworkProps) {
         <path
           d="M 0 516 C 360 494 1240 494 1600 516"
           fill="none"
-          stroke="var(--artwork-orbit)"
+          stroke="var(--artwork-row-divider)"
           strokeWidth="1.5"
           opacity="0.22"
         />
         <SeatRow
           count={15}
-          fill="var(--artwork-structure-far)"
+          fill="var(--artwork-seat-far)"
           gap={116}
           opacity={0.34}
           scale={0.54}
@@ -192,13 +169,13 @@ export default function FrontRowArtwork(props: ThemeArtworkProps) {
         <path
           d="M 0 636 C 390 610 1210 610 1600 636"
           fill="none"
-          stroke="var(--artwork-orbit)"
+          stroke="var(--artwork-row-divider)"
           strokeWidth="1.5"
           opacity="0.28"
         />
         <SeatRow
           count={10}
-          fill="var(--artwork-structure-far)"
+          fill="var(--artwork-seat-far)"
           gap={190}
           opacity={0.68}
           scale={0.86}
@@ -209,7 +186,7 @@ export default function FrontRowArtwork(props: ThemeArtworkProps) {
 
         <SeatRow
           count={7}
-          fill="var(--artwork-structure-near)"
+          fill="var(--artwork-seat-near)"
           gap={292}
           opacity={1}
           scale={1.46}
@@ -220,7 +197,7 @@ export default function FrontRowArtwork(props: ThemeArtworkProps) {
         <path
           d="M 0 892 H 1600"
           fill="none"
-          stroke="var(--artwork-orbit)"
+          stroke="var(--artwork-row-divider)"
           strokeWidth="2"
           opacity="0.18"
         />

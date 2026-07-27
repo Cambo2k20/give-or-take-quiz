@@ -6,6 +6,7 @@ afterEach(() => {
   cleanup();
   window.localStorage.clear();
   delete document.documentElement.dataset.bgTheme;
+  delete document.documentElement.dataset.bgThemeActive;
   delete document.documentElement.dataset.theme;
   document.documentElement.removeAttribute("style");
   vi.unstubAllGlobals();

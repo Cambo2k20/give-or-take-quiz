@@ -9,8 +9,10 @@ import {
   BACKGROUND_THEMES,
   type BackgroundTheme,
   type BackgroundThemeId,
+  isThemeSupportedInMode,
   isThemeTemporarilyUnlocked,
   isThemeUnlocked,
+  supportedModesForTheme,
 } from "../lib/themes";
 import type { QuestionCategory } from "../lib/types";
 import { formatPoints } from "./questionText";
@@ -35,6 +37,17 @@ function ThemeCard({
 }) {
   const unlocked = isThemeUnlocked(progress, theme);
   const temporarilyUnlocked = isThemeTemporarilyUnlocked(theme);
+  const supportedModes = supportedModesForTheme(theme);
+  const supportedMode =
+    supportedModes.length === 1 ? supportedModes[0] : null;
+  const supportedModeLabel = supportedMode
+    ? `${supportedMode[0].toUpperCase()}${supportedMode.slice(1)} mode`
+    : null;
+  const active = isThemeSupportedInMode(theme, mode);
+  const appliedLabel =
+    equipped && !active && supportedModeLabel
+      ? `Applied in ${supportedModeLabel.toLowerCase()}`
+      : "Applied";
   const current =
     progress.categories.find((entry) => entry.category === theme.gate.category)
       ?.rank ?? 1;
@@ -51,7 +64,10 @@ function ThemeCard({
         <div className="achievement-head">
           <strong>{theme.name}</strong>
           {equipped && (
-            <span className="theme-card-equipped">Applied</span>
+            <span className="theme-card-equipped">{appliedLabel}</span>
+          )}
+          {!equipped && supportedModeLabel && (
+            <span className="theme-card-mode">{supportedModeLabel}</span>
           )}
           {unlocked && !equipped && (
             <span className="achievement-tick" aria-label="Unlocked">
@@ -83,7 +99,16 @@ function ThemeCard({
   }
 
   return (
-    <li className={`theme-card is-unlocked${equipped ? " is-equipped" : ""}`}>
+    <li
+      className={[
+        "theme-card",
+        "is-unlocked",
+        equipped ? "is-equipped" : "",
+        equipped && !active ? "is-inactive" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <button
         type="button"
         className="theme-card-button"
@@ -92,7 +117,11 @@ function ThemeCard({
       >
         {body}
         <span className="theme-card-hint" aria-hidden="true">
-          {equipped ? "Tap to remove" : "Tap to apply"}
+          {equipped
+            ? "Tap to remove"
+            : !active && supportedModeLabel
+              ? `Tap to apply in ${supportedModeLabel.toLowerCase()}`
+              : "Tap to apply"}
         </span>
       </button>
     </li>

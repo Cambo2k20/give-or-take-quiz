@@ -69,7 +69,13 @@ import {
   useCountUp,
   verdictDetail,
 } from "./questionText";
-import { type Theme, applyTheme, readTheme } from "./theme";
+import {
+  type Theme,
+  applyTheme,
+  readTheme,
+  subscribeToSystemTheme,
+  syncTheme,
+} from "./theme";
 import { useAuth } from "./useAuth";
 import { useLeaderboard } from "./useLeaderboard";
 
@@ -274,7 +280,7 @@ export default function Game() {
   // Read straight from the browser during the first render. The app is fully
   // client-rendered, so there is no server pass to mismatch against.
   const [theme, setTheme] = useState<Theme>(readTheme);
-  // The active custom skin, if any. It supplies both light and dark palettes,
+  // The selected custom skin, if any. It may support one display mode or both,
   // while `theme` remains the independent mode axis.
   const [bgTheme, setBgTheme] = useState<BackgroundThemeId | null>(
     readEquippedBackgroundTheme,
@@ -337,6 +343,15 @@ export default function Game() {
   // session, so the account screen takes over until the new password is set.
   // Derived rather than pushed into state, so it cannot fight with navigation.
   const activePhase: Phase = auth.recovering ? "account" : phase;
+
+  useEffect(
+    () =>
+      subscribeToSystemTheme((next) => {
+        setTheme(next);
+        syncTheme(next);
+      }),
+    [],
+  );
 
   useEffect(() => {
     if (activePhase !== "category") focusHeadingRef.current?.focus();

@@ -5,20 +5,22 @@ import {
 } from "react";
 import {
   BACKGROUND_THEMES,
+  getThemeModeVariant,
+  supportedModesForTheme,
+  type BackgroundThemeArtworkTokenName,
+  type BackgroundThemeArtworkTokenPalette,
   type BackgroundThemeId,
-  type BackgroundThemeTokenName,
-  type BackgroundThemeTokenPalette,
 } from "../../lib/themes";
 import type { Theme } from "../theme";
 
 export type ThemeArtworkProps = {
   variant: "preview" | "backdrop";
   locked?: boolean;
-  tokens: BackgroundThemeTokenPalette;
+  tokens: BackgroundThemeArtworkTokenPalette;
 };
 
 export type ThemeArtworkStyle = CSSProperties &
-  Record<BackgroundThemeTokenName, string>;
+  Record<BackgroundThemeArtworkTokenName, string>;
 
 type ThemeArtworkModule = {
   default: ComponentType<ThemeArtworkProps>;
@@ -79,9 +81,19 @@ export function ThemeArtwork({
 
   const Artwork = ARTWORK_BY_THEME.get(themeId)!;
   const theme = BACKGROUND_THEMES.find((entry) => entry.id === themeId)!;
+  const requestedModeVariant = getThemeModeVariant(theme, mode);
+  const fallbackMode = supportedModesForTheme(theme)[0];
+  const resolvedModeVariant =
+    requestedModeVariant ??
+    (variant === "preview" && fallbackMode
+      ? getThemeModeVariant(theme, fallbackMode)
+      : undefined);
+
+  if (!resolvedModeVariant) return null;
+
   return createElement(Artwork, {
     variant,
     locked,
-    tokens: theme.tokens[mode],
+    tokens: resolvedModeVariant.artwork,
   });
 }

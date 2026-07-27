@@ -9,7 +9,7 @@
   max-width: 560px;
   aspect-ratio: 1;
   overflow: hidden;
-  background: var(--artwork-bg);
+  background: var(--artwork-deep-space-sky);
 }
 
 .theme-preview-glow {
@@ -18,30 +18,30 @@
   background:
     radial-gradient(
       ellipse at 20% 32%,
-      var(--artwork-glow-primary),
+      var(--artwork-nebula-violet),
       transparent 42%
     ),
     radial-gradient(
       ellipse at 78% 22%,
-      var(--artwork-glow-cool),
+      var(--artwork-nebula-cyan),
       transparent 40%
     ),
     radial-gradient(
       ellipse at 62% 76%,
-      var(--artwork-glow-warm),
+      var(--artwork-nebula-magenta),
       transparent 46%
     ),
     radial-gradient(
       ellipse at 34% 84%,
-      var(--artwork-glow-mint),
+      var(--artwork-nebula-mint),
       transparent 36%
     ),
     conic-gradient(
       from 120deg at 52% 48%,
       transparent 0 18%,
-      var(--artwork-glow-cool) 25%,
+      var(--artwork-nebula-cyan) 25%,
       transparent 38% 58%,
-      var(--artwork-glow-primary) 68%,
+      var(--artwork-nebula-violet) 68%,
       transparent 82%
     );
   filter: blur(34px) saturate(135%);
@@ -175,7 +175,7 @@
     var(--artwork-shooting-star),
     transparent
   );
-  box-shadow: 0 0 8px var(--artwork-shooting-shadow);
+  box-shadow: 0 0 8px var(--artwork-shooting-star-glow);
   opacity: 0;
   transform: rotate(-34deg) translateX(-120%);
   animation: deep-space-shoot 9s ease-in-out infinite 2s;
@@ -198,7 +198,7 @@
   aspect-ratio: 1;
   left: 50%;
   top: 50%;
-  border: 1px solid var(--artwork-orbit);
+  border: 1px solid var(--artwork-orbit-line);
   border-radius: 50%;
   transform: translate(-50%, -50%) rotate(-18deg);
   animation: deep-space-orbit-turn 38s linear infinite;
@@ -212,15 +212,15 @@
   top: 9%;
   left: 23%;
   border-radius: 50%;
-  background: var(--artwork-orb);
-  box-shadow: 0 0 18px 5px var(--artwork-orb-shadow);
+  background: var(--artwork-orbit-body);
+  box-shadow: 0 0 18px 5px var(--artwork-orbit-glow);
 }
 
 .theme-preview-orbit::after {
   content: "";
   position: absolute;
   inset: 15%;
-  border: 1px solid var(--artwork-orbit-inner);
+  border: 1px solid var(--artwork-orbit-inner-line);
   border-radius: 50%;
 }
 
@@ -256,7 +256,7 @@
   z-index: -1;
   overflow: hidden;
   pointer-events: none;
-  background: var(--artwork-bg);
+  background: var(--artwork-deep-space-sky);
 }
 
 .cosmic-glow {
@@ -265,30 +265,30 @@
   background:
     radial-gradient(
       ellipse at 20% 32%,
-      var(--artwork-glow-primary),
+      var(--artwork-nebula-violet),
       transparent 42%
     ),
     radial-gradient(
       ellipse at 78% 22%,
-      var(--artwork-glow-cool),
+      var(--artwork-nebula-cyan),
       transparent 40%
     ),
     radial-gradient(
       ellipse at 62% 76%,
-      var(--artwork-glow-warm),
+      var(--artwork-nebula-magenta),
       transparent 46%
     ),
     radial-gradient(
       ellipse at 34% 84%,
-      var(--artwork-glow-mint),
+      var(--artwork-nebula-mint),
       transparent 36%
     ),
     conic-gradient(
       from 120deg at 52% 48%,
       transparent 0 18%,
-      var(--artwork-glow-cool) 25%,
+      var(--artwork-nebula-cyan) 25%,
       transparent 38% 58%,
-      var(--artwork-glow-primary) 68%,
+      var(--artwork-nebula-violet) 68%,
       transparent 82%
     );
   filter: blur(clamp(54px, 8vw, 112px)) saturate(140%);
@@ -422,7 +422,7 @@
     var(--artwork-shooting-star),
     transparent
   );
-  box-shadow: 0 0 10px var(--artwork-shooting-shadow);
+  box-shadow: 0 0 10px var(--artwork-shooting-star-glow);
   opacity: 0;
   transform: rotate(-34deg) translateX(-120%);
   animation: deep-space-shoot 9s ease-in-out infinite 2s;
@@ -445,7 +445,7 @@
   aspect-ratio: 1;
   left: 57%;
   top: 51%;
-  border: 1px solid var(--artwork-orbit);
+  border: 1px solid var(--artwork-orbit-line);
   border-radius: 50%;
   transform: translate(-50%, -50%) rotate(-18deg);
   animation: deep-space-orbit-turn 44s linear infinite;
@@ -459,15 +459,15 @@
   top: 9%;
   left: 23%;
   border-radius: 50%;
-  background: var(--artwork-orb);
-  box-shadow: 0 0 22px 7px var(--artwork-orb-shadow);
+  background: var(--artwork-orbit-body);
+  box-shadow: 0 0 22px 7px var(--artwork-orbit-glow);
 }
 
 .cosmic-orbit::after {
   content: "";
   position: absolute;
   inset: 15%;
-  border: 1px solid var(--artwork-orbit-inner);
+  border: 1px solid var(--artwork-orbit-inner-line);
   border-radius: 50%;
 }
 
@@ -476,44 +476,6 @@
   position: absolute;
   inset: 0;
   background: var(--artwork-veil);
-}
-
-/*
- * Existing surfaces consume the tokens above. A shared backdrop blur is the
- * only structural treatment the theme adds to them.
- */
-:root[data-bg-theme="deep-space"]
-  :where(
-    .score-chip,
-    .theme-toggle,
-    .hero-demo,
-    .daily-strip,
-    .daily-archive li,
-    .mode-card,
-    .question-card,
-    .secondary-button,
-    .results-hero,
-    .result-list li,
-    .board-button,
-    .board-mode,
-    .board-list li,
-    .board-scope-button,
-    .board-scope-static,
-    .board-scope-chip,
-    .board-picker,
-    .hero-format,
-    .hero-survival,
-    .board-callout,
-    .auth-panel,
-    .auth-tab,
-    .account-nav-item,
-    .theme-card,
-    .rank-card,
-    .achievement,
-    .account-detail
-  ) {
-  -webkit-backdrop-filter: blur(16px) saturate(135%);
-  backdrop-filter: blur(16px) saturate(135%);
 }
 
 @keyframes deep-space-flow {

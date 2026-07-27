@@ -8,21 +8,21 @@
 
   --ink: #2a2118;
   --ink-soft: #4a3f33;
-  --muted: #8a7a68;
+  --muted: #837260;
 
   --line: #eadcc9;
   --line-strong: #ddc9b0;
 
   --accent: #d95a26;
-  --accent-hover: #c34d1d;
+  --accent-hover: #df6733;
   --accent-shadow: #ab4217;
   --accent-ink: #994415;
   --accent-wash: #f7ece1;
-  --on-accent: #fffdfa;
+  --on-accent: #20150f;
 
-  --good: #2f7d55;
+  --good: #2e7952;
   --good-wash: #e6f2ea;
-  --warn: #9a6a12;
+  --warn: #90600f;
   --warn-wash: #f8efdc;
   --bad: #a9452f;
   --bad-wash: #f8e9e4;
@@ -1153,6 +1153,14 @@ h2 {
   font-weight: 800;
 }
 
+:root[data-bg-theme-active] .site-footer {
+  background: radial-gradient(
+    ellipse 62% 100% at center,
+    var(--bg) 0 44%,
+    transparent 100%
+  );
+}
+
 /* ── Leaderboard ────────────────────────────────────────────────────────── */
 
 .board-button {
@@ -1902,6 +1910,19 @@ h2 {
   border-radius: 999px;
   background: var(--accent);
   color: var(--on-accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.theme-card-mode {
+  padding: 2px 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  background: var(--sunk);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.03em;

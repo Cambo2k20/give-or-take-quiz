@@ -2,6 +2,7 @@ import { useId } from "react";
 import type { BackgroundThemeId } from "../../lib/themes";
 import type { ThemeArtworkProps } from "./ThemeArtwork";
 import { SvgArtworkFrame } from "./SvgArtworkFrame";
+import "./city-pulse.css";
 
 export const themeId = "city-pulse" satisfies BackgroundThemeId;
 
@@ -108,8 +109,8 @@ function windowsFor(
         rx="0.8"
         fill={
           warm
-            ? "var(--artwork-detail-warm)"
-            : "var(--artwork-detail-cool)"
+            ? "var(--artwork-city-window-coral)"
+            : "var(--artwork-city-window-cyan)"
         }
       />
     );
@@ -156,8 +157,8 @@ function BuildingMasses({
             height={building.height}
             fill={
               near
-                ? "var(--artwork-structure-near)"
-                : "var(--artwork-structure-far)"
+                ? "var(--artwork-city-building-near)"
+                : "var(--artwork-city-building-far)"
             }
           />
           <line
@@ -165,7 +166,7 @@ function BuildingMasses({
             x2={building.x + building.width}
             y1={buildingTop(building) + 1}
             y2={buildingTop(building) + 1}
-            stroke="var(--artwork-orbit-inner)"
+            stroke="var(--artwork-city-rooftop-coral)"
             strokeWidth={near ? 2 : 1}
           />
         </g>
@@ -239,7 +240,7 @@ function SkylineLayer({
               width="6"
               height="8"
               rx="1"
-              fill="var(--artwork-detail-warm)"
+              fill="var(--artwork-city-window-coral)"
             />
           </g>
         )}
@@ -248,131 +249,13 @@ function SkylineLayer({
   );
 }
 
-const CITY_PULSE_MOTION = (
-  <style>{`
-    .city-pulse__window-cycle {
-      will-change: opacity;
-    }
-
-    .city-pulse__window-cycle--1 {
-      animation: city-pulse-window-one 11s ease-in-out infinite alternate;
-    }
-
-    .city-pulse__window-cycle--2 {
-      animation: city-pulse-window-two 13s ease-in-out infinite alternate;
-    }
-
-    .city-pulse__window-cycle--3 {
-      animation: city-pulse-window-three 17s ease-in-out infinite alternate;
-    }
-
-    .city-pulse__window-cycle--4 {
-      animation: city-pulse-window-four 19s ease-in-out infinite alternate;
-    }
-
-    .city-pulse__window-cycle--5 {
-      animation: city-pulse-window-five 23s ease-in-out infinite alternate;
-    }
-
-    .city-pulse__window-cycle--6 {
-      animation: city-pulse-window-six 21s ease-in-out infinite alternate;
-    }
-
-    .city-pulse__skyline-far-motion,
-    .city-pulse__skyline-near-motion {
-      will-change: transform;
-    }
-
-    .city-pulse__skyline-far-motion {
-      animation: city-pulse-parallax-far 109s ease-in-out infinite alternate;
-    }
-
-    .city-pulse__skyline-near-motion {
-      animation: city-pulse-parallax-near 83s ease-in-out infinite alternate;
-    }
-
-    .city-pulse__traffic-point {
-      filter: drop-shadow(0 0 4px var(--artwork-detail-cool));
-      will-change: opacity, transform;
-    }
-
-    .city-pulse__rare-accent-cycle {
-      animation: city-pulse-rare-window 47s ease-in-out infinite;
-      filter: drop-shadow(0 0 5px var(--artwork-detail-warm));
-      will-change: opacity;
-    }
-
-    @keyframes city-pulse-window-one {
-      from { opacity: 0.62; }
-      to { opacity: 0.92; }
-    }
-
-    @keyframes city-pulse-window-two {
-      from { opacity: 0.68; }
-      to { opacity: 1; }
-    }
-
-    @keyframes city-pulse-window-three {
-      from { opacity: 0.58; }
-      to { opacity: 0.9; }
-    }
-
-    @keyframes city-pulse-window-four {
-      from { opacity: 0.7; }
-      to { opacity: 0.96; }
-    }
-
-    @keyframes city-pulse-window-five {
-      from { opacity: 0.64; }
-      to { opacity: 0.94; }
-    }
-
-    @keyframes city-pulse-window-six {
-      from { opacity: 0.66; }
-      to { opacity: 0.95; }
-    }
-
-    @keyframes city-pulse-parallax-far {
-      from { transform: translateX(-1.5px); }
-      to { transform: translateX(1.5px); }
-    }
-
-    @keyframes city-pulse-parallax-near {
-      from { transform: translateX(-4px); }
-      to { transform: translateX(4px); }
-    }
-
-    @keyframes city-pulse-rare-window {
-      0%, 88%, 100% { opacity: 0.42; }
-      92% { opacity: 1; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .city-pulse__window-cycle,
-      .city-pulse__skyline-far-motion,
-      .city-pulse__skyline-near-motion,
-      .city-pulse__rare-accent-cycle {
-        animation: none;
-      }
-
-      .city-pulse__traffic-point {
-        display: none;
-      }
-    }
-  `}</style>
-);
-
-export function CityPulseArtwork(props: ThemeArtworkProps) {
+export default function CityPulseArtwork(props: ThemeArtworkProps) {
   const instanceId = useId().replaceAll(":", "");
   const farClipId = `${instanceId}-city-far`;
   const nearClipId = `${instanceId}-city-near`;
 
   return (
-    <SvgArtworkFrame
-      {...props}
-      className="city-pulse"
-      motionStyles={CITY_PULSE_MOTION}
-    >
+    <SvgArtworkFrame {...props} className="city-pulse" washCount={3}>
       <svg
         className="svg-theme-artwork__scene city-pulse__scene"
         viewBox="0 0 1600 900"
@@ -399,56 +282,66 @@ export function CityPulseArtwork(props: ThemeArtworkProps) {
         >
           <path
             d="M 90 506 Q 214 462 338 458"
-            stroke="var(--artwork-connection)"
+            stroke="var(--artwork-city-connection)"
             strokeWidth="1.5"
           />
           <path
             d="M 1260 470 Q 1371 430 1482 518"
-            stroke="var(--artwork-orbit-inner)"
+            stroke="var(--artwork-city-rooftop-coral)"
             strokeWidth="1.5"
           />
-          <g fill="var(--artwork-detail-warm)" stroke="none">
+          <g fill="var(--artwork-city-window-coral)" stroke="none">
             <rect x="87" y="503" width="6" height="6" rx="1" />
             <rect x="335" y="455" width="6" height="6" rx="1" />
             <rect x="1257" y="467" width="6" height="6" rx="1" />
             <rect x="1479" y="515" width="6" height="6" rx="1" />
           </g>
-          <g className="city-pulse__traffic-point" opacity="0">
-            <animateMotion
-              dur="41s"
-              repeatCount="indefinite"
-              path="M 90 506 Q 214 462 338 458"
-              keyPoints="0;0;1;1"
-              keyTimes="0;0.05;0.27;1"
-              calcMode="linear"
-            />
-            <animate
-              attributeName="opacity"
-              dur="41s"
-              repeatCount="indefinite"
-              values="0;0;1;1;0;0"
-              keyTimes="0;0.04;0.08;0.23;0.27;1"
-            />
-            <circle r="3" fill="var(--artwork-detail-cool)" />
-          </g>
-          <g className="city-pulse__traffic-point" opacity="0">
-            <animateMotion
-              dur="41s"
-              repeatCount="indefinite"
-              path="M 1260 470 Q 1371 430 1482 518"
-              keyPoints="0;0;1;1"
-              keyTimes="0;0.52;0.78;1"
-              calcMode="linear"
-            />
-            <animate
-              attributeName="opacity"
-              dur="41s"
-              repeatCount="indefinite"
-              values="0;0;1;1;0;0"
-              keyTimes="0;0.51;0.55;0.74;0.78;1"
-            />
-            <circle r="3" fill="var(--artwork-detail-warm)" />
-          </g>
+          {props.variant === "backdrop" && (
+            <>
+              <g className="city-pulse__traffic-point" opacity="0">
+                <animateMotion
+                  dur="41s"
+                  repeatCount="indefinite"
+                  path="M 90 506 Q 214 462 338 458"
+                  keyPoints="0;0;1;1"
+                  keyTimes="0;0.05;0.27;1"
+                  calcMode="linear"
+                />
+                <animate
+                  attributeName="opacity"
+                  dur="41s"
+                  repeatCount="indefinite"
+                  values="0;0;1;1;0;0"
+                  keyTimes="0;0.04;0.08;0.23;0.27;1"
+                />
+                <circle
+                  r="3"
+                  fill="var(--artwork-city-window-cyan)"
+                />
+              </g>
+              <g className="city-pulse__traffic-point" opacity="0">
+                <animateMotion
+                  dur="41s"
+                  repeatCount="indefinite"
+                  path="M 1260 470 Q 1371 430 1482 518"
+                  keyPoints="0;0;1;1"
+                  keyTimes="0;0.52;0.78;1"
+                  calcMode="linear"
+                />
+                <animate
+                  attributeName="opacity"
+                  dur="41s"
+                  repeatCount="indefinite"
+                  values="0;0;1;1;0;0"
+                  keyTimes="0;0.51;0.55;0.74;0.78;1"
+                />
+                <circle
+                  r="3"
+                  fill="var(--artwork-city-window-coral)"
+                />
+              </g>
+            </>
+          )}
         </g>
 
         <SkylineLayer
@@ -461,5 +354,3 @@ export function CityPulseArtwork(props: ThemeArtworkProps) {
     </SvgArtworkFrame>
   );
 }
-
-export default CityPulseArtwork;
