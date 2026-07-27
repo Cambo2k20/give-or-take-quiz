@@ -286,4 +286,23 @@
 - Browser verification at 678 px confirmed the 26 px inset, a 42.7 px auto-height heading and clear separation before the format controls.
 - Desktop Leaderboard spacing remains unchanged.
 
+## Combined Classic leaderboard
+
+- The leaderboard now has one Classic dataset and defaults to every category, with one row per player and category.
+- Classic remains the default tab. Survival remains available as the second tab, and a completed Survival run links directly to that board.
+- The previous Daily and per-board category controls are removed. A compact category select filters the loaded Classic rows in place, while Survival remains an all-subject run.
+- Desktop rows show Rank, Player, Category, Best, Correct, Accuracy and Date without changing the surrounding title, standing card or actions.
+- At the 371 px mobile QA width, each row keeps Rank, Player and Best on the first line, Category on the second, and the three game-detail metrics in a labelled lower grid with no clipping or horizontal scroll.
+- Survival rows show Rank, Player, Attempts and Best. The 371 px layout measured 88 px tall and rendered without horizontal overflow.
+- The live source-data fallback produced four existing rows and the Science filter reduced that list to the single Science result while reranking it first.
+- A read-only query against project `zwovdyyuacuipfhtycxw` verified the migration aggregate returns the same four best-round rows and detail values.
+- Correct means answers worth at least 980 points. Accuracy is the best round score as a percentage of the available 10,000 points.
+- `20260727152334_classic_leaderboard_details.sql` prepares the efficient aggregate view. The current app remains functional before deployment by deriving the same fields from the already-public, RLS-protected round source tables.
+- The bottom actions are centred in a two-button group. `Return to Home` is the left action, and the right action changes between the Classic and Survival calls to action.
+- Both actions use theme-aware gradients and a 4.2-second travelling sheen. The existing global reduced-motion rule suppresses the repeated animation for users who request reduced motion.
+- Browser checks measured the desktop action group exactly centred on the leaderboard body and confirmed both 220 px actions use the shimmer. At the 371 px viewport, both 157 px actions fit side-by-side without horizontal overflow.
+- `npm.cmd run lint` passed.
+- `npm.cmd test` passed: 16 files and 214 tests.
+- `npm.cmd run build` passed, including data validation, TypeScript and production Vite output. The existing large-chunk advisory remains.
+
 final result: passed

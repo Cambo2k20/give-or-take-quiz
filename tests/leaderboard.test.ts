@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { rpc, query } = vi.hoisted(() => {
   const limit = vi.fn();
-  const order = vi.fn(() => ({ limit }));
+  const order = vi.fn();
+  order.mockReturnValue({ order, limit });
   const eq = vi.fn(() => ({ order }));
-  const select = vi.fn(() => ({ eq }));
+  const select = vi.fn(() => ({ eq, order }));
   const from = vi.fn(() => ({ select }));
   return { rpc: vi.fn(), query: { from, select, eq, order, limit } };
 });
@@ -14,9 +15,11 @@ vi.mock("@/lib/supabase", () => ({
   leaderboardEnabled: true,
 }));
 
-const { fetchDailyLeaderboard, submitDailyRound } = await import(
-  "@/lib/leaderboard"
-);
+const {
+  fetchClassicLeaderboard,
+  fetchDailyLeaderboard,
+  submitDailyRound,
+} = await import("@/lib/leaderboard");
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -93,5 +96,47 @@ describe("fetchDailyLeaderboard", () => {
     query.limit.mockResolvedValue({ data: null, error: null });
 
     await expect(fetchDailyLeaderboard("2026-08-02")).resolves.toEqual([]);
+  });
+});
+
+describe("fetchClassicLeaderboard", () => {
+  it("maps the best round details used by the combined board", async () => {
+    query.limit.mockResolvedValue({
+      data: [
+        {
+          mode: "science",
+          player_id: "p-1",
+          display_name: "Ada",
+          best_score: 8420,
+          rounds_played: 4,
+          rank: 1,
+          correct_answers: 3,
+          accuracy: "84.2",
+          best_date: "2026-07-27T12:00:00Z",
+        },
+      ],
+      error: null,
+    });
+
+    await expect(fetchClassicLeaderboard()).resolves.toEqual([
+      {
+        playerId: "p-1",
+        displayName: "Ada",
+        category: "science",
+        bestScore: 8420,
+        roundsPlayed: 4,
+        rank: 1,
+        correctAnswers: 3,
+        accuracy: 84.2,
+        bestDate: "2026-07-27T12:00:00Z",
+      },
+    ]);
+    expect(query.from).toHaveBeenCalledWith("leaderboard");
+    expect(query.order).toHaveBeenNthCalledWith(1, "best_score", {
+      ascending: false,
+    });
+    expect(query.order).toHaveBeenNthCalledWith(2, "best_date", {
+      ascending: true,
+    });
   });
 });

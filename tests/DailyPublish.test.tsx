@@ -33,8 +33,7 @@ function fixtureQuestions(prefix: string) {
 const api = vi.hoisted(() => ({
   publish: vi.fn().mockResolvedValue(null),
   publishDaily: vi.fn().mockResolvedValue(null),
-  loadBoard: vi.fn().mockResolvedValue(undefined),
-  loadDailyBoard: vi.fn().mockResolvedValue(undefined),
+  loadClassicBoard: vi.fn().mockResolvedValue(undefined),
   join: vi.fn(),
   resetSubmit: vi.fn(),
 }));
@@ -63,8 +62,7 @@ vi.mock("@/src/useLeaderboard", () => ({
     board: [],
     boardLoading: false,
     boardError: null,
-    loadBoard: api.loadBoard,
-    loadDailyBoard: api.loadDailyBoard,
+    loadClassicBoard: api.loadClassicBoard,
   }),
 }));
 
@@ -96,7 +94,7 @@ describe("publishing a finished round", () => {
     window.localStorage.clear();
   });
 
-  it("sends a daily to the per-day board, never the category one", async () => {
+  it("publishes the daily but links results to the Classic board", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.setSystemTime(new Date("2026-08-01T09:00:00"));
 
@@ -122,13 +120,14 @@ describe("publishing a finished round", () => {
     );
     expect(api.publish).not.toHaveBeenCalled();
 
-    // The results screen leads to that day's board, not a category board.
+    // Every non-Classic result now leads to the single Classic leaderboard.
     await user.click(
-      screen.getByRole("button", { name: /see the day's board/i }),
+      screen.getByRole("button", { name: /see the classic leaderboard/i }),
     );
-    expect(api.loadDailyBoard).toHaveBeenCalledWith("2026-08-01");
-    expect(api.loadBoard).not.toHaveBeenCalled();
-    expect(screen.getByText(/^Daily · /)).toBeInTheDocument();
+    expect(api.loadClassicBoard).toHaveBeenCalledOnce();
+    expect(
+      screen.getByText(/highest classic scores across every category/i),
+    ).toBeInTheDocument();
   });
 
   it("still sends a category round to its mode board", async () => {

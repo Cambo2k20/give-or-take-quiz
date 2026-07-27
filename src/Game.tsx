@@ -24,9 +24,10 @@ import {
   writeFormatRecords,
   type SurvivalVerdict,
 } from "../lib/formats";
-import type { BoardScope } from "../lib/leaderboard";
-import { fetchMyStandings } from "../lib/leaderboard";
-import { BoardScreen, type Standings } from "./BoardScreen";
+import {
+  BoardScreen,
+  type LeaderboardFormat,
+} from "./BoardScreen";
 import { SurvivalOver, SurvivalRound } from "./Survival";
 import {
   activeStreak,
@@ -147,6 +148,15 @@ function AchievementShimmer() {
  * and conflating them is what made the old board row unmanageable.
  */
 type PlayFormat = "classic" | "survival";
+
+const SHIMMER_CUE_SELECTOR = [
+  ".board-format.is-current",
+  ".board-action-button",
+  ".profile-section-title button",
+  ".profile-section-action",
+  ".profile-account-strip > button",
+  ".account-screen-profile > .result-actions .secondary-button",
+].join(", ");
 
 const GlobeIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -339,12 +349,8 @@ export default function Game() {
   const [dailyProgress, setDailyProgress] = useState(readDailyProgress);
   // Non-null while the round in play is a daily, and holds which day's it is.
   const [dailyDate, setDailyDate] = useState<string | null>(null);
-  // Which board the leaderboard screen shows, along both axes at once.
-  const [boardScope, setBoardScope] = useState<BoardScope>({
-    kind: "category",
-    mode: "mixed",
-  });
-  const [standings, setStandings] = useState<Standings | null>(null);
+  const [leaderboardFormat, setLeaderboardFormat] =
+    useState<LeaderboardFormat>("classic");
   // Which format the hero is offering. Classic keeps the consequence-free
   // warm-up; picking Survival is the act of intent that starts a real run.
   const [heroFormat, setHeroFormat] = useState<PlayFormat>("classic");
@@ -362,6 +368,46 @@ export default function Game() {
   // exists for a player who has a name to record them against.
   const progress = useProgress(leaderboard.profile?.id ?? null);
   const { refresh: refreshProgress } = progress;
+
+  useEffect(() => {
+    const startShimmer = (target: Element | null) => {
+      const button = target?.closest<HTMLElement>(SHIMMER_CUE_SELECTOR);
+      if (!button) return;
+      button.classList.remove("is-shimmering");
+      void button.offsetWidth;
+      button.classList.add("is-shimmering");
+    };
+
+    const handlePointerOver = (event: PointerEvent) => {
+      const target = event.target instanceof Element ? event.target : null;
+      const button = target?.closest<HTMLElement>(SHIMMER_CUE_SELECTOR);
+      if (!button) return;
+      if (event.relatedTarget instanceof Node && button.contains(event.relatedTarget)) {
+        return;
+      }
+      startShimmer(button);
+    };
+
+    const handleFocusIn = (event: FocusEvent) => {
+      startShimmer(event.target instanceof Element ? event.target : null);
+    };
+
+    const handleAnimationEnd = (event: AnimationEvent) => {
+      if (event.animationName !== "board-action-shimmer") return;
+      if (event.target instanceof HTMLElement) {
+        event.target.classList.remove("is-shimmering");
+      }
+    };
+
+    document.addEventListener("pointerover", handlePointerOver);
+    document.addEventListener("focusin", handleFocusIn);
+    document.addEventListener("animationend", handleAnimationEnd);
+    return () => {
+      document.removeEventListener("pointerover", handlePointerOver);
+      document.removeEventListener("focusin", handleFocusIn);
+      document.removeEventListener("animationend", handleAnimationEnd);
+    };
+  }, []);
 
   /** Subject label and icon by category, so Progress renders what MODES does. */
   const categoryLabels = useMemo(
@@ -458,8 +504,7 @@ export default function Game() {
     publishDaily,
     publishSurvival,
     resetSubmit,
-    loadBoard,
-    loadDailyBoard,
+    loadClassicBoard,
     loadSurvivalBoard,
   } = leaderboard;
   const canPublish = auth.canUseLeaderboard;
@@ -545,29 +590,18 @@ export default function Game() {
     if (recorded) await refreshProgress();
   }
 
-  /** Loads whichever board a scope names, and shows the board screen. */
-  function openBoard(scope: BoardScope) {
-    setBoardScope(scope);
+  /** Classic is the default; Survival remains a separate comparable board. */
+  function openLeaderboard(
+    formatOrEvent:
+      | LeaderboardFormat
+      | React.MouseEvent<HTMLButtonElement> = "classic",
+  ) {
+    const format =
+      typeof formatOrEvent === "string" ? formatOrEvent : "classic";
+    setLeaderboardFormat(format);
     setPhase("leaderboard");
-    if (scope.kind === "survival") void loadSurvivalBoard();
-    else if (scope.kind === "daily") void loadDailyBoard(scope.date);
-    else void loadBoard(scope.mode);
-
-    // The picker shows a rank per board, so it is fetched once per visit
-    // rather than per switch. A failure just leaves the ranks blank.
-    if (player) {
-      fetchMyStandings(player.id, todayIso())
-        .then(setStandings)
-        .catch(() => setStandings(null));
-    }
-  }
-
-  function openLeaderboard() {
-    openBoard({ kind: "category", mode });
-  }
-
-  function openDailyBoard(date: string) {
-    openBoard({ kind: "daily", date });
+    if (format === "survival") void loadSurvivalBoard();
+    else void loadClassicBoard();
   }
 
   function toggleTheme() {
@@ -870,10 +904,14 @@ export default function Game() {
           </div>
 
           {/* Format pills: how you play, kept off the subject grid below. */}
-          <div className="hero-formats" role="group" aria-label="Choose a format">
+          <div
+            className="hero-formats board-formats"
+            role="group"
+            aria-label="Choose a format"
+          >
             <button
               type="button"
-              className={`hero-format${heroFormat === "classic" ? " is-current" : ""}`}
+              className={`hero-format board-format${heroFormat === "classic" ? " is-current" : ""}`}
               aria-pressed={heroFormat === "classic"}
               onClick={() => setHeroFormat("classic")}
             >
@@ -881,7 +919,7 @@ export default function Game() {
             </button>
             <button
               type="button"
-              className={`hero-format${heroFormat === "survival" ? " is-current" : ""}`}
+              className={`hero-format board-format${heroFormat === "survival" ? " is-current" : ""}`}
               aria-pressed={heroFormat === "survival"}
               onClick={() => setHeroFormat("survival")}
             >
@@ -1158,11 +1196,9 @@ export default function Game() {
               <button
                 className="secondary-button"
                 type="button"
-                onClick={() =>
-                  dailyDate ? openDailyBoard(dailyDate) : openLeaderboard()
-                }
+                onClick={openLeaderboard}
               >
-                {dailyDate ? "See the day's board" : "See the leaderboard"}
+                See the Classic leaderboard
               </button>
             </div>
           )}
@@ -1200,25 +1236,28 @@ export default function Game() {
 
       {activePhase === "leaderboard" && (
         <BoardScreen
-          scope={boardScope}
-          onScopeChange={(next) => {
-            if (next.kind === "category") setMode(next.mode);
-            openBoard(next);
-          }}
           modes={MODES}
           modeLabels={MODE_LABELS}
           rows={leaderboard.board}
           loading={leaderboard.boardLoading}
           error={leaderboard.boardError}
           profile={player}
-          standings={standings}
-          todaysDailyDate={archiveDates[0] ?? null}
-          onPlay={() => {
-            if (boardScope.kind === "survival") startSurvival();
-            else if (boardScope.kind === "daily") startDaily(boardScope.date);
-            else startGame(boardScope.mode);
+          format={leaderboardFormat}
+          onFormatChange={(format) => {
+            setLeaderboardFormat(format);
+            if (format === "survival") void loadSurvivalBoard();
+            else void loadClassicBoard();
           }}
-          onBack={() => setPhase("category")}
+          onPlay={(category) => {
+            if (category === "all") {
+              setPhase("category");
+              return;
+            }
+            setMode(category);
+            startGame(category);
+          }}
+          onPlaySurvival={startSurvival}
+          onReturnHome={() => setPhase("category")}
           headingRef={focusHeadingRef}
         />
       )}
@@ -1298,9 +1337,9 @@ export default function Game() {
                 <button
                   className="secondary-button"
                   type="button"
-                  onClick={() => openBoard({ kind: "survival" })}
+                  onClick={() => openLeaderboard("survival")}
                 >
-                  See the survival board
+                  See the Survival leaderboard
                 </button>
               </div>
             ) : null

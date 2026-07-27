@@ -5,6 +5,7 @@ import {
   type RoundGuess,
   type SubmittedRound,
   currentProfile,
+  fetchClassicLeaderboard,
   fetchDailyLeaderboard,
   fetchLeaderboard,
   fetchSurvivalLeaderboard,
@@ -134,6 +135,11 @@ export function useLeaderboard(userId: string | null) {
     [showBoard],
   );
 
+  const loadClassicBoard = useCallback(
+    () => showBoard(() => fetchClassicLeaderboard()),
+    [showBoard],
+  );
+
   const loadDailyBoard = useCallback(
     (date: string) => showBoard(() => fetchDailyLeaderboard(date)),
     [showBoard],
@@ -160,6 +166,7 @@ export function useLeaderboard(userId: string | null) {
     boardLoading,
     boardError,
     loadBoard,
+    loadClassicBoard,
     loadDailyBoard,
     loadSurvivalBoard,
   };

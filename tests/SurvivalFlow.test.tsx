@@ -32,8 +32,7 @@ const api = vi.hoisted(() => ({
   publish: vi.fn().mockResolvedValue(null),
   publishDaily: vi.fn().mockResolvedValue(null),
   publishSurvival: vi.fn().mockResolvedValue(null),
-  loadBoard: vi.fn().mockResolvedValue(undefined),
-  loadDailyBoard: vi.fn().mockResolvedValue(undefined),
+  loadClassicBoard: vi.fn().mockResolvedValue(undefined),
   loadSurvivalBoard: vi.fn().mockResolvedValue(undefined),
   join: vi.fn(),
   resetSubmit: vi.fn(),
@@ -64,8 +63,7 @@ vi.mock("@/src/useLeaderboard", () => ({
     board: [],
     boardLoading: false,
     boardError: null,
-    loadBoard: api.loadBoard,
-    loadDailyBoard: api.loadDailyBoard,
+    loadClassicBoard: api.loadClassicBoard,
     loadSurvivalBoard: api.loadSurvivalBoard,
   }),
 }));
@@ -151,20 +149,21 @@ describe("survival", () => {
     expect(readFormatRecords(window.localStorage).survivalBest).toBe(0);
   });
 
-  it("offers the survival board from the run's end screen", async () => {
+  it("links the run's end screen to the Survival leaderboard", async () => {
     const user = userEvent.setup();
     render(<Game />);
 
     await startRun(user);
     await playUntilDead(user);
     await user.click(
-      await screen.findByRole("button", { name: /see the survival board/i }),
+      await screen.findByRole("button", {
+        name: /see the survival leaderboard/i,
+      }),
     );
 
     expect(api.loadSurvivalBoard).toHaveBeenCalledOnce();
-    expect(api.loadBoard).not.toHaveBeenCalled();
     expect(
-      screen.getByText(/ranked by questions survived, not points/i),
+      screen.getByText(/runs are ranked by questions survived/i),
     ).toBeInTheDocument();
   });
 });

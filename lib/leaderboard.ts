@@ -9,6 +9,13 @@ export type LeaderboardRow = {
   rank: number;
 };
 
+export type ClassicLeaderboardRow = LeaderboardRow & {
+  category: GameMode;
+  correctAnswers: number;
+  accuracy: number;
+  bestDate: string;
+};
+
 export type PlayerProfile = {
   id: string;
   displayName: string;
@@ -213,6 +220,143 @@ export async function fetchLeaderboard(
     roundsPlayed: row.rounds_played,
     rank: row.rank,
   }));
+}
+
+/**
+ * The default Classic board: one best round per player per category, ordered
+ * across every category. Filtering is done client-side so switching the
+ * category select is instant and does not create a collection of empty boards.
+ */
+export async function fetchClassicLeaderboard(
+  limit = 100,
+): Promise<ClassicLeaderboardRow[]> {
+  const { data, error } = await client()
+    .from("leaderboard")
+    .select(
+      "mode, player_id, display_name, best_score, rounds_played, rank, correct_answers, accuracy, best_date",
+    )
+    .order("best_score", { ascending: false })
+    .order("best_date", { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    // Keep the checked-out app usable before the migration is applied to a
+    // hosted project. These source tables are already deliberately public and
+    // RLS-protected; the migration turns this work into one efficient view.
+    if (
+      error.message.includes("correct_answers") ||
+      error.message.includes("best_date")
+    ) {
+      return fetchClassicLeaderboardFromSource(limit);
+    }
+    throw new Error(error.message);
+  }
+
+  return (data ?? []).map((row) => ({
+    playerId: row.player_id,
+    displayName: row.display_name,
+    category: row.mode as GameMode,
+    bestScore: row.best_score,
+    roundsPlayed: row.rounds_played,
+    rank: row.rank,
+    correctAnswers: row.correct_answers,
+    accuracy: Number(row.accuracy),
+    bestDate: row.best_date,
+  }));
+}
+
+async function fetchClassicLeaderboardFromSource(
+  limit: number,
+): Promise<ClassicLeaderboardRow[]> {
+  const supabaseClient = client();
+  const { data: rounds, error: roundsError } = await supabaseClient
+    .from("game_rounds")
+    .select("id, player_id, mode, total_score, question_count, created_at")
+    .neq("mode", "daily")
+    .neq("mode", "survival")
+    .order("created_at", { ascending: true })
+    .limit(1000);
+
+  if (roundsError) throw new Error(roundsError.message);
+  if (!rounds?.length) return [];
+
+  const roundCount = new Map<string, number>();
+  const bestRound = new Map<string, (typeof rounds)[number]>();
+  for (const round of rounds) {
+    const key = `${round.player_id}:${round.mode}`;
+    roundCount.set(key, (roundCount.get(key) ?? 0) + 1);
+    const best = bestRound.get(key);
+    if (
+      !best ||
+      round.total_score > best.total_score ||
+      (round.total_score === best.total_score &&
+        new Date(round.created_at).getTime() <
+          new Date(best.created_at).getTime())
+    ) {
+      bestRound.set(key, round);
+    }
+  }
+
+  const bestRounds = [...bestRound.values()];
+  const playerIds = [...new Set(bestRounds.map((round) => round.player_id))];
+  const roundIds = bestRounds.map((round) => round.id);
+  const [profilesResult, answersResult] = await Promise.all([
+    supabaseClient
+      .from("profiles")
+      .select("id, display_name")
+      .in("id", playerIds),
+    supabaseClient
+      .from("round_answers")
+      .select("round_id, points")
+      .in("round_id", roundIds)
+      .limit(1000),
+  ]);
+
+  if (profilesResult.error) throw new Error(profilesResult.error.message);
+  if (answersResult.error) throw new Error(answersResult.error.message);
+
+  const names = new Map(
+    (profilesResult.data ?? []).map((profile) => [
+      profile.id,
+      profile.display_name,
+    ]),
+  );
+  const correctByRound = new Map<string, number>();
+  for (const answer of answersResult.data ?? []) {
+    if (answer.points < 980) continue;
+    correctByRound.set(
+      answer.round_id,
+      (correctByRound.get(answer.round_id) ?? 0) + 1,
+    );
+  }
+
+  return bestRounds
+    .map((round) => {
+      const key = `${round.player_id}:${round.mode}`;
+      return {
+        playerId: round.player_id,
+        displayName: names.get(round.player_id) ?? "Player",
+        category: round.mode as GameMode,
+        bestScore: round.total_score,
+        roundsPlayed: roundCount.get(key) ?? 1,
+        rank: 0,
+        correctAnswers: correctByRound.get(round.id) ?? 0,
+        accuracy:
+          Math.round(
+            (round.total_score / (round.question_count * 1000)) * 1000,
+          ) / 10,
+        bestDate: round.created_at,
+      };
+    })
+    .sort(
+      (left, right) =>
+        right.bestScore - left.bestScore ||
+        new Date(left.bestDate).getTime() -
+          new Date(right.bestDate).getTime() ||
+        left.playerId.localeCompare(right.playerId),
+    )
+    .slice(0, limit)
+    .map((row, index) => ({ ...row, rank: index + 1 }));
 }
 
 /**

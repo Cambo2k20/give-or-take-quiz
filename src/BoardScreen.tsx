@@ -1,18 +1,19 @@
-import { useState } from "react";
-import type { BoardScope, LeaderboardRow, PlayerProfile } from "../lib/leaderboard";
+import { useMemo, useState } from "react";
+import type {
+  ClassicLeaderboardRow,
+  LeaderboardRow,
+  PlayerProfile,
+} from "../lib/leaderboard";
 import { rowAbove } from "../lib/leaderboard";
-import { DAILY_QUESTIONS_PER_SET } from "../lib/daily";
 import type { GameMode } from "../lib/types";
-import { LeaderboardPanel } from "./Leaderboard";
-import { readableDate } from "./Daily";
+import {
+  LeaderboardPanel,
+  SurvivalLeaderboardPanel,
+} from "./Leaderboard";
 import { formatPoints } from "./questionText";
 
-/** Where the player stands on each board, for the picker. */
-export type Standings = {
-  categories: Partial<Record<GameMode, number>>;
-  daily: number | null;
-  survival: number | null;
-};
+type CategoryFilter = GameMode | "all";
+export type LeaderboardFormat = "classic" | "survival";
 
 function ordinal(rank: number): string {
   const tens = rank % 100;
@@ -29,91 +30,96 @@ function ordinal(rank: number): string {
   }
 }
 
-function scopeIsSurvival(scope: BoardScope) {
-  return scope.kind === "survival";
+function isClassicRow(row: LeaderboardRow): row is ClassicLeaderboardRow {
+  const candidate = row as Partial<ClassicLeaderboardRow>;
+  return (
+    typeof candidate.category === "string" &&
+    typeof candidate.correctAnswers === "number" &&
+    typeof candidate.accuracy === "number" &&
+    typeof candidate.bestDate === "string"
+  );
 }
 
 type BoardScreenProps = {
-  scope: BoardScope;
-  onScopeChange: (scope: BoardScope) => void;
   modes: ReadonlyArray<{ mode: GameMode; title: string }>;
   modeLabels: Record<GameMode, string>;
   rows: readonly LeaderboardRow[];
   loading: boolean;
   error: string | null;
   profile: PlayerProfile | null;
-  standings: Standings | null;
-  todaysDailyDate: string | null;
-  onPlay: () => void;
-  onBack: () => void;
+  format: LeaderboardFormat;
+  onFormatChange: (format: LeaderboardFormat) => void;
+  onPlay: (category: CategoryFilter) => void;
+  onPlaySurvival: () => void;
+  onReturnHome: () => void;
   headingRef: React.RefObject<HTMLHeadingElement | null>;
 };
 
 /**
- * One board at a time, chosen along two axes: format first (how you played),
- * then scope within it (which subject, or which day). Keeping them separate is
- * what stops the old flat row of ten tabs from becoming a row of thirteen.
+ * Classic has one useful board rather than a picker full of mostly empty
+ * boards. Every row is a player's best round in one category; the select only
+ * filters that already-loaded list.
  */
 export function BoardScreen({
-  scope,
-  onScopeChange,
   modes,
   modeLabels,
   rows,
   loading,
   error,
   profile,
-  standings,
-  todaysDailyDate,
+  format,
+  onFormatChange,
   onPlay,
-  onBack,
+  onPlaySurvival,
+  onReturnHome,
   headingRef,
 }: BoardScreenProps) {
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const survival = scopeIsSurvival(scope);
+  const [categoryFilter, setCategoryFilter] =
+    useState<CategoryFilter>("all");
 
-  const scopeLabel =
-    scope.kind === "survival"
-      ? "All subjects"
-      : scope.kind === "daily"
-        ? `Daily · ${readableDate(scope.date)}`
-        : modeLabels[scope.mode];
+  const visibleRows = useMemo(() => {
+    const classicRows = rows
+      .filter(isClassicRow)
+      .filter(
+        (row) =>
+          categoryFilter === "all" || row.category === categoryFilter,
+      )
+      .sort(
+        (left, right) =>
+          right.bestScore - left.bestScore ||
+          new Date(left.bestDate).getTime() -
+            new Date(right.bestDate).getTime() ||
+          left.playerId.localeCompare(right.playerId),
+      );
 
-  const blurb = survival
-    ? "Longest run, all nine subjects in the draw."
-    : scope.kind === "daily"
-      ? `Best score per player, ${DAILY_QUESTIONS_PER_SET} questions.`
-      : "Best score per player, ten questions.";
+    return classicRows.map((row, index) => ({ ...row, rank: index + 1 }));
+  }, [categoryFilter, rows]);
 
-  const footer = survival
-    ? "Runs are ranked by questions survived, not points — a different number, so it gets a different board."
-    : scope.kind === "daily"
-      ? "Everyone plays the same five questions until midnight."
-      : scope.kind === "category" && scope.mode === "mixed"
-        ? "Ten questions, one drawn from each subject."
-        : "Ten questions drawn from this subject.";
-
+  const categoryLabel =
+    categoryFilter === "all"
+      ? "All categories"
+      : modeLabels[categoryFilter];
+  const survival = format === "survival";
+  const standingRows: readonly LeaderboardRow[] = survival
+    ? rows
+    : visibleRows;
   const you = profile
-    ? rows.find((row) => row.playerId === profile.id) ?? null
+    ? standingRows.find((row) => row.playerId === profile.id) ?? null
     : null;
-  const above = profile ? rowAbove(rows, profile.id) : null;
+  const above = profile ? rowAbove(standingRows, profile.id) : null;
   const below = you
-    ? rows.find((row) => row.rank > you.rank) ?? null
+    ? standingRows.find((row) => row.rank > you.rank) ?? null
     : null;
 
-  function gapLine(): string {
-    if (!you) return "";
-    if (!above) return survival ? "Nobody has gone further." : "Nobody has scored higher.";
-    const gap = above.bestScore - you.bestScore;
-    if (survival) {
-      return gap === 1
-        ? `one more to catch ${ordinal(above.rank)}`
-        : `${formatPoints(gap)} more to catch ${ordinal(above.rank)}`;
-    }
-    return `${formatPoints(gap)} off ${ordinal(above.rank)} place`;
-  }
-
-  const standingDetail = gapLine();
+  const standingDetail = !you
+    ? ""
+    : !above
+      ? survival
+        ? "Nobody has gone further."
+        : "Nobody has scored higher."
+      : survival
+        ? `${formatPoints(above.bestScore - you.bestScore)} more to catch ${ordinal(above.rank)}`
+        : `${formatPoints(above.bestScore - you.bestScore)} off ${ordinal(above.rank)} place`;
   const standingDelta =
     you && below
       ? survival
@@ -132,22 +138,23 @@ export function BoardScreen({
           <h1 ref={headingRef} tabIndex={-1}>
             Leaderboard
           </h1>
-          <p className="board-blurb">{blurb}</p>
+          <p className="board-blurb">
+            {survival
+              ? "Longest run, all nine subjects in the draw."
+              : "Highest Classic scores across every category."}
+          </p>
         </div>
 
-        {/* Format is the primary axis: how you played, not what about. */}
-        <div className="board-formats" role="group" aria-label="Choose a format">
+        <div
+          className="board-formats"
+          role="group"
+          aria-label="Leaderboard format"
+        >
           <button
             type="button"
             className={`board-format${survival ? "" : " is-current"}`}
             aria-pressed={!survival}
-            onClick={() =>
-              onScopeChange(
-                todaysDailyDate
-                  ? { kind: "daily", date: todaysDailyDate }
-                  : { kind: "category", mode: "mixed" },
-              )
-            }
+            onClick={() => onFormatChange("classic")}
           >
             Classic
           </button>
@@ -155,7 +162,7 @@ export function BoardScreen({
             type="button"
             className={`board-format${survival ? " is-current" : ""}`}
             aria-pressed={survival}
-            onClick={() => onScopeChange({ kind: "survival" })}
+            onClick={() => onFormatChange("survival")}
           >
             Survival
           </button>
@@ -164,78 +171,26 @@ export function BoardScreen({
 
       <div className="board-scope">
         {survival ? (
-          // One survival board today. A subject picker appears here the day
-          // runs carry a subject, rather than a control that toggles nothing.
           <span className="board-scope-static">All subjects</span>
         ) : (
-          <button
-            type="button"
-            className="board-scope-button"
-            aria-expanded={pickerOpen}
-            onClick={() => setPickerOpen((open) => !open)}
-          >
-            {scopeLabel}
-            <span aria-hidden="true">⌄</span>
-          </button>
-        )}
-        {!survival && todaysDailyDate && (
-          <button
-            type="button"
-            className="board-scope-chip"
-            onClick={() => {
-              setPickerOpen(false);
-              onScopeChange({ kind: "daily", date: todaysDailyDate });
-            }}
-          >
-            Today
-          </button>
+          <label className="board-category-filter">
+            <span>Category</span>
+            <select
+              value={categoryFilter}
+              onChange={(event) =>
+                setCategoryFilter(event.target.value as CategoryFilter)
+              }
+            >
+              <option value="all">All categories</option>
+              {modes.map((detail) => (
+                <option key={detail.mode} value={detail.mode}>
+                  {detail.title}
+                </option>
+              ))}
+            </select>
+          </label>
         )}
       </div>
-
-      {pickerOpen && !survival && (
-        <div className="board-picker">
-          <div className="board-picker-head">
-            <strong>Which board?</strong>
-            <span>{scopeLabel}</span>
-          </div>
-          <ul className="board-picker-list">
-            {todaysDailyDate && (
-              <li>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPickerOpen(false);
-                    onScopeChange({ kind: "daily", date: todaysDailyDate });
-                  }}
-                >
-                  <span>Daily</span>
-                  <span className="board-picker-rank">
-                    {standings?.daily ? ordinal(standings.daily) : "—"}
-                  </span>
-                </button>
-              </li>
-            )}
-            {modes.map((detail) => (
-              <li key={detail.mode}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPickerOpen(false);
-                    onScopeChange({ kind: "category", mode: detail.mode });
-                  }}
-                >
-                  <span>{detail.title}</span>
-                  <span className="board-picker-rank">
-                    {standings?.categories[detail.mode]
-                      ? ordinal(standings.categories[detail.mode] as number)
-                      : "—"}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       {you && (
         <div className="board-standing">
@@ -261,8 +216,10 @@ export function BoardScreen({
               </>
             )}
             <div className="board-standing-chips">
-              <span>{you.roundsPlayed} rounds</span>
-              <span>{scopeLabel}</span>
+              <span>
+                {you.roundsPlayed} {survival ? "attempts" : "rounds"}
+              </span>
+              <span>{survival ? "All subjects" : categoryLabel}</span>
             </div>
           </div>
           <div className="board-standing-rank">
@@ -271,31 +228,51 @@ export function BoardScreen({
         </div>
       )}
 
-      <LeaderboardPanel
-        rows={rows}
-        loading={loading}
-        error={error}
-        profile={profile}
-        unit={survival ? "in a row" : "points"}
-        openLabel={
-          scope.kind === "daily"
-            ? "Open until midnight"
-            : "The next place is open"
-        }
-      />
+      {survival ? (
+        <SurvivalLeaderboardPanel
+          rows={rows}
+          loading={loading}
+          error={error}
+          profile={profile}
+        />
+      ) : (
+        <LeaderboardPanel
+          rows={visibleRows}
+          loading={loading}
+          error={error}
+          profile={profile}
+          modeLabels={modeLabels}
+        />
+      )}
 
-      <p className="board-footnote">{footer}</p>
+      <p className="board-footnote">
+        {survival
+          ? "Runs are ranked by questions survived, not points."
+          : "Each row is one player's best Classic round in that category. Correct counts near-perfect answers worth at least 980 points."}
+      </p>
 
-      <div className="result-actions">
-        <button className="primary-button" type="button" onClick={onPlay}>
-          {survival
-            ? "Start a run"
-            : scope.kind === "daily"
-              ? "Play this daily"
-              : `Play ${modeLabels[scope.mode]}`}
+      <div className="result-actions board-result-actions">
+        <button
+          className="secondary-button board-action-button"
+          type="button"
+          onClick={onReturnHome}
+        >
+          <span>Return to Home</span>
         </button>
-        <button className="secondary-button" type="button" onClick={onBack}>
-          Back
+        <button
+          className="primary-button board-action-button"
+          type="button"
+          onClick={() =>
+            survival ? onPlaySurvival() : onPlay(categoryFilter)
+          }
+        >
+          <span>
+            {survival
+              ? "Start a run"
+              : categoryFilter === "all"
+                ? "Choose a category"
+                : `Play ${modeLabels[categoryFilter]}`}
+          </span>
         </button>
       </div>
     </section>
