@@ -495,6 +495,199 @@ h1[tabindex="-1"]:focus {
   font-size: clamp(16px, 2.2vw, 19px);
 }
 
+/* ── Daily hero ─────────────────────────────────────────────────────────── */
+
+.daily-hero {
+  width: min(100%, var(--content));
+  margin: clamp(26px, 4vw, 38px) auto 0;
+  padding: clamp(22px, 3.6vw, 30px);
+  border: 1.5px solid var(--accent);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+.daily-hero-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+.daily-hero-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.daily-hero-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.daily-hero-date {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.daily-hero-heading {
+  margin: 16px 0 0;
+  font-size: clamp(24px, 4.4vw, 32px);
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.daily-hero-lede {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.daily-hero-streak {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  background: var(--sunk);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.daily-hero-streak svg {
+  width: 15px;
+  height: 15px;
+}
+
+.daily-hero-streak.is-lit {
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+}
+
+.daily-hero > .primary-button {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.daily-hero-score {
+  margin-top: 12px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+}
+
+.daily-hero-score strong {
+  color: var(--accent-ink);
+  font-size: clamp(48px, 12vw, 68px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.daily-hero-score span {
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.daily-hero-blocks {
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.daily-hero-block {
+  padding: 10px 6px;
+  border-radius: 14px;
+  background: var(--tier-wash);
+}
+
+.daily-hero-block-index {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.daily-hero-block strong {
+  color: var(--tier);
+  font-size: clamp(13px, 2.6vw, 16px);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.daily-hero-facts {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.daily-hero-rank {
+  margin-top: 16px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  background: var(--sunk);
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.daily-hero-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.daily-hero-actions.is-single {
+  grid-template-columns: 1fr;
+}
+
+.daily-hero-replay {
+  margin-top: 14px;
+  padding: 4px 8px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.daily-hero-replay:hover {
+  color: var(--accent-ink);
+}
+
+.keep-playing-label {
+  margin: clamp(34px, 6vw, 52px) 0 0;
+  text-align: center;
+  font-size: clamp(22px, 3.4vw, 28px);
+}
+
 /* ── Hero demo ──────────────────────────────────────────────────────────── */
 
 .hero-demo {
@@ -699,6 +892,23 @@ h1[tabindex="-1"]:focus {
   justify-content: center;
   gap: 6px;
   margin-bottom: 22px;
+}
+
+.daily-play-flag {
+  margin: 0 auto 16px;
+  width: fit-content;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.daily-play-flag.is-practice {
+  background: var(--sunk);
+  color: var(--muted);
 }
 
 .progress-dots span {
@@ -4691,6 +4901,20 @@ h1[tabindex="-1"]:focus {
 
   .hero-demo-actions {
     grid-template-columns: 1fr;
+  }
+
+  .daily-hero-actions {
+    grid-template-columns: 1fr;
+  }
+
+  /* Five blocks stay on one row: the sequence is the point, and wrapping
+     them reads as two separate groups rather than one round. */
+  .daily-hero-blocks {
+    gap: 5px;
+  }
+
+  .daily-hero-block {
+    padding: 8px 3px;
   }
 
   .join-row {

@@ -283,6 +283,27 @@ export async function fetchMyOfficialDaily(
 }
 
 /**
+ * The player's rank on one day's board, or null if they are not on it. A single
+ * row rather than the whole board: the home screen only needs the number, and
+ * loading the full board there would fight the leaderboard screen for the
+ * shared board state.
+ */
+export async function fetchMyDailyRank(
+  playerId: string,
+  date: string,
+): Promise<number | null> {
+  const { data, error } = await client()
+    .from("daily_leaderboard")
+    .select("rank")
+    .eq("player_id", playerId)
+    .eq("puzzle_date", date)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data?.rank ?? null;
+}
+
+/**
  * Records a finished survival run: every guess in order, ending with the one
  * that killed it. The server re-judges each guess against its own window
  * schedule and rejects a run that did not end in a miss, so the number it
