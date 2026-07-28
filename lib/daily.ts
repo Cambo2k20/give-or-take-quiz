@@ -24,6 +24,13 @@ export type DailyDateProgress = {
   officialScore: number | null;
   practiceBest: number | null;
   attemptCount: number;
+  /**
+   * Points per question for the official attempt, in asked order. Absent for
+   * dates recorded before this was stored, and for dates whose official score
+   * was learned from the server rather than played here — the home screen
+   * treats it as "no breakdown to show" rather than "scored zero".
+   */
+  officialPoints?: readonly number[];
 };
 
 /**
@@ -160,10 +167,20 @@ function parseDateProgress(value: unknown): DailyDateProgress | null {
       : null;
   };
 
+  const points = candidate.officialPoints;
+  const officialPoints =
+    Array.isArray(points) &&
+    points.every(
+      (entry) => typeof entry === "number" && Number.isFinite(entry) && entry >= 0,
+    )
+      ? (points as number[])
+      : undefined;
+
   return {
     officialScore: score("officialScore"),
     practiceBest: score("practiceBest"),
     attemptCount: countOrZero(candidate.attemptCount),
+    ...(officialPoints ? { officialPoints } : {}),
   };
 }
 
@@ -231,6 +248,7 @@ export function recordLocalDailyResult(
   playedDate: string,
   score: number,
   now: Date = new Date(),
+  pointsPerQuestion: readonly number[] = [],
 ): DailyProgress {
   const prior = progress.dates[playedDate] ?? EMPTY_DATE_PROGRESS;
   const isFirstPlay = prior.officialScore === null;
@@ -238,7 +256,14 @@ export function recordLocalDailyResult(
   const dates = {
     ...progress.dates,
     [playedDate]: isFirstPlay
-      ? { ...prior, officialScore: score, attemptCount: prior.attemptCount + 1 }
+      ? {
+          ...prior,
+          officialScore: score,
+          attemptCount: prior.attemptCount + 1,
+          ...(pointsPerQuestion.length > 0
+            ? { officialPoints: [...pointsPerQuestion] }
+            : {}),
+        }
       : {
           ...prior,
           practiceBest: Math.max(prior.practiceBest ?? 0, score),
@@ -273,12 +298,19 @@ export function applyOfficialDailyResult(
   if (!result) return progress;
 
   const prior = progress.dates[date] ?? EMPTY_DATE_PROGRESS;
+  // A stored breakdown describes the attempt played on this device. When the
+  // server's official score is a different one, that breakdown no longer
+  // explains the score being shown, so it is dropped rather than left to
+  // contradict it.
+  const keepsPoints =
+    prior.officialPoints !== undefined && prior.officialScore === result.score;
   const dates = {
     ...progress.dates,
     [date]: {
-      ...prior,
       officialScore: result.score,
+      practiceBest: prior.practiceBest,
       attemptCount: Math.max(prior.attemptCount, result.attempts),
+      ...(keepsPoints ? { officialPoints: prior.officialPoints } : {}),
     },
   };
 

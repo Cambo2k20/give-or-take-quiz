@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -213,13 +213,18 @@ describe("Game", () => {
       const user = userEvent.setup();
       render(<Game />);
 
-      expect(
-        screen.getByRole("button", { name: /play today's daily/i }),
-      ).toBeInTheDocument();
+      // The home screen's Daily hero, distinct from the header's compact
+      // control — both offer today's puzzle, so scope the query to the hero.
+      const hero = document.querySelector(".daily-hero");
+      if (!(hero instanceof HTMLElement)) {
+        throw new Error("The Daily hero is not on the home screen.");
+      }
+      const playToday = within(hero).getByRole("button", {
+        name: /play today's daily/i,
+      });
+      expect(playToday).toBeInTheDocument();
 
-      await user.click(
-        screen.getByRole("button", { name: /play today's daily/i }),
-      );
+      await user.click(playToday);
 
       for (let index = 0; index < set.questions.length; index += 1) {
         await user.click(

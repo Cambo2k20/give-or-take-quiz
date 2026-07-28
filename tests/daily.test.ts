@@ -132,6 +132,43 @@ describe("recordLocalDailyResult", () => {
     expect(better.dates["2026-07-26"].practiceBest).toBe(6000);
   });
 
+  it("stores the per-question breakdown for the official attempt only", () => {
+    const official = recordLocalDailyResult(
+      progress(),
+      "2026-07-26",
+      1067,
+      at("2026-07-26"),
+      [211, 212, 120, 95, 429],
+    );
+    expect(official.dates["2026-07-26"].officialPoints).toEqual([
+      211, 212, 120, 95, 429,
+    ]);
+
+    // A practice replay reports its own per-question points, but the stored
+    // breakdown must keep explaining the official score rather than this one.
+    const replayed = recordLocalDailyResult(
+      official,
+      "2026-07-26",
+      5000,
+      at("2026-07-26"),
+      [1000, 1000, 1000, 1000, 1000],
+    );
+    expect(replayed.dates["2026-07-26"].officialScore).toBe(1067);
+    expect(replayed.dates["2026-07-26"].officialPoints).toEqual([
+      211, 212, 120, 95, 429,
+    ]);
+  });
+
+  it("omits the breakdown when no per-question points are given", () => {
+    const next = recordLocalDailyResult(
+      progress(),
+      "2026-07-26",
+      6840,
+      at("2026-07-26"),
+    );
+    expect(next.dates["2026-07-26"].officialPoints).toBeUndefined();
+  });
+
   it("records an archive replay without touching the streak", () => {
     const before = progress({
       current: 3,
@@ -199,6 +236,46 @@ describe("applyOfficialDailyResult", () => {
     expect(corrected.current).toBe(4);
     expect(corrected.dates["2026-07-26"].officialScore).toBe(4200);
     expect(corrected.dates["2026-07-26"].attemptCount).toBe(2);
+  });
+
+  it("drops a breakdown the server's official score contradicts", () => {
+    const optimistic = recordLocalDailyResult(
+      progress(),
+      "2026-07-26",
+      1000,
+      at("2026-07-26"),
+      [200, 200, 200, 200, 200],
+    );
+
+    // A different attempt won the slot, so the stored per-question points no
+    // longer add up to the score being shown and must not be displayed.
+    const corrected = applyOfficialDailyResult(
+      optimistic,
+      "2026-07-26",
+      { score: 4200, attempts: 2 },
+      at("2026-07-26"),
+    );
+    expect(corrected.dates["2026-07-26"].officialPoints).toBeUndefined();
+  });
+
+  it("keeps the breakdown when the server confirms the same score", () => {
+    const local = recordLocalDailyResult(
+      progress(),
+      "2026-07-26",
+      1000,
+      at("2026-07-26"),
+      [200, 200, 200, 200, 200],
+    );
+    const confirmed = applyOfficialDailyResult(
+      local,
+      "2026-07-26",
+      { score: 1000, attempts: 1 },
+      at("2026-07-26"),
+    );
+
+    expect(confirmed.dates["2026-07-26"].officialPoints).toEqual([
+      200, 200, 200, 200, 200,
+    ]);
   });
 
   it("leaves the streak alone for a date other than today", () => {
@@ -271,6 +348,76 @@ describe("daily progress storage", () => {
     writeDailyProgress(saved, window.localStorage);
 
     expect(readDailyProgress(window.localStorage)).toEqual(saved);
+  });
+
+  it("round-trips the per-question breakdown", () => {
+    const saved = progress({
+      current: 1,
+      longest: 1,
+      lastPlayedDate: "2026-07-26",
+      dates: {
+        "2026-07-26": {
+          officialScore: 1067,
+          practiceBest: null,
+          attemptCount: 1,
+          officialPoints: [211, 212, 120, 95, 429],
+        },
+      },
+    });
+    writeDailyProgress(saved, window.localStorage);
+
+    expect(readDailyProgress(window.localStorage)).toEqual(saved);
+  });
+
+  it("drops a malformed breakdown rather than rendering it", () => {
+    window.localStorage.setItem(
+      DAILY_PROGRESS_KEY,
+      JSON.stringify({
+        version: 2,
+        progress: {
+          current: 1,
+          longest: 1,
+          lastPlayedDate: "2026-07-26",
+          dates: {
+            "2026-07-26": {
+              officialScore: 900,
+              practiceBest: null,
+              attemptCount: 1,
+              officialPoints: [200, "oops", -4],
+            },
+          },
+        },
+      }),
+    );
+
+    const read = readDailyProgress(window.localStorage);
+    expect(read.dates["2026-07-26"].officialScore).toBe(900);
+    expect(read.dates["2026-07-26"].officialPoints).toBeUndefined();
+  });
+
+  it("reads a record written before breakdowns were stored", () => {
+    window.localStorage.setItem(
+      DAILY_PROGRESS_KEY,
+      JSON.stringify({
+        version: 2,
+        progress: {
+          current: 1,
+          longest: 1,
+          lastPlayedDate: "2026-07-26",
+          dates: {
+            "2026-07-26": {
+              officialScore: 8100,
+              practiceBest: null,
+              attemptCount: 1,
+            },
+          },
+        },
+      }),
+    );
+
+    const read = readDailyProgress(window.localStorage);
+    expect(read.dates["2026-07-26"].officialScore).toBe(8100);
+    expect(read.dates["2026-07-26"].officialPoints).toBeUndefined();
   });
 
   it("returns empty progress when nothing is stored", () => {

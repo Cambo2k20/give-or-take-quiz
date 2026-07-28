@@ -9,6 +9,7 @@ import {
   fetchClassicLeaderboard,
   fetchDailyLeaderboard,
   fetchLeaderboard,
+  fetchMyDailyRank,
   fetchMyOfficialDaily,
   fetchSurvivalLeaderboard,
   joinLeaderboard,
@@ -137,6 +138,11 @@ export function useLeaderboard(userId: string | null) {
     [],
   );
 
+  const myDailyRank = useCallback(
+    (playerId: string, date: string) => fetchMyDailyRank(playerId, date),
+    [],
+  );
+
   // The run's own count of questions survived is discarded in favour of the
   // server's, which re-judged every guess against its own window schedule.
   const publishSurvival = useCallback(
@@ -198,6 +204,7 @@ export function useLeaderboard(userId: string | null) {
     publish,
     publishDaily,
     checkDailyOfficial,
+    myDailyRank,
     publishSurvival,
     submit,
     resetSubmit,

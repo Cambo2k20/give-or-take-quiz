@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -38,6 +38,7 @@ const api = vi.hoisted(() => ({
   loadSurvivalBoard: vi.fn().mockResolvedValue(undefined),
   join: vi.fn(),
   resetSubmit: vi.fn(),
+  myDailyRank: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock("@/src/useAuth", () => ({
@@ -59,6 +60,7 @@ vi.mock("@/src/useLeaderboard", () => ({
     join: api.join,
     publish: api.publish,
     publishDaily: api.publishDaily,
+    myDailyRank: api.myDailyRank,
     submit: { status: "idle" as const },
     resetSubmit: api.resetSubmit,
     board: [],
@@ -71,6 +73,27 @@ vi.mock("@/src/useLeaderboard", () => ({
 }));
 
 import Game from "@/src/Game";
+
+/**
+ * The home screen's Daily hero, as distinct from the compact Daily control in
+ * the header. Both offer today's puzzle, so a bare role query matches two.
+ */
+function dailyHero() {
+  const hero = document.querySelector(".daily-hero");
+  if (!(hero instanceof HTMLElement)) {
+    throw new Error("The Daily hero is not on the home screen.");
+  }
+  return within(hero);
+}
+
+/** The compact Daily control that rides along on every screen. */
+function homeHeader() {
+  const header = document.querySelector(".home-header");
+  if (!(header instanceof HTMLElement)) {
+    throw new Error("The home header is not rendered.");
+  }
+  return within(header);
+}
 
 async function playThrough(
   user: ReturnType<typeof userEvent.setup>,
@@ -105,13 +128,15 @@ describe("publishing a finished round", () => {
     const user = userEvent.setup();
     render(<Game />);
 
+    // Two entry points by design: the compact header control and the home
+    // screen's Daily hero.
     expect(
       screen.getAllByRole("button", { name: /play today's daily/i }),
-    ).toHaveLength(1);
+    ).toHaveLength(2);
     expect(document.querySelector(".daily-strip")).not.toBeInTheDocument();
 
     await user.click(
-      screen.getByRole("button", { name: /play today's daily/i }),
+      dailyHero().getByRole("button", { name: /play today's daily/i }),
     );
     await playThrough(user, 5);
 
@@ -168,13 +193,16 @@ describe("publishing a finished round", () => {
     render(<Game />);
 
     expect(
-      screen.getByRole("button", { name: /play today's daily/i }),
+      homeHeader().getByRole("button", { name: /play today's daily/i }),
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Ada" }));
 
+    // The hero is home-screen only; the header control is what must survive
+    // the trip to the account screen.
+    expect(document.querySelector(".daily-hero")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /play today's daily/i }),
+      homeHeader().getByRole("button", { name: /play today's daily/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Give or Take home" }),
@@ -183,7 +211,10 @@ describe("publishing a finished round", () => {
     await user.click(screen.getByRole("button", { name: "Give or Take home" }));
 
     expect(
-      screen.getByRole("button", { name: /play today's daily/i }),
+      homeHeader().getByRole("button", { name: /play today's daily/i }),
+    ).toBeInTheDocument();
+    expect(
+      dailyHero().getByRole("button", { name: /play today's daily/i }),
     ).toBeInTheDocument();
   });
 });

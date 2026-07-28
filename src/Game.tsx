@@ -30,6 +30,7 @@ import {
 } from "./BoardScreen";
 import { SurvivalOver, SurvivalRound } from "./Survival";
 import {
+  DAILY_MAX_SCORE,
   activeStreak,
   applyOfficialDailyResult,
   dailySetFor,
@@ -66,6 +67,7 @@ import {
 import { useProgress } from "./useProgress";
 import { EstimatePanel } from "./EstimatePanel";
 import { HeroDemo } from "./HeroDemo";
+import { DailyHero } from "./DailyHero";
 import { JoinLeaderboardForm } from "./Leaderboard";
 import type { SubmittedDailyRound } from "../lib/leaderboard";
 import {
@@ -363,6 +365,12 @@ export default function Game() {
   const [survivalVerdictState, setSurvivalVerdictState] =
     useState<SurvivalVerdict | null>(null);
   const [shareStatus, setShareStatus] = useState("");
+  // Tagged with the player and date it was fetched for, so a rank belonging to
+  // a previous sign-in can never be shown to the next one.
+  const [dailyRank, setDailyRank] = useState<{
+    key: string;
+    rank: number | null;
+  } | null>(null);
   const focusHeadingRef = useRef<HTMLHeadingElement>(null);
   const auth = useAuth();
   const leaderboard = useLeaderboard(auth.user?.id ?? null);
@@ -506,6 +514,7 @@ export default function Game() {
     publish,
     publishDaily,
     checkDailyOfficial,
+    myDailyRank,
     publishSurvival,
     resetSubmit,
     loadClassicBoard,
@@ -547,6 +556,43 @@ export default function Game() {
     // dependency — including it would refire this on every local record.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [player, canPublish, todaysDaily, checkDailyOfficial]);
+
+  // The home hero shows a rank only once there is an official score to rank,
+  // so this waits on the score rather than firing on every sign-in.
+  const todaysOfficialScore = dailyProgress.dates[today]?.officialScore ?? null;
+  const rankKey =
+    player && canPublish && todaysOfficialScore !== null
+      ? `${player.id}:${today}`
+      : null;
+
+  useEffect(() => {
+    if (!rankKey || !player) return;
+    let cancelled = false;
+    void myDailyRank(player.id, today)
+      .then((rank) => {
+        if (!cancelled) setDailyRank({ key: rankKey, rank });
+      })
+      .catch(() => {
+        // A rank that cannot be read just goes unshown; the score still stands.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [rankKey, player, today, myDailyRank]);
+
+  const shownDailyRank =
+    rankKey && dailyRank?.key === rankKey ? dailyRank.rank : null;
+
+  /**
+   * A daily round that cannot claim its date's official slot: either an archive
+   * day, which the server scores outside its window, or today after an official
+   * result is already in. Both are worth playing, and neither should read as
+   * the run that counts.
+   */
+  const isPracticeRound =
+    dailyDate !== null &&
+    (dailyDate !== today ||
+      dailyProgress.dates[dailyDate]?.officialScore != null);
 
   const survivalQuestion = survivalDeck[survivalIndex];
   const survivalNumber = survivalIndex + 1;
@@ -820,6 +866,8 @@ export default function Game() {
           dailyProgress,
           dailyDate,
           totalScore,
+          new Date(),
+          results.map((result) => result.points),
         );
         setDailyProgress(updated);
         writeDailyProgress(updated);
@@ -839,6 +887,34 @@ export default function Game() {
     setPosition(next ? startPosition(next) : 0.5);
     setLocked(false);
     setRevealing(false);
+  }
+
+  /**
+   * Shares a daily straight from the home hero, where no round is in play and
+   * `results` belongs to whatever was last finished. The date and score are
+   * passed in rather than read off round state for that reason.
+   */
+  async function shareDailyScore(date: string, score: number) {
+    const text = `I scored ${formatPoints(score)}/${formatPoints(
+      DAILY_MAX_SCORE,
+    )} in Give or Take — the ${date} daily. How close can you get?`;
+    const url = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Give or Take", text, url });
+        setShareStatus("Result shared.");
+        return;
+      }
+      await copyText(`${text} ${url}`);
+      setShareStatus("Result copied to your clipboard.");
+    } catch {
+      try {
+        await copyText(`${text} ${url}`);
+        setShareStatus("Result copied to your clipboard.");
+      } catch {
+        setShareStatus("Sharing is unavailable on this device.");
+      }
+    }
   }
 
   async function shareResult() {
@@ -991,6 +1067,28 @@ export default function Game() {
             </p>
           </div>
 
+          {todaysDaily && (
+            <DailyHero
+              set={todaysDaily}
+              streak={streak}
+              today={dailyProgress.dates[today]}
+              rank={shownDailyRank}
+              boardEnabled={leaderboard.enabled}
+              onPlay={() => startDaily(todaysDaily.date)}
+              onReplay={() => startDaily(todaysDaily.date)}
+              onOpenBoard={() => openLeaderboard("daily")}
+              onShare={() =>
+                void shareDailyScore(
+                  todaysDaily.date,
+                  dailyProgress.dates[today]?.officialScore ?? 0,
+                )
+              }
+              shareStatus={shareStatus}
+            />
+          )}
+
+          <h2 className="keep-playing-label">Keep playing</h2>
+
           {/* Format pills: how you play, kept off the subject grid below. */}
           <div
             className="hero-formats board-formats"
@@ -1111,6 +1209,16 @@ export default function Game() {
               />
             ))}
           </div>
+
+          {dailyDate && (
+            <p
+              className={`daily-play-flag${isPracticeRound ? " is-practice" : ""}`}
+            >
+              {isPracticeRound
+                ? "Practice replay"
+                : `Today's Daily · Question ${questionIndex + 1} of ${gameQuestions.length}`}
+            </p>
+          )}
 
           <article className="question-card">
             <span className="question-tag">{subtypeLabel(question)}</span>
