@@ -14,6 +14,7 @@ import {
   writeBestScores,
   writeQuestionHistory,
 } from "../lib/game";
+import { dailyResultGrid } from "../lib/share";
 import { signOut } from "../lib/auth";
 import {
   buildSurvivalDeck,
@@ -53,7 +54,7 @@ import {
 } from "../lib/backgroundTheme";
 import type { BackgroundThemeId } from "../lib/themes";
 import { ThemeArtwork } from "./themes/ThemeArtwork";
-import { DailyArchive } from "./Daily";
+import { DailyArchive, readableDate } from "./Daily";
 import { HomeHeader } from "./HomeHeader";
 import { BrandMark } from "./BrandMark";
 import {
@@ -890,14 +891,36 @@ export default function Game() {
   }
 
   /**
+   * The shareable form of a daily result: the day, a row of squares standing
+   * for how close each of the five guesses landed, and the score. The grid is
+   * dropped for a result recorded before breakdowns were stored, leaving the
+   * score to speak for itself rather than showing an empty row.
+   */
+  function dailyShareText(
+    date: string,
+    score: number,
+    pointsPerQuestion: readonly number[],
+  ) {
+    const grid =
+      pointsPerQuestion.length > 0
+        ? `\n${dailyResultGrid(pointsPerQuestion)}\n`
+        : " ";
+    return `Give or Take — ${readableDate(date)}${grid}${formatPoints(
+      score,
+    )}/${formatPoints(DAILY_MAX_SCORE)}\n\nHow close can you get?`;
+  }
+
+  /**
    * Shares a daily straight from the home hero, where no round is in play and
    * `results` belongs to whatever was last finished. The date and score are
    * passed in rather than read off round state for that reason.
    */
-  async function shareDailyScore(date: string, score: number) {
-    const text = `I scored ${formatPoints(score)}/${formatPoints(
-      DAILY_MAX_SCORE,
-    )} in Give or Take — the ${date} daily. How close can you get?`;
+  async function shareDailyScore(
+    date: string,
+    score: number,
+    pointsPerQuestion: readonly number[] = [],
+  ) {
+    const text = dailyShareText(date, score, pointsPerQuestion);
     const url = window.location.href;
     try {
       if (navigator.share) {
@@ -921,11 +944,16 @@ export default function Game() {
     // Naming the day is the point of sharing a daily: the reader can play the
     // same ten questions and compare directly. A run shares its length, which
     // is the number the survival board ranks.
-    const label = dailyDate ? `the ${dailyDate} daily` : MODE_LABELS[mode];
     const text =
       phase === "survival-over"
         ? `I survived ${formatPoints(survivalSurvived)} questions in Give or Take. How far can you get?`
-        : `I scored ${formatPoints(totalScore)}/${formatPoints(maxScore)} in Give or Take — ${label}. How close can you get?`;
+        : dailyDate
+          ? dailyShareText(
+              dailyDate,
+              totalScore,
+              results.map((result) => result.points),
+            )
+          : `I scored ${formatPoints(totalScore)}/${formatPoints(maxScore)} in Give or Take — ${MODE_LABELS[mode]}. How close can you get?`;
     const url = window.location.href;
     try {
       if (navigator.share) {
@@ -1081,6 +1109,7 @@ export default function Game() {
                 void shareDailyScore(
                   todaysDaily.date,
                   dailyProgress.dates[today]?.officialScore ?? 0,
+                  dailyProgress.dates[today]?.officialPoints ?? [],
                 )
               }
               shareStatus={shareStatus}
