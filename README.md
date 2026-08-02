@@ -14,8 +14,8 @@ slider to your estimate, lock it in, and see how close you were.
 The home page opens with one real, playable question — try it before choosing
 anything. From there:
 
-- **Classic** — a ten-question round from one of eight subjects, or **Mixed**,
-  which draws from all of them:
+- **Classic** — a five-question round from one of eight subjects, or **Mixed**,
+  which draws one question from five different subjects:
 
   | Subject | About |
   | --- | --- |
@@ -52,8 +52,8 @@ positions, a Classic or Daily question scores:
 round(1000 × (1 − d)²)
 ```
 
-An exact answer earns 1,000 points; a ten-question round is worth up to
-**10,000**, a five-question daily up to **5,000**. Each question's score also
+An exact answer earns 1,000 points; five-question Classic and Daily rounds are
+worth up to **5,000**. Each question's score also
 picks the verdict shown on its reveal:
 
 | Points | Verdict |

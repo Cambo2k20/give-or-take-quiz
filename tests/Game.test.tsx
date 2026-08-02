@@ -62,13 +62,13 @@ async function completeRound(
 ) {
   await startGame(user, mode);
 
-  for (let questionNumber = 1; questionNumber <= 10; questionNumber += 1) {
+  for (let questionNumber = 1; questionNumber <= 5; questionNumber += 1) {
     await user.click(
       await screen.findByRole("button", { name: /lock in guess/i }),
     );
 
     const advanceLabel =
-      questionNumber === 10 ? /see results/i : /next question/i;
+      questionNumber === 5 ? /see results/i : /next question/i;
     await user.click(
       await screen.findByRole("button", { name: advanceLabel }),
     );

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  CATEGORIES,
   formatQuestionValue,
   formatYear,
   positionToValue,
@@ -192,12 +191,12 @@ describe("selectQuestions", () => {
     "technology",
     "movies",
   ] as const)(
-    "returns ten unique %s questions",
+    "returns five unique %s questions",
     (mode) => {
       const selected = selectQuestions(mode, seededRandom(1234));
 
-      expect(selected).toHaveLength(10);
-      expect(new Set(selected.map(({ id }) => id)).size).toBe(10);
+      expect(selected).toHaveLength(5);
+      expect(new Set(selected.map(({ id }) => id)).size).toBe(5);
       expect(selected.every(({ category }) => category === mode)).toBe(true);
     },
   );
@@ -205,15 +204,9 @@ describe("selectQuestions", () => {
   it("returns a balanced, unique mixed round", () => {
     const selected = selectQuestions("mixed", seededRandom(5678));
 
-    expect(selected).toHaveLength(10);
-    expect(new Set(selected.map(({ id }) => id)).size).toBe(10);
-    // Ten slots across eight categories, so each appears at least once and
-    // the two spare slots go wherever the shuffle sends them.
-    for (const category of CATEGORIES) {
-      expect(
-        selected.filter((question) => question.category === category).length,
-      ).toBeGreaterThanOrEqual(1);
-    }
+    expect(selected).toHaveLength(5);
+    expect(new Set(selected.map(({ id }) => id)).size).toBe(5);
+    expect(new Set(selected.map(({ category }) => category)).size).toBe(5);
   });
 
   it("is deterministic when supplied the same random sequence", () => {
@@ -264,7 +257,7 @@ describe("selectQuestions", () => {
     expect(result.history[category]).toHaveLength(1);
   });
 
-  it("remembers mixed questions while keeping every category represented", () => {
+  it("remembers mixed questions while keeping five categories represented", () => {
     const first = selectQuestionsWithHistory("mixed", {}, seededRandom(500));
     const second = selectQuestionsWithHistory(
       "mixed",
@@ -274,11 +267,7 @@ describe("selectQuestions", () => {
     const firstIds = new Set(first.questions.map(({ id }) => id));
 
     expect(second.questions.every(({ id }) => !firstIds.has(id))).toBe(true);
-    for (const category of CATEGORIES) {
-      expect(
-        second.questions.some((question) => question.category === category),
-      ).toBe(true);
-    }
+    expect(new Set(second.questions.map(({ category }) => category)).size).toBe(5);
   });
 });
 
@@ -381,7 +370,7 @@ describe("best-score storage", () => {
   };
 
   it("uses a versioned, application-specific key", () => {
-    expect(STORAGE_KEY).toBe("close-enough:v3");
+    expect(STORAGE_KEY).toBe("close-enough:v4");
   });
 
   it("round-trips best scores through an injected Storage object", () => {

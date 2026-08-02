@@ -172,7 +172,7 @@ describe("publishing a finished round", () => {
     const button = label.closest("button");
     if (!button) throw new Error("The History label is not inside a button.");
     await user.click(button);
-    await playThrough(user, 10);
+    await playThrough(user, 5);
 
     await waitFor(() => expect(api.publish).toHaveBeenCalledOnce());
     expect(api.publish).toHaveBeenCalledWith(
@@ -181,7 +181,7 @@ describe("publishing a finished round", () => {
         expect.objectContaining({ question_id: expect.any(String) }),
       ]),
     );
-    expect(api.publish.mock.calls[0]?.[1]).toHaveLength(10);
+    expect(api.publish.mock.calls[0]?.[1]).toHaveLength(5);
     expect(api.publishDaily).not.toHaveBeenCalled();
   });
 
