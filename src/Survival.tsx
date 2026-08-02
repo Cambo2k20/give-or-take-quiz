@@ -3,7 +3,8 @@ import { formatQuestionValue } from "../lib/game";
 import { questionsUntilTighten, type SurvivalVerdict } from "../lib/formats";
 import type { Question } from "../lib/types";
 import { EstimatePanel } from "./EstimatePanel";
-import { formatPoints, subtypeLabel, verdictDetail } from "./questionText";
+import { QuestionCardShell } from "./QuestionCardShell";
+import { formatPoints, verdictDetail } from "./questionText";
 
 /**
  * How close the window is, in words. The posts on the rail are the real
@@ -60,12 +61,11 @@ export function SurvivalRound({
         <span className="survival-window-note">{windowNote(questionNumber)}</span>
       </div>
 
-      <article className="question-card">
-        <span className="question-tag">{subtypeLabel(question)}</span>
-        <h1 ref={headingRef} tabIndex={-1}>
-          {question.prompt}
-        </h1>
-
+      <QuestionCardShell
+        question={question}
+        progressLabel={`Question ${questionNumber}`}
+        headingRef={headingRef}
+      >
         <EstimatePanel
           question={question}
           position={position}
@@ -124,7 +124,7 @@ export function SurvivalRound({
             </button>
           </div>
         )}
-      </article>
+      </QuestionCardShell>
     </section>
   );
 }
