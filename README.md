@@ -23,7 +23,7 @@ Classic currently covers eight subjects:
 | --- | --- | ---: |
 | Population | Countries, cities and online populations | 35 |
 | History | Events, dates and historical money | 42 |
-| Geography | Oceans, deserts, mountains and land | 24 |
+| Geography | Oceans, deserts, mountains and land | 54 |
 | Science | Physics, chemistry and the human body | 50 |
 | Animals | Size, speed, behaviour and lifespans | 56 |
 | Space | Planets, missions, spacecraft and astronomy | 55 |
@@ -61,7 +61,7 @@ three questions to a floor of ±0.04.
 
 ## Daily puzzles and question data
 
-The current build contains **342 regular questions**. Postgres is the source of
+The current build contains **372 regular questions**. Postgres is the source of
 truth for these records, and [`lib/questions.generated.ts`](lib/questions.generated.ts)
 is the committed offline snapshot used during play. Regenerate it with
 `npm run generate:questions` after changing the database.
