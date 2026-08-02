@@ -1,7 +1,7 @@
 {
   "name": "Give or Take",
   "short_name": "Give or Take",
-  "description": "Ten questions. One slider. Put your instinct somewhere on the line.",
+  "description": "Five questions. One slider. Put your instinct somewhere on the line.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

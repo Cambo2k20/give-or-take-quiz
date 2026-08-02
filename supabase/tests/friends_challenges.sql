@@ -113,6 +113,10 @@ select pg_temp.assert_true(
   'anonymous users must not execute social RPCs'
 );
 select pg_temp.assert_true(
+  (select count(*) from public.achievements) = 65,
+  'the expanded catalogue must contain 65 distinct achievements'
+);
+select pg_temp.assert_true(
   (
     select bool_and(relrowsecurity)
     from pg_class
@@ -187,6 +191,19 @@ values
   (:'bravo_id', 'Social Bravo QA'),
   (:'charlie_id', 'Social Charlie QA');
 
+-- Legacy ten-question scores can remain in history, but five-question
+-- achievement thresholds must only consider rounds with the new maximum.
+insert into public.game_rounds (player_id, mode, total_score, question_count)
+values
+  (:'alpha_id', 'space', 9479, 10),
+  (:'alpha_id', 'space', 4000, 5);
+
+select pg_temp.assert_true(
+  (select value from public.player_stats
+   where player_id = :'alpha_id' and stat_key = 'best_category_score') = 4000,
+  'Classic score achievements must ignore legacy ten-question totals'
+);
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub', :'alpha_id', true);
 
@@ -217,6 +234,11 @@ select pg_temp.assert_true(
   jsonb_array_length(public.get_social_dashboard() -> 'friends') = 1,
   'accepting a request must create one mutual friend'
 );
+select pg_temp.assert_true(
+  (select earned from public.player_achievements
+   where player_id = :'bravo_id' and achievement_id = 'connected'),
+  'an accepted friendship must earn Connected for the signed-in player'
+);
 
 reset role;
 set local role authenticated;
@@ -232,8 +254,18 @@ select set_config(
 );
 
 select pg_temp.assert_true(
-  jsonb_array_length(public.get_game_challenge_deck(:'challenge_one')) = 10,
-  'a Mixed Classic challenge must contain exactly ten questions'
+  jsonb_array_length(public.get_game_challenge_deck(:'challenge_one')) = 5,
+  'a Mixed Classic challenge must contain exactly five questions'
+);
+
+select pg_temp.assert_true(
+  (
+    select count(distinct q.category)
+    from public.game_challenge_questions deck
+    join public.questions q on q.id = deck.question_id
+    where deck.challenge_id = :'challenge_one'
+  ) = 5,
+  'a Mixed Classic challenge must use five distinct subjects'
 );
 
 select pg_temp.assert_raises(
@@ -247,12 +279,12 @@ select pg_temp.assert_raises(
 reset role;
 select pg_temp.assert_true(
   (
-    select count(distinct q.category) = 8
+    select count(distinct q.category) = 5
     from public.game_challenge_questions deck
     join public.questions q on q.id = deck.question_id
     where deck.challenge_id = :'challenge_one'
   ),
-  'a Mixed deck must represent all eight subjects'
+  'a five-question Mixed deck must use five subjects'
 );
 
 set local role authenticated;
@@ -312,7 +344,7 @@ select pg_temp.assert_true(
   (select count(*) from public.game_challenges
     where id = :'challenge_one') = 1
   and (select count(*) from public.game_challenge_questions
-    where challenge_id = :'challenge_one') = 10,
+    where challenge_id = :'challenge_one') = 5,
   'the intended recipient must read the activated match and deck through RLS'
 );
 select pg_temp.assert_true(
@@ -345,8 +377,8 @@ select set_config('request.jwt.claim.sub', :'bravo_id', true);
 select public.create_game_challenge(:'alpha_id', 'classic', 'space')
   as challenge_two \gset
 select pg_temp.assert_true(
-  jsonb_array_length(public.get_game_challenge_deck(:'challenge_two')) = 10,
-  'a subject Classic challenge must contain exactly ten questions'
+  jsonb_array_length(public.get_game_challenge_deck(:'challenge_two')) = 5,
+  'a subject Classic challenge must contain exactly five questions'
 );
 select public.submit_game_challenge(
   :'challenge_two',
@@ -400,6 +432,30 @@ select pg_temp.assert_true(
     public.get_friend_match_history(:'bravo_id') -> 'matches'
   ) = 3,
   'head-to-head history must include each completed match'
+);
+select pg_temp.assert_true(
+  (select value from public.player_stats
+   where player_id = :'alpha_id' and stat_key = 'challenges_completed') = 3
+  and (select value from public.player_stats
+       where player_id = :'alpha_id' and stat_key = 'challenges_won') = 2
+  and (select value from public.player_stats
+       where player_id = :'alpha_id'
+         and stat_key = 'best_challenge_win_streak') = 2
+  and (select value from public.player_stats
+       where player_id = :'alpha_id'
+         and stat_key = 'max_challenges_vs_one_opponent') = 3,
+  'social achievement statistics must derive wins, streaks, and rivalry depth'
+);
+select pg_temp.assert_true(
+  (select earned from public.player_achievements
+   where player_id = :'alpha_id' and achievement_id = 'challenge-accepted')
+  and (select earned from public.player_achievements
+       where player_id = :'alpha_id' and achievement_id = 'rivalry-begins')
+  and (select earned from public.player_achievements
+       where player_id = :'alpha_id' and achievement_id = 'first-victory')
+  and not (select earned from public.player_achievements
+           where player_id = :'alpha_id' and achievement_id = 'hot-streak'),
+  'completed matches must unlock only the social milestones actually reached'
 );
 
 -- Survival uses every eligible non-Daily question in one shared order and

@@ -540,8 +540,8 @@ export default function Game() {
     Boolean(currentResult),
   );
 
-  // A daily is five questions and a category round ten, so the ceiling is read
-  // off the round rather than assumed.
+  // Classic and Daily are both five questions, while Survival is variable, so
+  // the ceiling is read off the active round rather than assumed.
   const maxScore = gameQuestions.length * 1000;
   const todaysDaily = useMemo(() => todaysDailySet(), []);
   const archiveDates = useMemo(() => playableDailyDates(), []);
@@ -973,7 +973,7 @@ export default function Game() {
 
   /**
    * The daily is a fixed set, so it neither draws from the shared bank nor
-   * touches question history — everyone must get the same ten in the same order.
+   * touches question history — everyone must get the same five in the same order.
    */
   function startDaily(date: string) {
     const set = dailySetFor(date);
@@ -1158,7 +1158,7 @@ export default function Game() {
 
   async function shareResult() {
     // Naming the day is the point of sharing a daily: the reader can play the
-    // same ten questions and compare directly. A run shares its length, which
+    // same five questions and compare directly. A run shares its length, which
     // is the number the survival board ranks.
     const text =
       phase === "survival-over"
@@ -1308,7 +1308,7 @@ export default function Game() {
             <p className="eyebrow">A game of informed guesses</p>
             <h1>How close can you get?</h1>
             <p className="hero-lede">
-              Ten questions. One slider. Put your instinct somewhere on the line.
+              Five questions. One slider. Put your instinct somewhere on the line.
             </p>
           </div>
 

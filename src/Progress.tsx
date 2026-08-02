@@ -3,6 +3,7 @@ import {
   DEFAULT_PROFILE_AVATAR,
   isProfileAvatarKey,
   VOLCANO_PROFILE_AVATAR,
+  type BuiltInProfileAvatarKey,
   type ProfileAvatarKey,
 } from "../lib/leaderboard";
 import {
@@ -22,12 +23,88 @@ import {
   supportedModesForTheme,
 } from "../lib/themes";
 import type { QuestionCategory } from "../lib/types";
+import aphroditeAvatarUrl from "./assets/avatars/aphrodite.jpg";
+import auroraLongshipAvatarUrl from "./assets/avatars/aurora-longship.jpg";
+import mayanTempleAvatarUrl from "./assets/avatars/emerald-temple.jpg";
 import eventHorizonAvatarUrl from "./assets/avatars/event-horizon.webp";
+import hermesAvatarUrl from "./assets/avatars/hermes.jpg";
+import stormRocketAvatarUrl from "./assets/avatars/storm-rocket.jpg";
+import mjolnirAvatarUrl from "./assets/avatars/thunder-hammer.jpg";
+import valkyrieHelmAvatarUrl from "./assets/avatars/valkyrie-helm.jpg";
 import volcanoAvatarUrl from "./assets/avatars/volcano.png";
 import { formatPoints } from "./questionText";
 import { RankBadgeArtwork } from "./RankBadgeArtwork";
 import type { Theme } from "./theme";
 import { ThemeArtwork } from "./themes/ThemeArtwork";
+
+const BUILT_IN_AVATAR_OPTIONS = [
+  {
+    key: DEFAULT_PROFILE_AVATAR,
+    name: "Event Horizon",
+    detail: "Default avatar",
+    url: eventHorizonAvatarUrl,
+  },
+  {
+    key: VOLCANO_PROFILE_AVATAR,
+    name: "Volcano",
+    detail: "Built-in avatar",
+    url: volcanoAvatarUrl,
+  },
+  {
+    key: "hermes",
+    name: "Hermes",
+    detail: "Messenger of the skies",
+    url: hermesAvatarUrl,
+  },
+  {
+    key: "aphrodite",
+    name: "Aphrodite",
+    detail: "Born from the sea",
+    url: aphroditeAvatarUrl,
+  },
+  {
+    key: "storm-rocket",
+    name: "Storm Rocket",
+    detail: "Launch through the lightning",
+    url: stormRocketAvatarUrl,
+  },
+  {
+    key: "aurora-longship",
+    name: "Aurora Longship",
+    detail: "Sail beneath the northern lights",
+    url: auroraLongshipAvatarUrl,
+  },
+  {
+    key: "mayan-temple",
+    name: "Mayan Temple",
+    detail: "Ancient beacon among the stars",
+    url: mayanTempleAvatarUrl,
+  },
+  {
+    key: "valkyrie-helm",
+    name: "Valkyrie Helm",
+    detail: "Armour of the star guard",
+    url: valkyrieHelmAvatarUrl,
+  },
+  {
+    key: "mjolnir",
+    name: "Mjolnir",
+    detail: "Forged in the storm",
+    url: mjolnirAvatarUrl,
+  },
+] satisfies ReadonlyArray<{
+  key: BuiltInProfileAvatarKey;
+  name: string;
+  detail: string;
+  url: string;
+}>;
+
+function builtInAvatarUrl(avatarKey: ProfileAvatarKey): string | null {
+  return (
+    BUILT_IN_AVATAR_OPTIONS.find((option) => option.key === avatarKey)?.url ??
+    null
+  );
+}
 
 function ThemeCard({
   theme,
@@ -231,16 +308,7 @@ export function ProfileDashboard({
     name: string;
     detail: string;
   }> = [
-    {
-      key: DEFAULT_PROFILE_AVATAR,
-      name: "Event Horizon",
-      detail: "Default avatar",
-    },
-    {
-      key: VOLCANO_PROFILE_AVATAR,
-      name: "Volcano",
-      detail: "Built-in avatar",
-    },
+    ...BUILT_IN_AVATAR_OPTIONS,
     ...badgeAvatarOptions,
   ];
   const currentAvatar =
@@ -583,23 +651,12 @@ export function ProfileAvatarArtwork({
   avatarKey: ProfileAvatarKey;
   className?: string;
 }) {
-  if (avatarKey === DEFAULT_PROFILE_AVATAR) {
+  const avatarUrl = builtInAvatarUrl(avatarKey);
+  if (avatarUrl) {
     return (
       <img
         className={className}
-        src={eventHorizonAvatarUrl}
-        alt=""
-        aria-hidden="true"
-        draggable={false}
-      />
-    );
-  }
-
-  if (avatarKey === VOLCANO_PROFILE_AVATAR) {
-    return (
-      <img
-        className={className}
-        src={volcanoAvatarUrl}
+        src={avatarUrl}
         alt=""
         aria-hidden="true"
         draggable={false}

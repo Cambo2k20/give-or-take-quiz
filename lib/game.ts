@@ -6,11 +6,11 @@ import type {
   QuestionUnit,
 } from "./types";
 
-// v3: the subject list changed again, so v2 best scores are recorded against
-// categories that no longer exist.
-export const STORAGE_KEY = "close-enough:v3";
+// v4: Classic rounds changed from ten questions to five, so v3 best scores
+// are not comparable with the new 5,000-point maximum.
+export const STORAGE_KEY = "close-enough:v4";
 
-export const QUESTIONS_PER_GAME = 10;
+export const QUESTIONS_PER_GAME = 5;
 export const QUESTION_HISTORY_KEY = "give-or-take:question-history:v1";
 
 /** Every mode that draws from a single category, in mode-chooser order. */
@@ -304,23 +304,20 @@ export function selectQuestionsWithHistory(
   rng: () => number = Math.random,
 ): { questions: Question[]; history: QuestionHistory } {
   if (mode === "mixed") {
-    // Every category contributes once. The two spare slots go to two randomly
-    // selected categories, keeping the round broad without always favouring
-    // the same subjects.
-    const extraCategories = new Set(
-      shuffled(CATEGORIES, rng).slice(
-        0,
-        QUESTIONS_PER_GAME - CATEGORIES.length,
-      ),
+    // Five distinct categories keep a short Mixed round genuinely varied.
+    // Which five appear changes each time rather than favouring a fixed set.
+    const selectedCategories = shuffled(CATEGORIES, rng).slice(
+      0,
+      QUESTIONS_PER_GAME,
     );
     const mixedSeen = history.mixed ?? [];
     const nextSeen: string[] = [];
-    const picked = CATEGORIES.flatMap((category) => {
+    const picked = selectedCategories.flatMap((category) => {
       const pool = byCategory(category);
       const poolIds = new Set(pool.map((question) => question.id));
       const draw = drawAvoidingSeen(
         pool,
-        extraCategories.has(category) ? 2 : 1,
+        1,
         mixedSeen.filter((id) => poolIds.has(id)),
         rng,
       );

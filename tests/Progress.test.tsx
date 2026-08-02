@@ -285,6 +285,19 @@ describe("progression screens", () => {
     expect(
       screen.getByRole("button", { name: /volcano/i }),
     ).toBeInTheDocument();
+    for (const avatarName of [
+      "Hermes",
+      "Aphrodite",
+      "Storm Rocket",
+      "Aurora Longship",
+      "Mayan Temple",
+      "Valkyrie Helm",
+      "Mjolnir",
+    ]) {
+      expect(
+        screen.getByRole("button", { name: new RegExp(avatarName, "i") }),
+      ).toBeInTheDocument();
+    }
     expect(
       screen.queryByRole("button", { name: /census scout/i }),
     ).not.toBeInTheDocument();

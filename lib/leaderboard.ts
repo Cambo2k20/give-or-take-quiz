@@ -6,11 +6,20 @@ export const VOLCANO_PROFILE_AVATAR = "volcano" as const;
 export const BUILT_IN_PROFILE_AVATARS = [
   DEFAULT_PROFILE_AVATAR,
   VOLCANO_PROFILE_AVATAR,
+  "hermes",
+  "aphrodite",
+  "storm-rocket",
+  "aurora-longship",
+  "mayan-temple",
+  "valkyrie-helm",
+  "mjolnir",
 ] as const;
 
 type PaddedBadgeRank = "05" | "10" | "15" | "20" | "25" | "30";
+export type BuiltInProfileAvatarKey =
+  (typeof BUILT_IN_PROFILE_AVATARS)[number];
 export type ProfileAvatarKey =
-  | (typeof BUILT_IN_PROFILE_AVATARS)[number]
+  | BuiltInProfileAvatarKey
   | `${QuestionCategory}-${PaddedBadgeRank}`;
 
 const PROFILE_AVATAR_PATTERN =
@@ -405,6 +414,7 @@ async function fetchClassicLeaderboardFromSource(
     .select("id, player_id, mode, total_score, question_count, created_at")
     .neq("mode", "daily")
     .neq("mode", "survival")
+    .eq("question_count", 5)
     .order("created_at", { ascending: true })
     .limit(1000);
 
