@@ -1,0 +1,125 @@
+name: Retire expired dailies
+
+# Returns daily questions to the category pool once their date has passed, and
+# refreshes the committed offline bank so players actually see them.
+#
+# Timed for 13:00 UTC deliberately. A daily for date D is still being played
+# wherever the local date is still D, and the last zone to leave D is UTC-12,
+# which does so at 12:00 UTC on D+1. Running an hour after that means no player
+# anywhere is mid-daily when its questions rejoin category play, while still
+# retiring them within a day of the puzzle closing. Moving this earlier would
+# reopen the answer leak the daily bank exists to prevent.
+
+on:
+  schedule:
+    - cron: "0 13 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: retire-expired-dailies
+  cancel-in-progress: false
+
+jobs:
+  retire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check credentials
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          missing=0
+          for name in VITE_SUPABASE_URL VITE_SUPABASE_PUBLISHABLE_KEY SUPABASE_SERVICE_ROLE_KEY; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name is not set."
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is a repository secret; the other two are repository variables."
+            exit 1
+          fi
+
+      - name: Retire expired dailies
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npm run questions:retire
+
+      # generate:questions reads .env, so give it one rather than reshaping the
+      # script that developers run locally.
+      - name: Write .env for the generator
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          {
+            echo "VITE_SUPABASE_URL=$VITE_SUPABASE_URL"
+            echo "VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY"
+          } > .env
+
+      - name: Regenerate the offline bank
+        run: npm run generate:questions
+
+      - name: Validate
+        run: npm run validate:data
+
+      - name: Check the bundled and Supabase banks agree
+        run: npm run validate:question-sync
+
+      - name: Remove .env
+        if: always()
+        run: rm -f .env
+
+      - name: Open or update the refresh pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git diff --quiet -- lib/questions.generated.ts; then
+            echo "No questions retired today; nothing to publish."
+            exit 0
+          fi
+
+          retired=$(git diff --numstat -- lib/questions.generated.ts | awk '{print $1}')
+          branch=automation/retire-expired-dailies
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout -B "$branch"
+          git add lib/questions.generated.ts
+          git commit -m "Refresh the offline bank after retiring expired dailies"
+          git push --force origin "$branch"
+
+          if gh pr view "$branch" --json number >/dev/null 2>&1; then
+            echo "Existing pull request updated."
+          else
+            gh pr create \
+              --base main \
+              --head "$branch" \
+              --title "Refresh the offline bank after retiring expired dailies" \
+              --body "Expired daily questions have rejoined the category pool, and \`lib/questions.generated.ts\` has been regenerated to match (${retired} added line(s)).
+
+\`validate:data\` and \`validate:question-sync\` both passed before this was opened, so the bundled bank and Supabase agree.
+
+Opened automatically by \`.github/workflows/retire-expired-dailies.yml\`. Merging deploys the refreshed bank."
+          fi
