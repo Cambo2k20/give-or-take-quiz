@@ -36,7 +36,9 @@ import Game from "@/src/Game";
 import { readBestScores } from "@/lib/game";
 import { dailySets, readDailyProgress } from "@/lib/daily";
 
-function categoryButton(mode: "Geography" | "History" | "Mixed") {
+function categoryButton(
+  mode: "Geography" | "History" | "Dinosaurs" | "Games" | "Mixed",
+) {
   const label = screen.getByText(mode, { exact: true, selector: "strong" });
   const button = label.closest("button");
 
@@ -48,7 +50,7 @@ function categoryButton(mode: "Geography" | "History" | "Mixed") {
 
 async function startGame(
   user: ReturnType<typeof userEvent.setup>,
-  mode: "Geography" | "History" | "Mixed",
+  mode: "Geography" | "History" | "Dinosaurs" | "Games" | "Mixed",
 ) {
   await user.click(categoryButton(mode));
   expect(
@@ -99,16 +101,12 @@ describe("Game", () => {
     expect(screen.getByRole("slider")).toBeInTheDocument();
   });
 
-  it("shows ten subject cards and keeps incubating categories disabled", () => {
+  it("shows ten playable subject cards", () => {
     render(<Game />);
 
     expect(document.querySelectorAll(".mode-grid > .mode-card")).toHaveLength(10);
-    expect(
-      screen.getByRole("button", { name: /Dinosaurs.*Coming soon/i }),
-    ).toBeDisabled();
-    expect(
-      screen.getByRole("button", { name: /Games.*Coming soon/i }),
-    ).toBeDisabled();
+    expect(categoryButton("Dinosaurs")).toBeEnabled();
+    expect(categoryButton("Games")).toBeEnabled();
   });
 
   it("locks the submitted guess before revealing the answer", async () => {

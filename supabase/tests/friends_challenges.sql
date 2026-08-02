@@ -140,15 +140,20 @@ select pg_temp.assert_true(
 );
 select pg_temp.assert_true(
   (select count(*) from public.questions
-   where category = 'dinosaurs' and not is_daily) = 5
+   where category = 'dinosaurs' and not is_daily) >= 20
   and (select count(*) from public.questions
-       where category = 'games' and not is_daily) = 5,
-  'incubating categories must each contain five starter questions'
+       where category = 'games' and not is_daily) >= 20,
+  'live categories must each contain at least twenty regular questions'
 );
 select pg_temp.assert_true(
   (select count(*) from public.rank_titles
    where category in ('dinosaurs', 'games')) = 12,
-  'incubating categories must provide all twelve rank titles'
+  'live categories must provide all twelve rank titles'
+);
+select pg_temp.assert_true(
+  (select threshold from public.achievements where id = 'well-read') = 10
+  and (select threshold from public.achievements where id = 'polymath') = 10,
+  'cross-subject achievements must require all ten live subjects'
 );
 select pg_temp.assert_true(
   (
@@ -326,9 +331,12 @@ select pg_temp.assert_true(
     from public.game_challenge_questions deck
     join public.questions q on q.id = deck.question_id
     where deck.challenge_id = :'challenge_one'
-      and q.category in ('dinosaurs', 'games')
+      and q.category not in (
+        'population', 'history', 'geography', 'science', 'animals',
+        'space', 'technology', 'movies', 'dinosaurs', 'games'
+      )
   ),
-  'production Mixed challenge decks must exclude incubating subjects'
+  'production Mixed challenge decks must use only live subjects'
 );
 
 set local role authenticated;
@@ -519,7 +527,7 @@ select pg_temp.assert_true(
      where not is_daily
        and category in (
          'population', 'history', 'geography', 'science',
-         'animals', 'space', 'technology', 'movies'
+         'animals', 'space', 'technology', 'movies', 'dinosaurs', 'games'
        )),
   'Survival must include every live non-Daily question'
 );

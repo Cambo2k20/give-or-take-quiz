@@ -84,7 +84,7 @@ describe("fetchProgress", () => {
     );
     expect(history).toMatchObject({ xp: 0, rank: 1, title: "Newcomer" });
     expect(result.badgeCatalogueAvailable).toBe(true);
-    expect(result.badges).toHaveLength(48);
+    expect(result.badges).toHaveLength(60);
     expect(
       result.badges.find((badge) => badge.badgeKey === "space-05"),
     ).toMatchObject({ earned: true, current: true });
