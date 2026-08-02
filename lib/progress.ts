@@ -1,4 +1,5 @@
-import { CATEGORIES } from "./game";
+import { RANK_FLOORS } from "./categories";
+import { PLAYABLE_CATEGORIES } from "./game";
 import { supabase } from "./supabase";
 import type { QuestionCategory } from "./types";
 
@@ -39,7 +40,7 @@ export type Achievement = {
   earned: boolean;
 };
 
-export const BADGE_RANK_FLOORS = [5, 10, 15, 20, 25, 30] as const;
+export const BADGE_RANK_FLOORS = RANK_FLOORS;
 export type BadgeRankFloor = (typeof BADGE_RANK_FLOORS)[number];
 
 export type RankBadge = {
@@ -115,10 +116,10 @@ export async function fetchProgress(playerId: string): Promise<PlayerProgress> {
     (progress.data ?? []).map((row) => [row.category as QuestionCategory, row]),
   );
 
-  // Ordered by CATEGORIES rather than by whatever the view returned, so the
+  // Ordered by the playable registry rather than by whatever the view returned, so the
   // account screen matches the mode chooser. A subject with no row is a player
   // who has never touched it, which is rank 1 rather than an error.
-  const categories: CategoryRank[] = CATEGORIES.map((category) => {
+  const categories: CategoryRank[] = PLAYABLE_CATEGORIES.map((category) => {
     const row = byCategory.get(category);
     const xp = row?.xp ?? 0;
     const rankFloorXp = row?.rank_floor_xp ?? 0;
@@ -152,7 +153,7 @@ export async function fetchProgress(playerId: string): Promise<PlayerProgress> {
 
   for (const row of rawCatalogue) {
     if (
-      !CATEGORIES.includes(row.category as QuestionCategory) ||
+      !PLAYABLE_CATEGORIES.includes(row.category as QuestionCategory) ||
       !BADGE_RANK_FLOORS.includes(row.rank_floor as BadgeRankFloor) ||
       typeof row.title !== "string" ||
       row.title.trim().length === 0 ||
@@ -173,8 +174,9 @@ export async function fetchProgress(playerId: string): Promise<PlayerProgress> {
   }
 
   const badgeCatalogueAvailable =
-    catalogueBySlot.size === CATEGORIES.length * BADGE_RANK_FLOORS.length &&
-    CATEGORIES.every((category) =>
+    catalogueBySlot.size ===
+      PLAYABLE_CATEGORIES.length * BADGE_RANK_FLOORS.length &&
+    PLAYABLE_CATEGORIES.every((category) =>
       BADGE_RANK_FLOORS.every((rankFloor) =>
         catalogueBySlot.has(`${category}:${rankFloor}`),
       ),
@@ -183,7 +185,7 @@ export async function fetchProgress(playerId: string): Promise<PlayerProgress> {
     categories.map((entry) => [entry.category, entry.rank]),
   );
   const badges: RankBadge[] = badgeCatalogueAvailable
-    ? CATEGORIES.flatMap((category) => {
+    ? PLAYABLE_CATEGORIES.flatMap((category) => {
         const rank = categoryRanks.get(category) ?? 1;
         const currentFloor = [...BADGE_RANK_FLOORS]
           .reverse()

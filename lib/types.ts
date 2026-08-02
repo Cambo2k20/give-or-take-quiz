@@ -4,15 +4,9 @@
  * and "what did the Golden Gate Bridge cost" are both about the built world
  * even though one is a length and the other a sum of money.
  */
-export type QuestionCategory =
-  | "population"
-  | "history"
-  | "geography"
-  | "science"
-  | "animals"
-  | "space"
-  | "technology"
-  | "movies";
+import type { QuestionCategory } from "./categories";
+
+export type { QuestionCategory } from "./categories";
 
 export type GameMode = QuestionCategory | "mixed";
 

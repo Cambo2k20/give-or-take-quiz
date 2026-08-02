@@ -6,9 +6,9 @@ import {
 } from "@/src/rankBadges";
 
 describe("rank badge artwork catalogue", () => {
-  it("contains exactly eight subjects by six rank floors", () => {
-    expect(EXPECTED_BADGE_KEYS).toHaveLength(48);
-    expect(new Set(EXPECTED_BADGE_KEYS).size).toBe(48);
+  it("contains exactly ten subjects by six rank floors", () => {
+    expect(EXPECTED_BADGE_KEYS).toHaveLength(60);
+    expect(new Set(EXPECTED_BADGE_KEYS).size).toBe(60);
 
     for (const key of EXPECTED_BADGE_KEYS) {
       expect(isRankBadgeKey(key), key).toBe(true);

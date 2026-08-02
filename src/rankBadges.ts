@@ -1,4 +1,4 @@
-import { CATEGORIES } from "../lib/game";
+import { ALL_CATEGORIES } from "../lib/categories";
 import {
   BADGE_RANK_FLOORS,
   type BadgeRankFloor,
@@ -18,7 +18,7 @@ function badgeKey(category: QuestionCategory, rank: BadgeRankFloor): RankBadgeKe
   return `${category}-${String(rank).padStart(2, "0") as PaddedBadgeRank}`;
 }
 
-export const EXPECTED_BADGE_KEYS = CATEGORIES.flatMap((category) =>
+export const EXPECTED_BADGE_KEYS = ALL_CATEGORIES.flatMap((category) =>
   BADGE_RANK_FLOORS.map((rank) => badgeKey(category, rank)),
 ) as readonly RankBadgeKey[];
 
@@ -38,7 +38,7 @@ const unexpectedKeys = Object.keys(artworkByKey).filter(
 if (missingKeys.length > 0 || unexpectedKeys.length > 0) {
   throw new Error(
     [
-      "Rank badge artwork does not match the eight-subject catalogue.",
+      "Rank badge artwork does not match the ten-subject catalogue.",
       missingKeys.length > 0 ? `Missing: ${missingKeys.join(", ")}` : "",
       unexpectedKeys.length > 0
         ? `Unexpected: ${unexpectedKeys.join(", ")}`
@@ -55,7 +55,7 @@ export function isRankBadgeKey(value: unknown): value is RankBadgeKey {
 
 /**
  * Unknown server keys degrade to the neutral medallion instead of breaking
- * ordinary progression. Missing files from the committed 48-asset set are a
+ * ordinary progression. Missing files from the committed 60-asset set are a
  * build error above, while a future catalogue can roll out independently.
  */
 export function rankBadgeArtworkUrl(key: string): string | null {

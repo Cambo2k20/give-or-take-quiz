@@ -1,5 +1,3 @@
-Below is the document text only—I have not opened or changed any files.
-
 # Adding questions to category banks
 
 This guide covers questions used in normal category and Mixed rounds. Daily questions follow a separate process and belong in `data/daily-sets.json`.
@@ -28,8 +26,18 @@ Use one of the existing category identifiers:
 - `space`
 - `technology`
 - `movies`
+- `dinosaurs` (incubating)
+- `games` (incubating)
 
-Mixed mode draws from these categories automatically. It does not have its own question records.
+The canonical list, display metadata, rank titles and launch state live in
+`lib/categories.ts`. Do not create a second category list. Mixed, Survival,
+progression, leaderboards and challenges use the registry's currently playable
+categories; Mixed does not have its own question records.
+
+An incubating category needs at least five regular questions for local testing
+and at least 20 before it can be changed to `live`. Set
+`VITE_ENABLE_INCUBATING_CATEGORIES=true` in development to test an incubating
+bank. Production ignores the override.
 
 Before adding several questions, check the existing distribution. Prefer categories with smaller banks unless the new questions are especially strong.
 
@@ -93,7 +101,10 @@ Test unusually large, small, negative or fractional values carefully.
 
 ## 5. Add the database record
 
-Create the question in the project’s questions table using a comparable existing record as a template.
+Create an additive SQL migration for the question rows using a comparable
+existing record as a template. If a new category needs enum labels, put only
+the enum additions in one migration and put content in a later migration so
+PostgreSQL commits the enum values before they are used.
 
 Ensure that:
 
@@ -138,6 +149,16 @@ Validation should reject problems such as invalid categories, duplicate identifi
 
 Fix validation failures in the database, regenerate, and run validation again.
 
+After the migration is applied to the target database, also run:
+
+```bash
+npm run validate:question-sync
+```
+
+This must pass before activation. It prevents a bundled question from reaching
+a player before Supabase knows its ID, which would make round submission fail
+with `every guess must reference a known question`.
+
 ## 8. Test the questions in play
 
 Start the development server:
@@ -174,6 +195,7 @@ All three must pass.
 ## Final checklist
 
 - [ ] Existing category identifier used
+- [ ] Enum migration committed before any migration that uses a new category
 - [ ] Unique, stable question ID
 - [ ] Unique and unambiguous prompt
 - [ ] Answer verified against a primary or authoritative source
@@ -186,5 +208,6 @@ All three must pass.
 - [ ] Generated file updated through the generator
 - [ ] Generated diff reviewed
 - [ ] Data validation passes
+- [ ] Bundled and Supabase regular-question IDs match
 - [ ] Question checked in its category and Mixed mode
 - [ ] Lint, tests and production build pass

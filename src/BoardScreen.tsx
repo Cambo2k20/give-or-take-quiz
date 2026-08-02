@@ -59,7 +59,7 @@ const COPY: Record<
   },
   survival: {
     label: "Survival",
-    blurb: "Longest run, all nine subjects in the draw.",
+    blurb: "Longest run, all playable subjects in the draw.",
     unit: "in a row",
     attemptNoun: "attempts",
     nobodyAbove: "Nobody has gone further.",

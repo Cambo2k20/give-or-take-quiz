@@ -1,4 +1,5 @@
 import { questions } from "./questions";
+import { isQuestionCategory } from "./categories";
 import {
   DEFAULT_PROFILE_AVATAR,
   isProfileAvatarKey,
@@ -189,13 +190,14 @@ function headToHead(value: unknown): HeadToHeadRecord {
 
 function challenge(value: unknown): ChallengeSummary {
   const row = object(value);
+  const classicMode =
+    row.classic_mode === "mixed" || isQuestionCategory(row.classic_mode)
+      ? row.classic_mode
+      : null;
   return {
     id: text(row.id),
     format: row.format === "survival" ? "survival" : "classic",
-    classicMode:
-      typeof row.classic_mode === "string"
-        ? (row.classic_mode as GameMode)
-        : null,
+    classicMode,
     state: text(row.state, "draft") as ChallengeState,
     role: row.role === "recipient" ? "recipient" : "challenger",
     opponent: profile(row.opponent),

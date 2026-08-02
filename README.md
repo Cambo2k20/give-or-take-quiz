@@ -17,18 +17,27 @@ and find out how close you were.
 - **Survival** — keep answering until the first miss. The acceptable range
   narrows every three questions, and the number survived is the score.
 
-Classic currently covers eight subjects:
+The client understands ten subjects. Eight are live; Dinosaurs and Games are
+incubating behind disabled **Coming soon** cards until each reaches 20 regular
+questions.
 
-| Subject | What it covers | Regular questions |
-| --- | --- | ---: |
-| Population | Countries, cities and online populations | 35 |
-| History | Events, dates and historical money | 42 |
-| Geography | Oceans, deserts, mountains and land | 54 |
-| Science | Physics, chemistry and the human body | 50 |
-| Animals | Size, speed, behaviour and lifespans | 56 |
-| Space | Planets, missions, spacecraft and astronomy | 55 |
-| Technology | Machines, infrastructure and inventions | 50 |
-| Movies | Release dates, productions and box office | 30 |
+| Subject | What it covers | Status | Regular questions |
+| --- | --- | --- | ---: |
+| Population | Countries, cities and online populations | Live | 35 |
+| History | Events, dates and historical money | Live | 42 |
+| Geography | Oceans, deserts, mountains and land | Live | 54 |
+| Science | Physics, chemistry and the human body | Live | 50 |
+| Animals | Size, speed, behaviour and lifespans | Live | 56 |
+| Space | Planets, missions, spacecraft and astronomy | Live | 55 |
+| Technology | Machines, infrastructure and inventions | Live | 50 |
+| Movies | Release dates, productions and box office | Live | 30 |
+| Dinosaurs | Dinosaurs, fossils, trackways and the Mesozoic | Coming soon | 5 |
+| Games | Video, board, card, tabletop and competitive games | Coming soon | 5 |
+
+For local testing only, set `VITE_ENABLE_INCUBATING_CATEGORIES=true` in a
+development environment. The override is ignored by production builds and only
+enables an incubating subject when its bundled bank contains at least five
+questions.
 
 Every question includes a source and explanation. The slider starts away from
 its midpoint at a deterministic position, so leaving it untouched is not a
@@ -61,7 +70,7 @@ three questions to a floor of ±0.04.
 
 ## Daily puzzles and question data
 
-The current build contains **372 regular questions**. Postgres is the source of
+The current build contains **382 regular questions**. Postgres is the source of
 truth for these records, and [`lib/questions.generated.ts`](lib/questions.generated.ts)
 is the committed offline snapshot used during play. Regenerate it with
 `npm run generate:questions` after changing the database.
@@ -80,6 +89,7 @@ production build.
 | Command | Purpose |
 | --- | --- |
 | `npm run validate:data` | Validate the regular bank and Daily schedule |
+| `npm run validate:question-sync` | Require bundled and Supabase regular-question IDs to match |
 | `npm run generate:questions` | Regenerate the regular offline snapshot from Supabase |
 | `npm run build:daily-sql` | Regenerate `supabase/seed-daily.sql` from the Daily JSON |
 

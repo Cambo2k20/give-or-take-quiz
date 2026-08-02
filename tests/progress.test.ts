@@ -31,11 +31,11 @@ vi.mock("@/lib/supabase", () => ({
 }));
 
 const { diffProgress, fetchProgress } = await import("@/lib/progress");
-const { CATEGORIES } = await import("@/lib/game");
+const { PLAYABLE_CATEGORIES } = await import("@/lib/game");
 const { BADGE_RANK_FLOORS } = await import("@/lib/progress");
 
 function badgeRows() {
-  return CATEGORIES.flatMap((category) =>
+  return PLAYABLE_CATEGORIES.flatMap((category) =>
     BADGE_RANK_FLOORS.map((rankFloor) => ({
       category,
       rank_floor: rankFloor,
@@ -74,7 +74,7 @@ describe("fetchProgress", () => {
     const result = await fetchProgress("player-1");
 
     expect(result.categories.map((entry) => entry.category)).toEqual(
-      CATEGORIES,
+      PLAYABLE_CATEGORIES,
     );
     const space = result.categories.find((entry) => entry.category === "space");
     expect(space).toMatchObject({ xp: 5000, rank: 6, title: "Stargazer" });

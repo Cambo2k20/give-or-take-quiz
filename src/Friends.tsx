@@ -12,18 +12,9 @@ import type { GameMode } from "../lib/types";
 import type { SocialController } from "./useSocial";
 import { formatPoints } from "./questionText";
 import { ProfileAvatarArtwork } from "./Progress";
+import { GAME_MODES } from "../lib/game";
 
-const CLASSIC_MODES: readonly GameMode[] = [
-  "population",
-  "history",
-  "geography",
-  "science",
-  "animals",
-  "space",
-  "technology",
-  "movies",
-  "mixed",
-];
+const CLASSIC_MODES: readonly GameMode[] = GAME_MODES;
 
 type FriendsScreenProps = {
   social: SocialController;

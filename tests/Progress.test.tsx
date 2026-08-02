@@ -36,7 +36,7 @@ const fixtureCategories: PlayerProgress["categories"] = [
     fraction: 0.5,
   }));
 
-const badgeTitles: Record<QuestionCategory, readonly string[]> = {
+const badgeTitles: Partial<Record<QuestionCategory, readonly string[]>> = {
   population: [
     "People Watcher",
     "Crowd Counter",
