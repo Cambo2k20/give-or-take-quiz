@@ -14,6 +14,37 @@ The normal workflow is:
 Research → Add database record → Generate TypeScript → Validate → Test
 ```
 
+## How daily questions reach the category bank
+
+A question written for the daily is not locked away forever. It moves through
+four states:
+
+```text
+reserved → scheduled → played → retired
+```
+
+- **Reserved.** `is_daily` is true and the question has no `daily_set_questions`
+  row. It is excluded from category, Mixed, Survival and challenge play, and
+  from the generated offline bank. This is the pool a daily is built from.
+- **Scheduled.** A `daily_set_questions` row places it on a date. Still
+  excluded, and a future date stays sealed by row-level security.
+- **Played.** On its date it is the daily. Still excluded from everything else,
+  because the round is still being scored.
+- **Retired.** Once every date it is scheduled for is in the past,
+  `public.retire_expired_daily_questions()` clears `is_daily` and the question
+  becomes an ordinary category question.
+
+Retirement is what the scheduled refresh performs; it also regenerates the
+offline bank in the same run, so the flag and the bundled bank never disagree.
+Because the game deals rounds from that committed bank rather than from
+Postgres, a retired question only reaches players once the refresh has landed.
+
+This is why `npm run validate:data` only rejects a daily question that also
+sits in the category bank when its date is still ahead. After the date passes,
+appearing in both `data/daily-sets.json` and the bank is the intended result:
+past dailies stay replayable from the JSON while the same record is dealt in
+category rounds.
+
 ## 1. Choose the category
 
 Use one of the existing category identifiers:

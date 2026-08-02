@@ -85,6 +85,14 @@ const bankPrompts = new Set(
   questions.map((question) => question.prompt.trim().toLowerCase()),
 );
 
+/**
+ * A daily that has already run is retired into the category pool, so from that
+ * point its questions legitimately appear in both this file and the bank. Only
+ * a daily still to be played -- today's included, because it is still being
+ * scored -- has to be unique to the daily bank.
+ */
+const TODAY = new Date().toISOString().slice(0, 10);
+
 let daily: DailySchedule | null = null;
 try {
   daily = JSON.parse(readFileSync(DAILY_PATH, "utf8")) as DailySchedule;
@@ -150,15 +158,20 @@ if (daily) {
       }
       seenDailyIds.add(question.id);
 
-      // Daily questions are written for the daily; a shared record would leak
-      // the answer to anyone who had met it in category play.
-      if (bankIds.has(question.id)) {
-        errors.push(`${where}: ${question.id} also exists in the category bank`);
-      }
-      if (bankPrompts.has(question.prompt?.trim().toLowerCase())) {
-        errors.push(
-          `${where}: ${question.id} repeats a prompt from the category bank`,
-        );
+      // An unplayed daily question must not also sit in the category bank: a
+      // shared record would leak the answer to anyone who had met it in
+      // category play. Once the date has passed that sharing is the point.
+      if (set.date >= TODAY) {
+        if (bankIds.has(question.id)) {
+          errors.push(
+            `${where}: ${question.id} also exists in the category bank`,
+          );
+        }
+        if (bankPrompts.has(question.prompt?.trim().toLowerCase())) {
+          errors.push(
+            `${where}: ${question.id} repeats a prompt from the category bank`,
+          );
+        }
       }
 
       // A mistyped field would throw inside the semantic checks, so report the
