@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type {
   ClassicLeaderboardRow,
   DailyLeaderboardRow,
@@ -14,7 +14,7 @@ import {
 } from "./Leaderboard";
 import { formatPoints } from "./questionText";
 
-type CategoryFilter = GameMode | "all";
+export type CategoryFilter = GameMode | "all";
 export type LeaderboardFormat = "classic" | "daily" | "survival";
 
 const FORMAT_ORDER: readonly LeaderboardFormat[] = [
@@ -118,11 +118,14 @@ type BoardScreenProps = {
   format: LeaderboardFormat;
   /** Which day the Daily board is showing, as ISO `YYYY-MM-DD`. */
   dailyDate: string;
+  categoryFilter: CategoryFilter;
+  onCategoryFilterChange: (category: CategoryFilter) => void;
   onFormatChange: (format: LeaderboardFormat) => void;
   onPlay: (category: CategoryFilter) => void;
   onPlayDaily: () => void;
   onPlaySurvival: () => void;
   onReturnHome: () => void;
+  onOpenPlayer: (playerId: string) => void;
   headingRef: React.RefObject<HTMLHeadingElement | null>;
 };
 
@@ -140,16 +143,16 @@ export function BoardScreen({
   profile,
   format,
   dailyDate,
+  categoryFilter,
+  onCategoryFilterChange,
   onFormatChange,
   onPlay,
   onPlayDaily,
   onPlaySurvival,
   onReturnHome,
+  onOpenPlayer,
   headingRef,
 }: BoardScreenProps) {
-  const [categoryFilter, setCategoryFilter] =
-    useState<CategoryFilter>("all");
-
   const classic = format === "classic";
   const daily = format === "daily";
   const copy = COPY[format];
@@ -243,7 +246,7 @@ export function BoardScreen({
             <select
               value={categoryFilter}
               onChange={(event) =>
-                setCategoryFilter(event.target.value as CategoryFilter)
+                onCategoryFilterChange(event.target.value as CategoryFilter)
               }
             >
               <option value="all">All categories</option>
@@ -310,6 +313,7 @@ export function BoardScreen({
           error={error}
           profile={profile}
           modeLabels={modeLabels}
+          onOpenPlayer={onOpenPlayer}
         />
       ) : daily ? (
         <DailyLeaderboardPanel
@@ -317,6 +321,7 @@ export function BoardScreen({
           loading={loading}
           error={error}
           profile={profile}
+          onOpenPlayer={onOpenPlayer}
         />
       ) : (
         <SurvivalLeaderboardPanel
@@ -324,6 +329,7 @@ export function BoardScreen({
           loading={loading}
           error={error}
           profile={profile}
+          onOpenPlayer={onOpenPlayer}
         />
       )}
 
