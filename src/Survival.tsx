@@ -144,6 +144,8 @@ type SurvivalOverProps = {
   boardCallout?: ReactNode;
   /** Rank-ups and achievements the run just earned, if any. */
   progressRibbon?: ReactNode;
+  /** Replaces ordinary replay/share actions for an asynchronous challenge. */
+  challengeCallout?: ReactNode;
 };
 
 export function SurvivalOver({
@@ -158,6 +160,7 @@ export function SurvivalOver({
   headingRef,
   boardCallout,
   progressRibbon,
+  challengeCallout,
 }: SurvivalOverProps) {
   const isBest = survived >= best && survived > 0;
 
@@ -178,27 +181,29 @@ export function SurvivalOver({
           </p>
         )}
 
-        <div className="result-summary">
-          <p>
-            {isBest
-              ? "That is your longest run yet."
-              : `Your best run is ${formatPoints(best)}.`}
-          </p>
-          <div className="result-actions">
-            <button className="primary-button" type="button" onClick={onRunAgain}>
-              Run it back
-            </button>
-            <button className="secondary-button" type="button" onClick={onHome}>
-              Back to the game
-            </button>
-            <button className="secondary-button" type="button" onClick={onShare}>
-              Share result
-            </button>
+        {challengeCallout ?? (
+          <div className="result-summary">
+            <p>
+              {isBest
+                ? "That is your longest run yet."
+                : `Your best run is ${formatPoints(best)}.`}
+            </p>
+            <div className="result-actions">
+              <button className="primary-button" type="button" onClick={onRunAgain}>
+                Run it back
+              </button>
+              <button className="secondary-button" type="button" onClick={onHome}>
+                Back to the game
+              </button>
+              <button className="secondary-button" type="button" onClick={onShare}>
+                Share result
+              </button>
+            </div>
+            <p className="share-status" role="status">
+              {shareStatus}
+            </p>
           </div>
-          <p className="share-status" role="status">
-            {shareStatus}
-          </p>
-        </div>
+        )}
       </div>
 
       {progressRibbon}
