@@ -6745,8 +6745,8 @@ export const generatedQuestions: readonly Question[] = [
     subtype: "percentage",
     prompt: "What share of Earth's species died out alongside the dinosaurs?",
     answer: 70,
-    min: 15,
-    max: 99,
+    min: 0,
+    max: 100,
     scale: "linear",
     unit: "percent",
     source: {
