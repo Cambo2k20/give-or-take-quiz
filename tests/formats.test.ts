@@ -13,6 +13,7 @@ import {
 } from "@/lib/formats";
 import { positionToValue } from "@/lib/game";
 import type { Question } from "@/lib/types";
+import schedule from "@/data/daily-sets.json";
 
 function question(overrides: Partial<Question> = {}): Question {
   return {
@@ -128,9 +129,24 @@ describe("buildSurvivalDeck", () => {
     expect(new Set(deck.map((q) => q.id)).size).toBe(deck.length);
   });
 
-  it("excludes daily questions, which the server would reject", () => {
+  it("excludes questions reserved for a daily that has not been played", () => {
     const deck = buildSurvivalDeck(() => 0.42);
-    expect(deck.some((q) => q.id.startsWith("daily-"))).toBe(false);
+    const dealt = new Set(deck.map((q) => q.id));
+    const today = new Date().toISOString().slice(0, 10);
+
+    // A `daily-` id no longer means the server would reject the question:
+    // once every date it was scheduled for has passed it is retired into the
+    // category pool and dealt like any other. What must never be dealt is a
+    // daily still ahead of us, today's included, because that leaks the
+    // answer to a puzzle still being scored.
+    const reserved = schedule.sets
+      .filter((set) => set.date >= today)
+      .flatMap((set) => set.questions.map((q) => q.id));
+
+    // Without this the assertion goes quietly vacuous once the schedule runs
+    // out, which is exactly when it would matter most.
+    expect(reserved.length).toBeGreaterThan(0);
+    expect(reserved.filter((id) => dealt.has(id))).toEqual([]);
   });
 });
 
