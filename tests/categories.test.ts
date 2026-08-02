@@ -11,16 +11,15 @@ const counts = Object.fromEntries(
 );
 
 describe("category registry", () => {
-  it("defines ten subjects while keeping eight live", () => {
+  it("defines ten live subjects at public launch", () => {
     expect(ALL_CATEGORIES).toHaveLength(10);
-    expect(LIVE_CATEGORIES).toHaveLength(8);
-    expect(CATEGORY_REGISTRY.filter(({ availability }) => availability === "incubating").map(({ id }) => id)).toEqual([
-      "dinosaurs",
-      "games",
-    ]);
+    expect(LIVE_CATEGORIES).toHaveLength(10);
+    expect(
+      CATEGORY_REGISTRY.every(({ availability }) => availability === "live"),
+    ).toBe(true);
   });
 
-  it("ignores the incubating override outside development", () => {
+  it("does not need the former incubating override in production", () => {
     expect(
       getPlayableCategories(counts, {
         mode: "production",
@@ -29,13 +28,13 @@ describe("category registry", () => {
     ).toEqual(LIVE_CATEGORIES);
   });
 
-  it("requires both the development override and five questions", () => {
+  it("includes Dinosaurs and Games without a development override", () => {
     expect(
       getPlayableCategories(
         { ...counts, dinosaurs: 5, games: 4 },
         { mode: "development", enableIncubating: "true" },
       ),
-    ).toEqual([...LIVE_CATEGORIES, "dinosaurs"]);
+    ).toEqual(LIVE_CATEGORIES);
 
     expect(
       getPlayableCategories(counts, {

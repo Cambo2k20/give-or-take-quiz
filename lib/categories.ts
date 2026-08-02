@@ -147,7 +147,7 @@ export const CATEGORY_REGISTRY = [
     label: "Dinosaurs",
     description: "Dinosaurs, fossils, trackways and the Mesozoic world.",
     icon: "fossil",
-    availability: "incubating",
+    availability: "live",
     rankTitles: [
       { rank: 5, title: "Fossil Finder" },
       { rank: 10, title: "Trackway Tracker" },
@@ -162,7 +162,7 @@ export const CATEGORY_REGISTRY = [
     label: "Games",
     description: "Video, board, card, tabletop and competitive games.",
     icon: "gamepad",
-    availability: "incubating",
+    availability: "live",
     rankTitles: [
       { rank: 5, title: "Rookie Gamer" },
       { rank: 10, title: "Level Navigator" },
