@@ -99,7 +99,7 @@ jobs:
             exit 0
           fi
 
-          retired=$(git diff --numstat -- lib/questions.generated.ts | awk '{print $1}')
+          echo "Bank changed: $(git diff --numstat -- lib/questions.generated.ts | awk '{print $1}') added line(s)."
           branch=automation/retire-expired-dailies
 
           git config user.name "github-actions[bot]"
@@ -113,13 +113,20 @@ jobs:
           if gh pr view "$branch" --json number >/dev/null 2>&1; then
             echo "Existing pull request updated."
           else
+            cat > "$RUNNER_TEMP/pr-body.md" <<'BODY'
+          Expired daily questions have rejoined the category pool, and
+          `lib/questions.generated.ts` has been regenerated to match.
+
+          `validate:data` and `validate:question-sync` both passed before this
+          was opened, so the bundled bank and Supabase agree.
+
+          Opened automatically by `.github/workflows/retire-expired-dailies.yml`.
+          Merging deploys the refreshed bank.
+          BODY
+
             gh pr create \
               --base main \
               --head "$branch" \
               --title "Refresh the offline bank after retiring expired dailies" \
-              --body "Expired daily questions have rejoined the category pool, and \`lib/questions.generated.ts\` has been regenerated to match (${retired} added line(s)).
-
-\`validate:data\` and \`validate:question-sync\` both passed before this was opened, so the bundled bank and Supabase agree.
-
-Opened automatically by \`.github/workflows/retire-expired-dailies.yml\`. Merging deploys the refreshed bank."
+              --body-file "$RUNNER_TEMP/pr-body.md"
           fi
