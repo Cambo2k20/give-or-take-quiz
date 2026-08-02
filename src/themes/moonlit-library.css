@@ -1,0 +1,482 @@
+.moonlit-library {
+  overflow: hidden;
+  isolation: isolate;
+  pointer-events: none;
+  background: var(--artwork-library-void);
+}
+
+.moonlit-library--preview {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 1;
+}
+
+.moonlit-library--backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+}
+
+.moonlit-library__aisle,
+.moonlit-library__veil,
+.moonlit-library__beam,
+.moonlit-library__floorpool,
+.moonlit-library__dust,
+.moonlit-library__pages,
+.moonlit-library__vignette {
+  position: absolute;
+  inset: 0;
+}
+
+.moonlit-library__aisle {
+  perspective: 1000px;
+  perspective-origin: 50% 42%;
+  transform-style: preserve-3d;
+}
+
+.moonlit-library__bookcase {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.moonlit-library__bookcase--left {
+  top: -16%;
+  left: -6%;
+  width: 44%;
+  height: 128%;
+  transform: rotateY(31deg);
+  transform-origin: left center;
+}
+
+.moonlit-library__bookcase--right {
+  top: -16%;
+  right: -6%;
+  width: 44%;
+  height: 128%;
+  transform: rotateY(-31deg);
+  transform-origin: right center;
+}
+
+.moonlit-library__bookcase--back {
+  top: 2%;
+  left: 50%;
+  width: 34%;
+  height: 86%;
+  opacity: 0.75;
+  filter: blur(3.5px);
+  transform: translateX(-50%) translateZ(-560px);
+}
+
+.moonlit-library__shelf {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 0;
+}
+
+.moonlit-library__shelf-books {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: calc(100% - 11px);
+  padding-left: 6px;
+}
+
+.moonlit-library__shelf-board {
+  flex: 0 0 11px;
+  height: 11px;
+  background: linear-gradient(
+    180deg,
+    var(--artwork-library-board-top) 0%,
+    var(--artwork-library-board) 45%,
+    var(--artwork-library-board-deep) 100%
+  );
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(201, 162, 77, 0.12);
+}
+
+.moonlit-library__book,
+.moonlit-library__book-gap {
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+}
+
+.moonlit-library__book {
+  border-radius: 2px 2px 0 0;
+  box-shadow:
+    inset -2px 0 3px rgba(0, 0, 0, 0.55),
+    inset 2px 0 0 rgba(255, 255, 255, 0.045);
+}
+
+.moonlit-library__book.is-gilt::after {
+  position: absolute;
+  top: 16%;
+  right: 22%;
+  left: 22%;
+  height: 2px;
+  content: "";
+  background: color-mix(
+    in srgb,
+    var(--artwork-library-brass) 50%,
+    transparent
+  );
+  box-shadow: 0 7px 0
+    color-mix(in srgb, var(--artwork-library-brass) 28%, transparent);
+}
+
+.moonlit-library__book.is-tilted {
+  transform-origin: bottom left;
+}
+
+.moonlit-library__book--tone-1 {
+  background: var(--artwork-library-book-1);
+}
+
+.moonlit-library__book--tone-2 {
+  background: var(--artwork-library-book-2);
+}
+
+.moonlit-library__book--tone-3 {
+  background: var(--artwork-library-book-3);
+}
+
+.moonlit-library__book--tone-4 {
+  background: var(--artwork-library-book-4);
+}
+
+.moonlit-library__book--tone-5 {
+  background: var(--artwork-library-book-5);
+}
+
+.moonlit-library__book--tone-6 {
+  background: var(--artwork-library-book-6);
+}
+
+.moonlit-library__book--tone-7 {
+  background: var(--artwork-library-book-7);
+}
+
+.moonlit-library__book--tone-8 {
+  background: var(--artwork-library-book-8);
+}
+
+.moonlit-library__book--tone-9 {
+  background: var(--artwork-library-book-9);
+}
+
+.moonlit-library__book--tone-10 {
+  background: var(--artwork-library-book-10);
+}
+
+.moonlit-library__book--tone-11 {
+  background: var(--artwork-library-book-11);
+}
+
+.moonlit-library__book--tone-12 {
+  background: var(--artwork-library-book-12);
+}
+
+.moonlit-library__veil {
+  z-index: 1;
+  background:
+    radial-gradient(
+      120% 90% at 50% 38%,
+      rgba(7, 10, 20, 0.3) 0%,
+      rgba(7, 10, 20, 0.8) 58%,
+      rgba(7, 10, 20, 0.96) 100%
+    ),
+    linear-gradient(
+      180deg,
+      var(--artwork-library-void) 0%,
+      rgba(7, 10, 20, 0.45) 22%,
+      rgba(7, 10, 20, 0.35) 62%,
+      rgba(7, 10, 20, 0.92) 100%
+    );
+}
+
+.moonlit-library__beam {
+  z-index: 2;
+  right: auto;
+  bottom: auto;
+  mix-blend-mode: screen;
+}
+
+.moonlit-library__beam--wide {
+  top: -40%;
+  left: 46%;
+  width: 46vw;
+  height: 170%;
+  background: linear-gradient(
+    178deg,
+    color-mix(in srgb, var(--artwork-library-moon) 30%, transparent) 0%,
+    color-mix(in srgb, var(--artwork-library-moon) 10%, transparent) 46%,
+    rgba(120, 150, 210, 0.02) 78%,
+    transparent 100%
+  );
+  filter: blur(34px);
+  transform: rotate(13deg);
+  animation: moonlit-library-sway 22s ease-in-out infinite alternate;
+}
+
+.moonlit-library__beam--thin {
+  top: -34%;
+  left: 62%;
+  width: 11vw;
+  height: 150%;
+  background: linear-gradient(
+    178deg,
+    color-mix(
+        in srgb,
+        var(--artwork-library-moon-bright) 36%,
+        transparent
+      )
+      0%,
+    color-mix(in srgb, var(--artwork-library-moon) 10%, transparent) 52%,
+    transparent 88%
+  );
+  filter: blur(11px);
+  transform: rotate(13deg);
+  animation: moonlit-library-sway 22s ease-in-out infinite alternate-reverse;
+}
+
+.moonlit-library--preview .moonlit-library__beam--wide {
+  width: 58%;
+}
+
+.moonlit-library--preview .moonlit-library__beam--thin {
+  width: 14%;
+}
+
+.moonlit-library__floorpool {
+  z-index: 2;
+  top: auto;
+  right: auto;
+  bottom: -16%;
+  left: 52%;
+  width: 62vw;
+  height: 36vh;
+  background: radial-gradient(
+    50% 50% at 50% 50%,
+    color-mix(in srgb, var(--artwork-library-moon) 16%, transparent),
+    transparent 72%
+  );
+  filter: blur(24px);
+  mix-blend-mode: screen;
+  transform: translateX(-50%);
+}
+
+.moonlit-library--preview .moonlit-library__floorpool {
+  width: 76%;
+  height: 36%;
+}
+
+@keyframes moonlit-library-sway {
+  from {
+    transform: rotate(12deg) translateX(-1.2vw);
+  }
+
+  to {
+    transform: rotate(15deg) translateX(1.6vw);
+  }
+}
+
+.moonlit-library__dust,
+.moonlit-library__pages {
+  z-index: 3;
+}
+
+.moonlit-library__dust > span {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--artwork-library-moon-bright);
+  box-shadow: 0 0 6px
+    color-mix(in srgb, var(--artwork-library-moon) 75%, transparent);
+  animation: moonlit-library-drift var(--moonlit-duration) linear
+    var(--moonlit-delay) infinite;
+}
+
+@keyframes moonlit-library-drift {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+
+  14% {
+    opacity: var(--moonlit-opacity);
+  }
+
+  50% {
+    transform: translate3d(
+      var(--moonlit-dx),
+      calc(var(--moonlit-rise) * 0.5),
+      0
+    );
+  }
+
+  86% {
+    opacity: var(--moonlit-opacity);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(0, var(--moonlit-rise), 0);
+  }
+}
+
+.moonlit-library__leaf {
+  position: absolute;
+  width: 42px;
+  height: 56px;
+  opacity: 0;
+  background: linear-gradient(
+    128deg,
+    var(--artwork-library-page) 0%,
+    var(--artwork-library-page-mid) 52%,
+    var(--artwork-library-page-edge) 100%
+  );
+  border-radius: 2px 11px 3px 7px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55);
+  animation: moonlit-library-flutter var(--moonlit-duration) ease-in-out
+    var(--moonlit-delay) infinite;
+}
+
+.moonlit-library__leaf::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(
+    112deg,
+    transparent 46%,
+    rgba(120, 104, 72, 0.4) 50%,
+    transparent 54%
+  );
+  border-radius: inherit;
+}
+
+@keyframes moonlit-library-flutter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate3d(1, 1, 0.25, 0deg);
+  }
+
+  6% {
+    opacity: 0.7;
+  }
+
+  46% {
+    opacity: 0.55;
+    transform: translate3d(
+        calc(var(--moonlit-dx) * 0.55),
+        calc(var(--moonlit-dy) * 0.55),
+        0
+      )
+      rotate3d(1, 1, 0.25, 300deg);
+  }
+
+  72%,
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--moonlit-dx), var(--moonlit-dy), 0)
+      rotate3d(1, 1, 0.25, 540deg);
+  }
+}
+
+.moonlit-library__vignette {
+  z-index: 4;
+  background: radial-gradient(
+    115% 85% at 50% 45%,
+    transparent 42%,
+    var(--artwork-library-vignette) 100%
+  );
+}
+
+.moonlit-library__lock {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  left: 50%;
+  padding: 0.34rem 0.56rem;
+  color: var(--artwork-library-lock-ink);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--artwork-library-lock-bg);
+  border: 1px solid color-mix(in srgb, currentcolor 18%, transparent);
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+}
+
+.moonlit-library--backdrop .moonlit-library__beam,
+.moonlit-library--backdrop .moonlit-library__dust > span,
+.moonlit-library--backdrop .moonlit-library__leaf {
+  will-change: transform, opacity;
+}
+
+.moonlit-library--preview *,
+.moonlit-library--preview *::before,
+.moonlit-library--preview *::after {
+  animation-play-state: paused !important;
+}
+
+.theme-card-button:is(:hover, :focus-visible, :active)
+  .moonlit-library--preview *,
+.theme-card-button:is(:hover, :focus-visible, :active)
+  .moonlit-library--preview *::before,
+.theme-card-button:is(:hover, :focus-visible, :active)
+  .moonlit-library--preview *::after {
+  animation-play-state: running !important;
+}
+
+@media (max-width: 600px) {
+  .moonlit-library__bookcase--back {
+    display: none;
+  }
+
+  .moonlit-library__bookcase--left {
+    left: -18%;
+    width: 62%;
+    transform: rotateY(38deg);
+  }
+
+  .moonlit-library__bookcase--right {
+    right: -18%;
+    width: 62%;
+    transform: rotateY(-38deg);
+  }
+
+  .moonlit-library__beam--wide {
+    filter: blur(24px);
+  }
+
+  .moonlit-library__beam--thin {
+    filter: blur(8px);
+  }
+
+  .moonlit-library__dust > span:nth-child(n + 27) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moonlit-library *,
+  .moonlit-library *::before,
+  .moonlit-library *::after {
+    animation: none !important;
+  }
+
+  .moonlit-library__leaf {
+    display: none;
+  }
+
+  .moonlit-library__dust > span {
+    opacity: var(--moonlit-opacity);
+  }
+}

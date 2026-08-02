@@ -28,6 +28,10 @@ const auroraDriftStyles = readFileSync(
   resolve("src/themes/aurora-drift.css"),
   "utf8",
 );
+const moonlitLibraryStyles = readFileSync(
+  resolve("src/themes/moonlit-library.css"),
+  "utf8",
+);
 
 describe("theme artwork registry", () => {
   it("has exactly one auto-discovered artwork component per theme", () => {
@@ -93,6 +97,7 @@ describe("theme artwork registry", () => {
       frontRowStyles,
       deepSpaceStyles,
       auroraDriftStyles,
+      moonlitLibraryStyles,
     ]) {
       expect(css).toContain("@media (prefers-reduced-motion: reduce)");
       expect(css).toMatch(/animation:\s*none(?:\s*!important)?/);
@@ -107,6 +112,7 @@ describe("theme artwork registry", () => {
         frontRowStyles,
         deepSpaceStyles,
         auroraDriftStyles,
+        moonlitLibraryStyles,
       ].join("\n"),
     ).not.toContain("backdrop-filter");
   });
@@ -117,6 +123,7 @@ describe("theme artwork registry", () => {
       cityStyles,
       frontRowStyles,
       auroraDriftStyles,
+      moonlitLibraryStyles,
     ]) {
       const selectors = [...css.matchAll(/([^{}]+)\{[^{}]*will-change:/g)].map(
         (match) => match[1],
@@ -162,6 +169,73 @@ describe("Aurora Drift artwork", () => {
     );
     expect(container.querySelector(".aurora-drift__lock")).not.toBeNull();
     expect(themeStyles).toContain(".aurora-drift--preview *");
+  });
+});
+
+describe("Moonlit Library artwork", () => {
+  it("preserves the complete room composition", () => {
+    const { container } = render(
+      <ThemeArtwork
+        themeId="moonlit-library"
+        mode="dark"
+        variant="backdrop"
+      />,
+    );
+
+    expect(
+      container.querySelectorAll(".moonlit-library__bookcase"),
+    ).toHaveLength(3);
+    expect(
+      container.querySelectorAll(".moonlit-library__shelf"),
+    ).toHaveLength(19);
+    expect(
+      container.querySelectorAll(
+        ".moonlit-library__book, .moonlit-library__book-gap",
+      ),
+    ).toHaveLength(229);
+    expect(
+      container.querySelectorAll(".moonlit-library__beam"),
+    ).toHaveLength(2);
+    expect(
+      container.querySelectorAll(".moonlit-library__dust > span"),
+    ).toHaveLength(58);
+    expect(
+      container.querySelectorAll(".moonlit-library__leaf"),
+    ).toHaveLength(3);
+  });
+
+  it("keeps beam, dust and page motion with a reduced-motion fallback", () => {
+    expect(moonlitLibraryStyles).toContain("moonlit-library-sway");
+    expect(moonlitLibraryStyles).toContain("moonlit-library-drift");
+    expect(moonlitLibraryStyles).toContain("moonlit-library-flutter");
+    expect(moonlitLibraryStyles).toContain(
+      "@media (prefers-reduced-motion: reduce)",
+    );
+    expect(moonlitLibraryStyles).toMatch(
+      /\.moonlit-library \*[\s\S]*animation:\s*none !important/,
+    );
+  });
+
+  it("renders a locked preview with its real artwork paused", () => {
+    const { container } = render(
+      <ThemeArtwork
+        themeId="moonlit-library"
+        mode="dark"
+        variant="preview"
+        locked
+      />,
+    );
+
+    expect(container.querySelector(".moonlit-library--preview")).toHaveClass(
+      "is-locked",
+    );
+    expect(container.querySelector(".moonlit-library__lock")).not.toBeNull();
+    expect(moonlitLibraryStyles).toContain(
+      ".moonlit-library--preview *",
+    );
+    expect(moonlitLibraryStyles).toContain(
+      "animation-play-state: paused",
+    );
   });
 });
 

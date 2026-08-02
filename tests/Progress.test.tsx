@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -226,7 +226,7 @@ beforeEach(() => {
 });
 
 async function openAccount(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole("button", { name: "Ada" }));
+  await user.click(screen.getByRole("button", { name: "Profile, Ada" }));
   return screen.findByRole("heading", { name: /^ada$/i });
 }
 
@@ -476,7 +476,11 @@ describe("progression screens", () => {
     );
     // The fixture's Space rank is 1; the gate is rank 5 (Stargazer).
     expect(screen.getByText(/Space rank 1 \/ 5 for Stargazer/)).toBeInTheDocument();
-    expect(screen.queryByText(/^Unlocked/)).not.toBeInTheDocument();
+    expect(
+      within(screen.getByLabelText("Deep Space, locked")).queryByText(
+        /^Unlocked/,
+      ),
+    ).not.toBeInTheDocument();
   });
 
   it("shows Deep Space unlocked once Space reaches its gate", async () => {
@@ -506,6 +510,78 @@ describe("progression screens", () => {
     expect(
       await screen.findByText(/Unlocked · Space rank 5 · Stargazer/),
     ).toBeInTheDocument();
+  });
+
+  it("keeps Moonlit Library locked below History rank 5", async () => {
+    vi.mocked(useProgress).mockReturnValue({
+      enabled: true,
+      progress: {
+        ...fixture,
+        categories: fixture.categories.map((entry) =>
+          entry.category === "history"
+            ? { ...entry, rank: 4, title: "Newcomer" }
+            : entry,
+        ),
+      },
+      change: null,
+      refresh: vi.fn().mockResolvedValue(null),
+      clearChange: vi.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<Game />);
+    await openAccount(user);
+    await user.click(
+      screen.getByRole("button", { name: /manage backgrounds/i }),
+    );
+
+    const lockedCard = await screen.findByLabelText(
+      "Moonlit Library, locked",
+    );
+    expect(lockedCard).toHaveTextContent("History rank 4 / 5 for Time Tourist");
+    expect(
+      screen.queryByRole("button", { name: /Moonlit Library/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("unlocks, applies and removes Moonlit Library at History rank 5", async () => {
+    vi.mocked(useProgress).mockReturnValue({
+      enabled: true,
+      progress: {
+        ...fixture,
+        categories: fixture.categories.map((entry) =>
+          entry.category === "history"
+            ? { ...entry, rank: 5, title: "Time Tourist" }
+            : entry,
+        ),
+      },
+      change: null,
+      refresh: vi.fn().mockResolvedValue(null),
+      clearChange: vi.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<Game />);
+    await openAccount(user);
+    await user.click(
+      screen.getByRole("button", { name: /manage backgrounds/i }),
+    );
+
+    expect(
+      await screen.findByText(/Unlocked · History rank 5 · Time Tourist/),
+    ).toBeInTheDocument();
+    const card = screen.getByRole("button", { name: /Moonlit Library/i });
+    expect(card).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(card);
+    expect(card).toHaveAttribute("aria-pressed", "true");
+    expect(document.documentElement.dataset.bgTheme).toBe("moonlit-library");
+    expect(document.documentElement.dataset.bgThemeActive).toBeUndefined();
+    expect(screen.getByText("Applied in dark mode")).toBeInTheDocument();
+
+    await user.click(card);
+    expect(card).toHaveAttribute("aria-pressed", "false");
+    expect(document.documentElement.dataset.bgTheme).toBeUndefined();
   });
 
   it("applies and removes an unlocked background from its card", async () => {
