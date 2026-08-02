@@ -2,17 +2,6 @@ export const RANK_FLOORS = [5, 10, 15, 20, 25, 30] as const;
 
 export type RankFloor = (typeof RANK_FLOORS)[number];
 export type CategoryAvailability = "live" | "incubating";
-export type CategoryIcon =
-  | "people"
-  | "clock"
-  | "globe"
-  | "bolt"
-  | "paw"
-  | "rocket"
-  | "stack"
-  | "film"
-  | "fossil"
-  | "gamepad";
 
 /**
  * The single catalogue for every subject the client understands.
@@ -26,7 +15,6 @@ export const CATEGORY_REGISTRY = [
     id: "population",
     label: "Population",
     description: "How many people live in a country, a city, or online.",
-    icon: "people",
     availability: "live",
     rankTitles: [
       { rank: 5, title: "People Watcher" },
@@ -41,7 +29,6 @@ export const CATEGORY_REGISTRY = [
     id: "history",
     label: "History",
     description: "Place turning points on the timeline, and price the past.",
-    icon: "clock",
     availability: "live",
     rankTitles: [
       { rank: 5, title: "Time Tourist" },
@@ -56,7 +43,6 @@ export const CATEGORY_REGISTRY = [
     id: "geography",
     label: "Geography",
     description: "Oceans, deserts, mountains and the shape of the land.",
-    icon: "globe",
     availability: "live",
     rankTitles: [
       { rank: 5, title: "Globe Gazer" },
@@ -71,7 +57,6 @@ export const CATEGORY_REGISTRY = [
     id: "science",
     label: "Science",
     description: "Physics, chemistry and the workings of the human body.",
-    icon: "bolt",
     availability: "live",
     rankTitles: [
       { rank: 5, title: "Curious Mind" },
@@ -86,7 +71,6 @@ export const CATEGORY_REGISTRY = [
     id: "animals",
     label: "Animals",
     description: "What they weigh, how fast they run, how long they carry.",
-    icon: "paw",
     availability: "live",
     rankTitles: [
       { rank: 5, title: "Creature Curious" },
@@ -101,7 +85,6 @@ export const CATEGORY_REGISTRY = [
     id: "space",
     label: "Space",
     description: "Orbits, planets and the machines we have sent up there.",
-    icon: "rocket",
     availability: "live",
     rankTitles: [
       { rank: 5, title: "Stargazer" },
@@ -116,7 +99,6 @@ export const CATEGORY_REGISTRY = [
     id: "technology",
     label: "Technology",
     description: "The tallest, heaviest and fastest things we have built.",
-    icon: "stack",
     availability: "live",
     rankTitles: [
       { rank: 5, title: "Tinkerer" },
@@ -131,7 +113,6 @@ export const CATEGORY_REGISTRY = [
     id: "movies",
     label: "Movies",
     description: "When films landed, and what they took at the box office.",
-    icon: "film",
     availability: "live",
     rankTitles: [
       { rank: 5, title: "Casual Viewer" },
@@ -146,7 +127,6 @@ export const CATEGORY_REGISTRY = [
     id: "dinosaurs",
     label: "Dinosaurs",
     description: "Dinosaurs, fossils, trackways and the Mesozoic world.",
-    icon: "fossil",
     availability: "live",
     rankTitles: [
       { rank: 5, title: "Fossil Finder" },
@@ -161,7 +141,6 @@ export const CATEGORY_REGISTRY = [
     id: "games",
     label: "Games",
     description: "Video, board, card, tabletop and competitive games.",
-    icon: "gamepad",
     availability: "live",
     rankTitles: [
       { rank: 5, title: "Rookie Gamer" },
@@ -176,7 +155,6 @@ export const CATEGORY_REGISTRY = [
   id: string;
   label: string;
   description: string;
-  icon: CategoryIcon;
   availability: CategoryAvailability;
   rankTitles: readonly { rank: RankFloor; title: string }[];
 }[];
