@@ -29,6 +29,7 @@ type FriendsScreenProps = {
   social: SocialController;
   modeLabels: Record<GameMode, string>;
   initialChallengeId: string | null;
+  initialSetupFriend?: FriendProfile | null;
   externalError?: string;
   onPlayChallenge: (challenge: ChallengeSummary) => void;
   onBack: () => void;
@@ -200,6 +201,7 @@ export function FriendsScreen({
   social,
   modeLabels,
   initialChallengeId,
+  initialSetupFriend = null,
   externalError = "",
   onPlayChallenge,
   onBack,
@@ -207,7 +209,9 @@ export function FriendsScreen({
 }: FriendsScreenProps) {
   const [searchName, setSearchName] = useState("");
   const [selectedFriend, setSelectedFriend] = useState<Friendship | null>(null);
-  const [setupFriend, setSetupFriend] = useState<FriendProfile | null>(null);
+  const [setupFriend, setSetupFriend] = useState<FriendProfile | null>(
+    initialSetupFriend,
+  );
   const [setupFormat, setSetupFormat] = useState<ChallengeFormat>("classic");
   const [setupMode, setSetupMode] = useState<GameMode>("mixed");
   const [history, setHistory] = useState<FriendMatchHistory | null>(null);

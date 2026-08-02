@@ -244,6 +244,7 @@ type ProfileDashboardProps = {
   onOpenAchievements: () => void;
   onOpenUnlocks: () => void;
   onOpenFriends: () => void;
+  onCustomisePublicProfile: () => void;
   friendCount: number;
   activeChallengeCount: number;
   socialUnreadCount: number;
@@ -271,6 +272,7 @@ export function ProfileDashboard({
   onOpenAchievements,
   onOpenUnlocks,
   onOpenFriends,
+  onCustomisePublicProfile,
   friendCount,
   activeChallengeCount,
   socialUnreadCount,
@@ -437,6 +439,24 @@ export function ProfileDashboard({
           </p>
         </section>
       )}
+
+      <section className="profile-section profile-public-card">
+        <div>
+          <p className="eyebrow">Seen from the leaderboard</p>
+          <h2>Public profile</h2>
+          <p>
+            Feature an earned title, pin achievements and choose an unlocked
+            banner without changing your own game background.
+          </p>
+        </div>
+        <button
+          className="profile-section-action"
+          type="button"
+          onClick={onCustomisePublicProfile}
+        >
+          Customise public profile
+        </button>
+      </section>
 
       <section className="profile-section profile-friends-card">
         <div>

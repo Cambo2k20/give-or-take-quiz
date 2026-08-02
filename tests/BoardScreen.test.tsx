@@ -1,8 +1,9 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { ClassicLeaderboardRow } from "@/lib/leaderboard";
-import { BoardScreen } from "@/src/BoardScreen";
+import { BoardScreen, type CategoryFilter } from "@/src/BoardScreen";
 
 const modes = [
   { mode: "science" as const, title: "Science" },
@@ -60,7 +61,12 @@ const rows: ClassicLeaderboardRow[] = [
 function renderBoard() {
   const onFormatChange = vi.fn();
   const onReturnHome = vi.fn();
-  render(
+  const onOpenPlayer = vi.fn();
+
+  function TestBoard() {
+    const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
+
+    return (
     <BoardScreen
       modes={modes}
       modeLabels={labels}
@@ -74,15 +80,21 @@ function renderBoard() {
       }}
       format="classic"
       dailyDate="2026-07-27"
+      categoryFilter={categoryFilter}
+      onCategoryFilterChange={setCategoryFilter}
       onFormatChange={onFormatChange}
+      onOpenPlayer={onOpenPlayer}
       onPlay={vi.fn()}
       onPlayDaily={vi.fn()}
       onPlaySurvival={vi.fn()}
       onReturnHome={onReturnHome}
       headingRef={{ current: null }}
-    />,
-  );
-  return { onFormatChange, onReturnHome };
+    />
+    );
+  }
+
+  render(<TestBoard />);
+  return { onFormatChange, onReturnHome, onOpenPlayer };
 }
 
 describe("Classic leaderboard screen", () => {
@@ -96,7 +108,7 @@ describe("Classic leaderboard screen", () => {
     );
 
     const list = screen.getByRole("list");
-    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
+    expect(within(list).getAllByRole("button")).toHaveLength(3);
     expect(within(list).getAllByText("Ada")).toHaveLength(2);
     expect(screen.getByText("Correct")).toBeInTheDocument();
     expect(screen.getByText("Accuracy")).toBeInTheDocument();
@@ -112,7 +124,7 @@ describe("Classic leaderboard screen", () => {
       "history",
     );
 
-    const items = within(screen.getByRole("list")).getAllByRole("listitem");
+    const items = within(screen.getByRole("list")).getAllByRole("button");
     expect(items).toHaveLength(2);
     expect(within(items[0]).getByText("Grace")).toBeInTheDocument();
     expect(within(items[0]).getByText("1")).toBeInTheDocument();
@@ -129,5 +141,20 @@ describe("Classic leaderboard screen", () => {
 
     await user.click(screen.getByRole("button", { name: "Return to Home" }));
     expect(onReturnHome).toHaveBeenCalledOnce();
+  });
+
+  it("opens a player profile from the whole row with pointer or keyboard", async () => {
+    const user = userEvent.setup();
+    const { onOpenPlayer } = renderBoard();
+    const adaRows = screen.getAllByRole("button", {
+      name: /view ada's profile/i,
+    });
+
+    await user.click(adaRows[0]);
+    expect(onOpenPlayer).toHaveBeenCalledWith("ada");
+
+    adaRows[1].focus();
+    await user.keyboard("{Enter}");
+    expect(onOpenPlayer).toHaveBeenLastCalledWith("ada");
   });
 });

@@ -34,6 +34,7 @@ import {
 } from "../lib/formats";
 import {
   BoardScreen,
+  type CategoryFilter,
   type LeaderboardFormat,
 } from "./BoardScreen";
 import { SurvivalOver, SurvivalRound } from "./Survival";
@@ -99,6 +100,8 @@ import { FriendsScreen } from "./Friends";
 import {
   submitGameChallenge,
   type ChallengeSummary,
+  type FriendMatchHistory,
+  type FriendProfile,
 } from "../lib/social";
 import {
   ChallengePlayBanner,
@@ -110,6 +113,19 @@ import {
   challengeShareUrl,
   replaceChallengeLink,
 } from "../lib/challengeLink";
+import {
+  playerIdFromUrl,
+  playerProfileReturnState,
+  playerProfileShareUrl,
+  pushPlayerProfileLink,
+  replacePlayerProfileLink,
+} from "../lib/playerProfileLink";
+import { usePublicProfile } from "./usePublicProfile";
+import {
+  PublicProfileEditor,
+  PublicProfileEditorState,
+  PublicProfileScreen,
+} from "./PublicProfile";
 
 type Phase =
   | "category"
@@ -123,12 +139,19 @@ type Phase =
   | "survival-over"
   | "ranks"
   | "achievements"
-  | "unlocks";
+  | "unlocks"
+  | "public-profile"
+  | "profile-editor";
 type RoundResult = { question: Question; guess: number; points: number };
 
 function linkedChallengeId(): string | null {
   if (typeof window === "undefined") return null;
   return challengeIdFromUrl(window.location.href);
+}
+
+function linkedPlayerId(): string | null {
+  if (typeof window === "undefined") return null;
+  return playerIdFromUrl(window.location.href);
 }
 
 const SHIMMER_DURATION_MS = 2600;
@@ -361,10 +384,13 @@ async function copyText(text: string) {
 }
 
 export default function Game() {
-  const [phase, setPhase] = useState<Phase>(() =>
-    linkedChallengeId() ? "account" : "category",
-  );
+  const [phase, setPhase] = useState<Phase>(() => {
+    if (linkedChallengeId()) return "account";
+    if (linkedPlayerId()) return "public-profile";
+    return "category";
+  });
   const [targetChallengeId, setTargetChallengeId] = useState(linkedChallengeId);
+  const [targetPlayerId, setTargetPlayerId] = useState(linkedPlayerId);
   const [rankSubject, setRankSubject] = useState<QuestionCategory | null>(null);
   const [mode, setMode] = useState<GameMode>("mixed");
   const [gameQuestions, setGameQuestions] = useState<Question[]>([]);
@@ -387,7 +413,16 @@ export default function Game() {
   // Non-null while the round in play is a daily, and holds which day's it is.
   const [dailyDate, setDailyDate] = useState<string | null>(null);
   const [leaderboardFormat, setLeaderboardFormat] =
-    useState<LeaderboardFormat>("classic");
+    useState<LeaderboardFormat>(
+      () => playerProfileReturnState()?.format ?? "classic",
+    );
+  const [leaderboardCategoryFilter, setLeaderboardCategoryFilter] =
+    useState<CategoryFilter>(() => {
+      const category = playerProfileReturnState()?.category;
+      return category === "all" || MODES.some((item) => item.mode === category)
+        ? (category as CategoryFilter)
+        : "all";
+    });
   // Which format the hero is offering. Classic keeps the consequence-free
   // warm-up; picking Survival is the act of intent that starts a real run.
   const [heroFormat, setHeroFormat] = useState<PlayFormat>("classic");
@@ -403,6 +438,23 @@ export default function Game() {
   const [challengeSubmit, setChallengeSubmit] =
     useState<ChallengeSubmitState>({ status: "idle" });
   const [challengeOpenError, setChallengeOpenError] = useState("");
+  const [profileActionBusy, setProfileActionBusy] = useState(false);
+  const [profileActionMessage, setProfileActionMessage] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSaveMessage, setProfileSaveMessage] = useState("");
+  const [profileMatchHistory, setProfileMatchHistory] =
+    useState<FriendMatchHistory | null>(null);
+  const [profileMatchHistoryLoading, setProfileMatchHistoryLoading] =
+    useState(false);
+  const [profileChallengeFriend, setProfileChallengeFriend] =
+    useState<FriendProfile | null>(null);
+  const profileOpenedInAppRef = useRef(false);
+  const profileReturnPhaseRef = useRef<"leaderboard" | "account">(
+    playerProfileReturnState()?.phase ?? "leaderboard",
+  );
+  const profileEditorReturnRef = useRef<"account" | "public-profile">(
+    "public-profile",
+  );
   // Tagged with the player and date it was fetched for, so a rank belonging to
   // a previous sign-in can never be shown to the next one.
   const [dailyRank, setDailyRank] = useState<{
@@ -416,6 +468,7 @@ export default function Game() {
   // exists for a player who has a name to record them against.
   const progress = useProgress(leaderboard.profile?.id ?? null);
   const social = useSocial(leaderboard.profile?.id ?? null);
+  const publicProfile = usePublicProfile(targetPlayerId);
   const { refresh: refreshProgress } = progress;
   const { refresh: refreshSocial } = social;
 
@@ -586,6 +639,70 @@ export default function Game() {
       cancelled = true;
     };
   }, [targetChallengeId, activeChallenge, auth.status, player]);
+
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const playerId = linkedPlayerId();
+      const returnState = playerProfileReturnState(event.state);
+      setTargetPlayerId(playerId);
+      setProfileActionMessage("");
+      setProfileSaveMessage("");
+      const returnPhase = returnState?.phase ?? profileReturnPhaseRef.current;
+      if (returnState) {
+        profileReturnPhaseRef.current = returnState.phase;
+        setLeaderboardFormat(returnState.format);
+        const category = returnState.category;
+        setLeaderboardCategoryFilter(
+          category === "all" || MODES.some((item) => item.mode === category)
+            ? (category as CategoryFilter)
+            : "all",
+        );
+      }
+      setPhase(playerId ? "public-profile" : returnPhase);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  const viewedProfileId = publicProfile.profile?.player.id ?? null;
+  const viewedProfileRelationship = publicProfile.profile?.relationship ?? null;
+  const loadProfileMatchHistory = social.loadMatchHistory;
+
+  useEffect(() => {
+    let cancelled = false;
+    if (viewedProfileRelationship !== "friend" || !viewedProfileId) {
+      queueMicrotask(() => {
+        if (!cancelled) {
+          setProfileMatchHistory(null);
+          setProfileMatchHistoryLoading(false);
+        }
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    queueMicrotask(() => {
+      if (!cancelled) setProfileMatchHistoryLoading(true);
+    });
+    loadProfileMatchHistory(viewedProfileId)
+      .then((history) => {
+        if (!cancelled) setProfileMatchHistory(history);
+      })
+      .catch(() => {
+        if (!cancelled) setProfileMatchHistory(null);
+      })
+      .finally(() => {
+        if (!cancelled) setProfileMatchHistoryLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    viewedProfileId,
+    viewedProfileRelationship,
+    loadProfileMatchHistory,
+  ]);
 
   // Checked once per sign-in, before the player has necessarily played today
   // on this device. Without this, a device that has not played yet offers
@@ -857,6 +974,138 @@ export default function Game() {
     showBoardFor(format);
   }
 
+  function openPlayerProfile(
+    playerId: string,
+    returnPhase: "leaderboard" | "account" = "leaderboard",
+  ) {
+    profileOpenedInAppRef.current = true;
+    profileReturnPhaseRef.current = returnPhase;
+    setTargetPlayerId(playerId);
+    setProfileActionMessage("");
+    setProfileSaveMessage("");
+    pushPlayerProfileLink(playerId, {
+      phase: returnPhase,
+      format: leaderboardFormat,
+      category: leaderboardCategoryFilter,
+    });
+    setPhase("public-profile");
+  }
+
+  function closePlayerProfile() {
+    if (profileOpenedInAppRef.current) {
+      profileOpenedInAppRef.current = false;
+      window.history.back();
+      return;
+    }
+    setTargetPlayerId(null);
+    replacePlayerProfileLink(null);
+    const returnState = playerProfileReturnState();
+    const returnPhase = returnState?.phase ?? profileReturnPhaseRef.current;
+    if (returnState) {
+      setLeaderboardFormat(returnState.format);
+      const category = returnState.category;
+      setLeaderboardCategoryFilter(
+        category === "all" || MODES.some((item) => item.mode === category)
+          ? (category as CategoryFilter)
+          : "all",
+      );
+    }
+    setPhase(returnPhase);
+    if (returnPhase === "leaderboard") {
+      showBoardFor(returnState?.format ?? leaderboardFormat);
+    }
+  }
+
+  function closeProfileEditor() {
+    if (profileEditorReturnRef.current === "public-profile") {
+      setPhase("public-profile");
+      return;
+    }
+    profileOpenedInAppRef.current = false;
+    setTargetPlayerId(null);
+    replacePlayerProfileLink(null);
+    setPhase("account");
+  }
+
+  function openFriendsFromProfile() {
+    setProfileChallengeFriend(null);
+    setTargetPlayerId(null);
+    replacePlayerProfileLink(null);
+    setPhase("friends");
+  }
+
+  function challengeProfilePlayer() {
+    const viewed = publicProfile.profile;
+    if (!viewed) return;
+    setProfileChallengeFriend({
+      id: viewed.player.id,
+      displayName: viewed.player.displayName,
+      avatarKey: viewed.player.avatarKey,
+    });
+    setTargetPlayerId(null);
+    replacePlayerProfileLink(null);
+    setPhase("friends");
+  }
+
+  async function addProfileFriend() {
+    if (profileActionBusy) return;
+    setProfileActionBusy(true);
+    setProfileActionMessage("");
+    try {
+      await publicProfile.addFriend();
+      await refreshSocial();
+      setProfileActionMessage("Friend request sent.");
+    } catch (caught) {
+      setProfileActionMessage(
+        caught instanceof Error ? caught.message : "The request could not be sent.",
+      );
+    } finally {
+      setProfileActionBusy(false);
+    }
+  }
+
+  async function sharePlayerProfile() {
+    const viewed = publicProfile.profile;
+    if (!viewed) return;
+    const url = playerProfileShareUrl(viewed.player.id, window.location.href);
+    const text = `See ${viewed.player.displayName}'s Give or Take profile.`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `${viewed.player.displayName} · Give or Take`, text, url });
+        setProfileActionMessage("Profile shared.");
+        return;
+      }
+      await copyText(url);
+      setProfileActionMessage("Profile link copied.");
+    } catch {
+      setProfileActionMessage("Sharing is unavailable on this device.");
+    }
+  }
+
+  async function savePublicProfile(
+    draft: Parameters<typeof publicProfile.save>[0],
+  ) {
+    if (profileSaving) return;
+    setProfileSaving(true);
+    setProfileSaveMessage("");
+    try {
+      await publicProfile.save(draft);
+      setProfileSaveMessage(
+        draft.featuredBadgeKey === null &&
+          draft.pinnedAchievementIds.length === 0 &&
+          draft.profileThemeId === null
+          ? "Profile reset to Automatic."
+          : "Public profile saved.",
+      );
+    } catch (caught) {
+      setProfileSaveMessage(
+        caught instanceof Error ? caught.message : "The profile could not be saved.",
+      );
+    } finally {
+      setProfileSaving(false);
+    }
+  }
+
   function toggleTheme() {
     const next: Theme = theme === "dark" ? "light" : "dark";
     setTheme(next);
@@ -886,6 +1135,12 @@ export default function Game() {
     setChallengeSubmit({ status: "idle" });
     resetSubmit();
     setPhase("playing");
+  }
+
+  function goHome() {
+    setTargetPlayerId(null);
+    replacePlayerProfileLink(null);
+    setPhase("category");
   }
 
   function startGame(selectedMode: GameMode) {
@@ -1211,7 +1466,7 @@ export default function Game() {
           }
           socialUnreadCount={social.unreadCount}
           theme={theme}
-          onHome={() => setPhase("category")}
+          onHome={goHome}
           onPlayDaily={() => startDaily(todaysDaily.date)}
           onOpenArchive={() => setPhase("daily-archive")}
           onOpenLeaderboard={openLeaderboard}
@@ -1223,7 +1478,7 @@ export default function Game() {
         <button
           className="wordmark"
           type="button"
-          onClick={() => setPhase("category")}
+          onClick={goHome}
           aria-label="Give or Take home"
         >
           <BrandMark />
@@ -1702,6 +1957,8 @@ export default function Game() {
           profile={player}
           format={leaderboardFormat}
           dailyDate={boardDailyDate}
+          categoryFilter={leaderboardCategoryFilter}
+          onCategoryFilterChange={setLeaderboardCategoryFilter}
           onFormatChange={(format) => {
             setLeaderboardFormat(format);
             showBoardFor(format);
@@ -1720,9 +1977,69 @@ export default function Game() {
           }}
           onPlaySurvival={startSurvival}
           onReturnHome={() => setPhase("category")}
+          onOpenPlayer={(playerId) => openPlayerProfile(playerId)}
           headingRef={focusHeadingRef}
         />
       )}
+
+      {activePhase === "public-profile" && (
+        <PublicProfileScreen
+          profile={publicProfile.profile}
+          labels={categoryLabels}
+          themeMode={theme}
+          loading={publicProfile.loading}
+          unavailable={publicProfile.unavailable}
+          error={publicProfile.error}
+          actionBusy={profileActionBusy}
+          actionMessage={profileActionMessage}
+          matchHistory={profileMatchHistory}
+          matchHistoryLoading={profileMatchHistoryLoading}
+          onAddFriend={() => void addProfileFriend()}
+          onOpenFriends={openFriendsFromProfile}
+          onChallenge={challengeProfilePlayer}
+          onManage={() => {
+            setProfileSaveMessage("");
+            profileEditorReturnRef.current = "public-profile";
+            setPhase("profile-editor");
+          }}
+          onSignIn={() => setPhase("account")}
+          onShare={() => void sharePlayerProfile()}
+          onBack={closePlayerProfile}
+          headingRef={focusHeadingRef}
+        />
+      )}
+
+      {activePhase === "profile-editor" && (
+        publicProfile.profile &&
+        progress.progress &&
+        publicProfile.profile.relationship === "self" ? (
+          <PublicProfileEditor
+            key={`${publicProfile.profile.player.id}:${publicProfile.profile.showcase.customFeaturedBadgeKey ?? "auto"}:${publicProfile.profile.showcase.customProfileThemeId ?? "auto"}:${publicProfile.profile.showcase.pinnedAchievementIds.join(",")}`}
+            profile={publicProfile.profile}
+            progress={progress.progress}
+            labels={categoryLabels}
+            themeMode={theme}
+            saving={profileSaving}
+            message={profileSaveMessage || publicProfile.error}
+            onSave={savePublicProfile}
+            onBack={closeProfileEditor}
+            headingRef={focusHeadingRef}
+          />
+        ) : (
+          <PublicProfileEditorState
+            loading={publicProfile.loading || Boolean(!progress.progress && !publicProfile.error)}
+            error={
+              publicProfile.error ||
+              (publicProfile.unavailable
+                ? "Your public profile is unavailable."
+                : publicProfile.profile && publicProfile.profile.relationship !== "self"
+                  ? "Only the profile owner can customise this page."
+                  : "")
+            }
+            onBack={closeProfileEditor}
+            headingRef={focusHeadingRef}
+          />
+        ))}
 
       {activePhase === "survival" && survivalQuestion && (
         <>
@@ -1903,6 +2220,13 @@ export default function Game() {
                 setChallengeOpenError("");
                 setPhase("friends");
               }}
+              onCustomisePublicProfile={() => {
+                if (!player) return;
+                profileReturnPhaseRef.current = "account";
+                profileEditorReturnRef.current = "account";
+                openPlayerProfile(player.id, "account");
+                setPhase("profile-editor");
+              }}
               friendCount={social.dashboard.friends.length}
               activeChallengeCount={social.dashboard.activeChallenges.length}
               socialUnreadCount={social.unreadCount}
@@ -1949,7 +2273,11 @@ export default function Game() {
               </button>
             </div>
           ) : (
-            <AuthPanel onSignedIn={() => setPhase("category")} />
+            <AuthPanel
+              onSignedIn={() =>
+                setPhase(targetPlayerId ? "public-profile" : "category")
+              }
+            />
           )}
 
           <div className="result-actions">
@@ -1969,9 +2297,11 @@ export default function Game() {
           social={social}
           modeLabels={MODE_LABELS}
           initialChallengeId={targetChallengeId}
+          initialSetupFriend={profileChallengeFriend}
           externalError={challengeOpenError}
           onPlayChallenge={requestPlayChallenge}
           onBack={() => {
+            setProfileChallengeFriend(null);
             setTargetChallengeId(null);
             replaceChallengeLink(null);
             setChallengeOpenError("");

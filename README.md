@@ -3,191 +3,155 @@
 [![CI](https://github.com/Cambo2k20/give-or-take-quiz/actions/workflows/ci.yml/badge.svg)](https://github.com/Cambo2k20/give-or-take-quiz/actions/workflows/ci.yml)
 [![Deploy](https://github.com/Cambo2k20/give-or-take-quiz/actions/workflows/deploy.yml/badge.svg)](https://github.com/Cambo2k20/give-or-take-quiz/actions/workflows/deploy.yml)
 
-A quick, source-backed slider game about the scale of things: how many people
-live somewhere, how big something is, when something happened. Drag the
-slider to your estimate, lock it in, and see how close you were.
+A source-backed numeric estimation game. Move one slider, trust your instincts,
+and find out how close you were.
 
-**Play it at <https://cambo2k20.github.io/give-or-take-quiz/>**
+**Play at <https://giveortakequiz.com/>**
 
-## How to play
+## Game modes
 
-The home page opens with one real, playable question — try it before choosing
-anything. From there:
+- **Daily** — the same five questions for everyone on a given day, with an
+  archive of past puzzles and a dedicated leaderboard.
+- **Classic** — a five-question round from one subject or a five-subject Mixed
+  draw. Scores can reach 5,000 points.
+- **Survival** — keep answering until the first miss. The acceptable range
+  narrows every three questions, and the number survived is the score.
 
-- **Classic** — a five-question round from one of eight subjects, or **Mixed**,
-  which draws one question from five different subjects:
+Classic currently covers eight subjects:
 
-  | Subject | About |
-  | --- | --- |
-  | Population | How many people live in a country, a city, or online |
-  | History | Turning points on the timeline, and the price of the past |
-  | Geography | Oceans, deserts, mountains and the shape of the land |
-  | Science | Physics, chemistry and the workings of the human body |
-  | Animals | What they weigh, how fast they run, how long they carry |
-  | Space | Orbits, planets and the machines sent up there |
-  | Technology | The tallest, heaviest and fastest things built |
-  | Movies | When films landed, and what they took at the box office |
+| Subject | What it covers | Regular questions |
+| --- | --- | ---: |
+| Population | Countries, cities and online populations | 35 |
+| History | Events, dates and historical money | 42 |
+| Geography | Oceans, deserts, mountains and land | 24 |
+| Science | Physics, chemistry and the human body | 50 |
+| Animals | Size, speed, behaviour and lifespans | 56 |
+| Space | Planets, missions, spacecraft and astronomy | 55 |
+| Technology | Machines, infrastructure and inventions | 50 |
+| Movies | Release dates, productions and box office | 30 |
 
-- **Daily challenge** — five questions, the same ones for everyone on a given
-  day. See [below](#the-daily-challenge).
-- **Survival** — no fixed length. Answer until a guess lands outside a window
-  around your estimate, which narrows every three questions. The run ends at
-  your first miss; how many questions you survived is the score.
-
-Every question opens the slider away from its midpoint, at a position fixed
-by the question itself — the same one for everyone playing that question, so
-an untouched slider is never a reliable strategy. Locking a guess shades the
-distance between your guess and the answer, reveals the verdict, the
-explanation and the source, and (outside Survival) awards points. A finished
-Classic or Daily round shows the full breakdown and a shareable result.
+Every question includes a source and explanation. The slider starts away from
+its midpoint at a deterministic position, so leaving it untouched is not a
+reliable strategy.
 
 ## Scoring
 
-Both the guess and answer are converted to positions from `0` to `1` on that
-question's slider — logarithmically for a question like population, linearly
-for one like a historic year. If `d` is the absolute distance between those
-positions, a Classic or Daily question scores:
+The guess and answer are converted to positions from `0` to `1` on the
+question's slider. Population-scale values and other large ranges can use a
+logarithmic scale; years, percentages and compact ranges use a linear scale.
+
+If `d` is the absolute distance between the two positions, Classic and Daily
+award:
 
 ```text
 round(1000 × (1 − d)²)
 ```
 
-An exact answer earns 1,000 points; five-question Classic and Daily rounds are
-worth up to **5,000**. Each question's score also
-picks the verdict shown on its reveal:
-
 | Points | Verdict |
 | --- | --- |
-| 980 and above | Bullseye! |
+| 980–1,000 | Bullseye! |
 | 850–979 | So close! |
 | 600–849 | Not bad. |
 | 300–599 | Off the mark. |
 | Below 300 | Way off. |
 
-**Survival** scores differently: there is no per-question point total. A
-guess survives if its distance `d` from the answer is within that question's
-window, which starts at ±0.12 of the slider and tightens by 0.01 every three
-questions, to a floor of ±0.04. The run ends at the first guess outside its
-window; the number of questions answered before that one is the score, ranked
-on its own leaderboard.
+Survival has no point total. A guess survives when its distance is within the
+current window, which starts at ±0.12 of the slider and tightens by 0.01 every
+three questions to a floor of ±0.04.
 
-## The question bank
+## Daily puzzles and question data
 
-**Postgres is the source of truth.** [`lib/questions.generated.ts`](lib/questions.generated.ts)
-is a committed, offline snapshot of it — regenerated with
-`npm run generate:questions` — so a round can be dealt with no network call
-and no live dependency on the database. [`lib/questions.ts`](lib/questions.ts)
-re-exports that snapshot for the rest of the app.
+The current build contains **342 regular questions**. Postgres is the source of
+truth for these records, and [`lib/questions.generated.ts`](lib/questions.generated.ts)
+is the committed offline snapshot used during play. Regenerate it with
+`npm run generate:questions` after changing the database.
 
-Run `npm run validate:data` for the current, authoritative counts. As of this
-writing the bank holds 197 category questions —
+The Daily schedule is authored separately in
+[`data/daily-sets.json`](data/daily-sets.json). It currently contains **32
+sets and 160 Daily-only questions**. Daily questions never enter Classic or
+Survival draws. [`data/daily-sets.example.json`](data/daily-sets.example.json)
+is a small template for authoring new dates.
 
-| Subtype | Count | Subtype | Count |
-| --- | --- | --- | --- |
-| Country population | 15 | Count | 13 |
-| City population | 15 | Percentage | 11 |
-| Historic event | 46 | Money | 24 |
-| Length | 14 | Duration | 16 |
-| Area | 10 | Speed | 11 |
-| Mass | 11 | Temperature | 11 |
-
-— plus a further 100 questions reserved for the daily challenge (below), kept
-out of Classic play by an `is_daily` flag.
-
-Every record carries its answer, slider bounds, scale, an explanation, and a
-source title and URL. Two rules keep the data honest:
-
-- **Money questions are historical.** Each is the figure in the dollars of
-  its day, carrying a `referenceYear`, so no current price ever needs
-  re-checking.
-- **Temperature questions are records or constants**, not a live reading, and
-  always use a linear scale — a logarithmic slider cannot represent the
-  negative values several of them need.
-
-`npm run validate:data` checks IDs, record shape, slider bounds, source URLs,
-population definitions, and category coverage, and runs automatically before
-every production build. It makes no network requests; regenerating the bank
-from Postgres does (see [Development](#development)).
-
-## The daily challenge
-
-Everyone who opens the app on a given day gets the same five questions, in
-the same order — what makes a daily score worth comparing. Daily questions
-are written for the daily and never appear in Classic or Survival play.
-
-The schedule is authored by hand in
-[`data/daily-sets.json`](data/daily-sets.json), which is the source of truth
-for the daily — the opposite of the category bank, where Postgres is.
-[`data/daily-sets.example.json`](data/daily-sets.example.json) is a worked
-two-day template to copy from.
-
-```json
-{
-  "version": 1,
-  "sets": [
-    { "date": "2026-08-01", "questions": [ /* exactly 5 question records */ ] }
-  ]
-}
-```
-
-A question record obeys the same rules as one in the category bank, plus a
-few of its own that `npm run validate:data` checks: every set is dated
-`YYYY-MM-DD` with no date repeated; every set holds exactly five questions;
-no question id is reused across dates; and no daily question shares an id or
-a prompt with the category bank.
-
-A set dated in the future stays hidden until its day arrives — enforced by
-row-level security, not just the client — so the schedule can be committed
-well ahead of time. Streaks and per-date scores live in the browser's
-`localStorage`; only today's puzzle moves a streak, so replaying the archive
-cannot be used to top one up.
+`npm run validate:data` checks both collections for valid IDs, shapes, slider
+bounds, units, scales, source URLs, category coverage and collisions between
+Daily and regular questions. It makes no network requests and runs before every
+production build.
 
 | Command | Purpose |
 | --- | --- |
-| `npm run validate:data` | Check the category bank and the daily schedule |
-| `npm run build:daily-sql` | Regenerate `supabase/seed-daily.sql` from the JSON |
+| `npm run validate:data` | Validate the regular bank and Daily schedule |
+| `npm run generate:questions` | Regenerate the regular offline snapshot from Supabase |
+| `npm run build:daily-sql` | Regenerate `supabase/seed-daily.sql` from the Daily JSON |
 
-Playing the daily works offline with no database. Its leaderboard needs the
-daily migrations applied and `supabase/seed-daily.sql` run, so the server can
-rescore a submitted round against that date's actual questions.
+## Accounts, progression and cosmetics
 
-## Accounts and leaderboards
+An account is not required for ordinary play. Local Classic bests, Daily
+progress, Survival bests and visual preferences are stored on the device.
 
-**No account is ever required to play.** Classic, Daily and Survival all work
-fully offline, and a personal best is kept on the device for each. Signing in
-only adds one thing: a score on a shared leaderboard.
+A confirmed Supabase account adds:
 
-Signing in takes an email address and password; Supabase requires the address
-be confirmed before the account can publish anything, which is enforced on
-the server, not just suggested by the UI. Confirmed players then pick a
-display name — no other profile information is collected — and every
-finished round is rescored on the server before being recorded, so a client
-cannot simply submit an inflated total. Category rounds, the daily and
-Survival each rank on their own board; a Survival run cannot appear on a
-points board and vice versa.
+- public Classic, Daily and Survival leaderboards;
+- a unique leaderboard display name and selectable profile avatar;
+- subject XP, ranks and titles calculated from recorded rounds;
+- six collectible rank badges per subject, unlocked at ranks 5, 10, 15, 20,
+  25 and 30;
+- 65 server-tracked achievements;
+- nine built-in avatars plus earned rank badges that can be used as avatars;
+- rank-gated animated backgrounds.
 
-Leaderboard features are additive and gated by configuration. Without
-`VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` set, the app runs
-with every leaderboard and sign-in affordance simply absent — useful for
-local development or a fork with no Supabase project of its own. The hosted
-build at the play link above always has both set.
+The current animated backgrounds are **Deep Space**, **City Pulse**, **Front
+Row** and **Aurora Drift**. They are dark-mode themes with their own artwork and
+UI palettes. The ordinary light/dark preference remains separate from the
+selected background. See [Adding a custom theme](docs/ADDING_THEMES.md) for the
+theme contract, artwork pairing, unlock gates and test requirements.
+
+## Friends and asynchronous challenges
+
+Confirmed players can find each other by exact display name and exchange mutual
+friend requests. Friends can challenge one another to Classic or Survival
+without both being online at the same time.
+
+- Classic challenges select a subject or Mixed; Survival needs no subject.
+- Both players receive the same immutable, server-generated question order.
+- The challenger completes the game before the invitation becomes active.
+- The recipient then has seven days to play.
+- The challenger's result stays hidden until the recipient finishes.
+- Challenge rounds count normally toward XP, achievements and public boards;
+  winning adds no bonus XP.
+- Each friend has a head-to-head history showing wins, losses, draws, current
+  win streak and best win streak.
+
+Challenge links use `?challenge=<uuid>`. Signed-out visitors can authenticate
+without losing the target challenge, and only its intended participant can
+open it.
 
 ## Privacy
 
-Nothing is sent anywhere until a player chooses to sign in. Fonts are
-self-hosted, so an unconfigured build makes no third-party requests at all;
-a configured build talks only to its own Supabase project, and only for
-authentication and the leaderboard calls described above.
+Supabase Auth stores account email addresses. The public game surfaces expose
+only the chosen display name, avatar and qualifying leaderboard results—not an
+email address. Friendships, requests, challenge decks and head-to-head history
+are restricted to their participants.
 
-Local device state lives in a handful of versioned `localStorage` keys —
-best scores per category, the daily's streak and per-date scores, Survival's
-best run, and the light/dark preference — clearing site data removes all of
-it. None of it, nor the question dataset, contains other players' data.
+Unsigned local progress and visual preferences live in versioned
+`localStorage` entries and can be removed by clearing the site's data. Sharing
+uses the device's native share sheet when available and otherwise copies text
+to the clipboard. Opening a question source leaves the app for the source's
+website.
 
-Sharing happens only after selecting **Share result**. The game uses the
-device's native share sheet when available and otherwise copies the result
-to the clipboard. Opening a source link leaves the app, so that destination's
-own privacy terms apply.
+## Backend and security
+
+Supabase provides authentication, the question bank, server-validated round
+submission, leaderboards, progression and social play.
+
+The client uses only a publishable key. It never contains a database password,
+secret key or `service_role` key. Exposed tables use row-level security, and
+sensitive writes go through narrowly granted database functions. Social rows
+are participant-only, and a pending recipient cannot read the challenger's
+result.
+
+The schema is versioned in [`supabase/migrations`](supabase/migrations). New
+exposed tables must include explicit role grants as well as RLS policies; these
+are separate controls.
 
 ## Development
 
@@ -200,56 +164,87 @@ npm ci
 npm run dev
 ```
 
-The dev server prints a local address. Because the site is built for a
-project Pages path, that address includes the repo name — for example
-<http://localhost:5173/give-or-take-quiz/>.
+The default Vite base path is `/give-or-take-quiz/`, so the local URL normally
+looks like <http://localhost:5173/give-or-take-quiz/>.
 
-Leaderboard and sign-in features need a Supabase project: copy `.env.example`
-to `.env` and fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`.
-Without it the app still runs, just without those features.
+Copy `.env.example` to `.env` to enable Supabase-backed features locally:
+
+```dotenv
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+Without those values, the offline game still works but accounts, shared
+leaderboards, progression and friends are unavailable.
 
 | Command | Purpose |
 | --- | --- |
 | `npm run dev` | Start the Vite development server |
-| `npm test` | Run the Vitest test suite once |
+| `npm test` | Run the Vitest suite once |
 | `npm run test:watch` | Run tests in watch mode |
-| `npm run validate:data` | Validate the category bank and daily schedule |
-| `npm run generate:questions` | Regenerate `lib/questions.generated.ts` from Postgres (needs `.env`) |
-| `npm run build:daily-sql` | Regenerate `supabase/seed-daily.sql` from `data/daily-sets.json` |
+| `npm run validate:data` | Validate all question data |
+| `npm run generate:questions` | Regenerate the regular question snapshot (requires `.env`) |
+| `npm run build:daily-sql` | Regenerate Daily seed SQL |
 | `npm run lint` | Run ESLint |
-| `npm run build` | Validate data, type-check, and build to `dist/` |
-| `npm run preview` | Serve the built `dist/` locally |
+| `npm run build` | Validate, type-check and build to `dist/` |
+| `npm run preview` | Serve the production build locally |
 
-Tests cover scale conversion and scoring, question selection, Survival's
-window schedule and verdicts, the daily schedule and streak logic, auth and
-leaderboard calls, and full playthroughs of Classic, Daily and Survival
-rounds including publish behaviour. CI runs `npm ci`, `npm run lint`,
-`npm test`, and `npm run build` for every push and pull request.
+Tests cover question selection and scoring, Daily state, Classic and Survival
+playthroughs, authentication, leaderboards, progression, avatars, themes,
+friend requests, challenge links, hidden results, expiry and match-history
+comparisons.
 
-To create another unlockable visual treatment, follow
-[Adding a custom theme](docs/ADDING_THEMES.md). The guide covers theme
-metadata, preview and backdrop artwork, semantic UI tokens, unlock gates and
-the required verification.
+## Database migrations
 
-## Deploying to GitHub Pages
+Git and Supabase deploy separately. Merging a migration file does **not** apply
+it to the hosted database, and the website deployment workflow does not run
+`supabase db push`.
 
-[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) tests, builds,
-and publishes `dist/` on every push to `main`. It requires the repository
-variables `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` to be set
-(**Settings → Secrets and variables → Actions → Variables**) and fails the
-build if either is missing, so the deployed site always has leaderboard
-features enabled.
-
-One-time setup: in the repository, open **Settings → Pages** and set
-**Source** to **GitHub Actions**.
-
-`vite.config.ts` sets `base` to `/give-or-take-quiz/`, which is the path a
-project Pages site is served from. If you move the app to a custom domain or
-any host that serves it from the root, build with `BASE_PATH=/` instead:
+For a linked Supabase project, review the local and remote migration histories
+before pushing:
 
 ```bash
-BASE_PATH=/ npm run build
+npx supabase login
+npx supabase link --project-ref <project-ref>
+npx supabase migration list
+npx supabase db push
 ```
+
+Daily content is generated into `supabase/seed-daily.sql` and must also be
+applied when the Daily schedule changes. Never put a database password or
+secret key in `.env`, source control or a frontend build.
+
+## Deployment
+
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) tests, builds and
+publishes `dist/` to GitHub Pages on pushes to `main`. The production workflow
+sets `BASE_PATH=/` because the custom domain serves the application from its
+root.
+
+The repository must define these GitHub Actions variables under **Settings →
+Secrets and variables → Actions → Variables**:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+
+Both values are designed for browser use and rely on database grants and RLS
+for protection. They are not substitutes for secret or service-role keys.
+
+The frontend workflow does not deploy Supabase migrations. Apply and verify
+database changes separately before relying on them in the newly deployed
+client.
+
+## Project structure
+
+| Path | Purpose |
+| --- | --- |
+| `src/` | React screens, components, artwork and global styling |
+| `lib/` | Game rules, question data, Supabase clients and domain types |
+| `data/` | Hand-authored Daily schedules |
+| `supabase/` | Migrations and generated Daily seed SQL |
+| `scripts/` | Question generation and validation utilities |
+| `tests/` | Unit, integration and component tests |
+| `docs/` | Maintainer guides |
 
 ## License
 

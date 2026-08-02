@@ -26,12 +26,14 @@ export function LeaderboardPanel({
   error,
   profile,
   modeLabels,
+  onOpenPlayer,
 }: {
   rows: readonly ClassicLeaderboardRow[];
   loading: boolean;
   error: string | null;
   profile: PlayerProfile | null;
   modeLabels: Record<GameMode, string>;
+  onOpenPlayer: (playerId: string) => void;
 }) {
   if (loading) {
     return (
@@ -80,6 +82,15 @@ export function LeaderboardPanel({
               ]
                 .filter(Boolean)
                 .join(" ")}
+              role="button"
+              tabIndex={0}
+              aria-label={`View ${row.displayName}'s profile`}
+              onClick={() => onOpenPlayer(row.playerId)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                onOpenPlayer(row.playerId);
+              }}
             >
               <span className="board-rank">{row.rank}</span>
               <span className="board-name">
@@ -118,11 +129,13 @@ export function SurvivalLeaderboardPanel({
   loading,
   error,
   profile,
+  onOpenPlayer,
 }: {
   rows: readonly LeaderboardRow[];
   loading: boolean;
   error: string | null;
   profile: PlayerProfile | null;
+  onOpenPlayer: (playerId: string) => void;
 }) {
   if (loading) {
     return (
@@ -169,6 +182,15 @@ export function SurvivalLeaderboardPanel({
               ]
                 .filter(Boolean)
                 .join(" ")}
+              role="button"
+              tabIndex={0}
+              aria-label={`View ${row.displayName}'s profile`}
+              onClick={() => onOpenPlayer(row.playerId)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                onOpenPlayer(row.playerId);
+              }}
             >
               <span className="board-rank">{row.rank}</span>
               <span className="board-name">
@@ -207,11 +229,13 @@ export function DailyLeaderboardPanel({
   loading,
   error,
   profile,
+  onOpenPlayer,
 }: {
   rows: readonly DailyLeaderboardRow[];
   loading: boolean;
   error: string | null;
   profile: PlayerProfile | null;
+  onOpenPlayer: (playerId: string) => void;
 }) {
   if (loading) {
     return (
@@ -258,6 +282,15 @@ export function DailyLeaderboardPanel({
               ]
                 .filter(Boolean)
                 .join(" ")}
+              role="button"
+              tabIndex={0}
+              aria-label={`View ${row.displayName}'s profile`}
+              onClick={() => onOpenPlayer(row.playerId)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                onOpenPlayer(row.playerId);
+              }}
             >
               <span className="board-rank">{row.rank}</span>
               <span className="board-name">

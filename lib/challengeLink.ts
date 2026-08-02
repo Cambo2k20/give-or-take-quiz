@@ -14,7 +14,10 @@ export function challengeShareUrl(challengeId: string, baseUrl: string): string 
 export function replaceChallengeLink(challengeId: string | null) {
   if (typeof window === "undefined") return;
   const url = new URL(window.location.href);
-  if (challengeId) url.searchParams.set("challenge", challengeId);
+  if (challengeId) {
+    url.searchParams.delete("player");
+    url.searchParams.set("challenge", challengeId);
+  }
   else url.searchParams.delete("challenge");
   window.history.replaceState({}, "", url);
 }
