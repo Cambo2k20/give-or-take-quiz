@@ -998,6 +998,20 @@ h1[tabindex="-1"]:focus {
 }
 
 .question-card {
+  --question-accent: var(--accent);
+  --question-art-color: color-mix(
+    in oklab,
+    var(--question-accent) 72%,
+    var(--accent)
+  );
+  --question-category-ink: color-mix(
+    in oklab,
+    var(--question-accent) 62%,
+    var(--ink)
+  );
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   padding: clamp(24px, 4vw, 34px);
   border: 1.5px solid var(--line);
   border-radius: 24px;
@@ -1005,18 +1019,134 @@ h1[tabindex="-1"]:focus {
   box-shadow: var(--shadow-card);
 }
 
-.question-tag {
+.question-card > :not(.question-card-artwork) {
+  position: relative;
+  z-index: 1;
+}
+
+.question-card-artwork {
+  position: absolute;
+  z-index: 0;
+  top: 42px;
+  right: -42px;
+  width: clamp(210px, 34vw, 300px);
+  height: clamp(190px, 30vw, 270px);
+  color: var(--question-art-color);
+  opacity: 0.105;
+  filter: drop-shadow(
+    0 0 24px color-mix(in srgb, var(--question-art-color) 35%, transparent)
+  );
+  pointer-events: none;
+  transform-origin: 70% 36%;
+  animation: question-artwork-enter 440ms cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+.question-card-artwork svg {
+  position: absolute;
+  overflow: visible;
+}
+
+.question-card-artwork-primary {
+  top: 0;
+  right: 0;
+  width: 82%;
+  height: 82%;
+}
+
+.question-card-artwork-secondary {
+  right: 45%;
+  bottom: 0;
+  width: 42%;
+  height: 42%;
+  opacity: 0.62;
+}
+
+.question-card-artwork.is-variant-1 {
+  top: 54px;
+  right: -22px;
+  transform: rotate(5deg) scale(1.04);
+}
+
+.question-card-artwork.is-variant-1 .question-card-artwork-secondary {
+  right: 8%;
+  bottom: -4%;
+}
+
+.question-card-artwork.is-variant-2 {
+  top: 32px;
+  right: -58px;
+  transform: rotate(-6deg) scale(0.96);
+}
+
+.question-card-artwork.is-variant-2 .question-card-artwork-secondary {
+  right: 54%;
+  bottom: 8%;
+}
+
+@keyframes question-artwork-enter {
+  from {
+    opacity: 0;
+    translate: 18px -6px;
+  }
+}
+
+.question-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: -4px 0 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.question-card-category {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 10px;
+  color: var(--question-category-ink);
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.question-card-category svg {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  color: var(--question-art-color);
+  filter: drop-shadow(
+    0 0 8px color-mix(in srgb, var(--question-art-color) 30%, transparent)
+  );
+}
+
+.question-card-counter {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.question-tag,
+.question-type-badge {
   display: inline-block;
   padding: 6px 14px;
   border-radius: 999px;
-  background: var(--accent-wash);
-  color: var(--accent-ink);
+  background: color-mix(in srgb, var(--question-accent) 12%, transparent);
+  color: var(--question-accent);
   font-size: 13px;
   font-weight: 700;
 }
 
 .question-card > h1 {
   margin: 16px 0 0;
+  max-width: min(72%, 560px);
   font-size: clamp(26px, 4.6vw, 34px);
   line-height: 1.22;
 }
@@ -1124,6 +1254,10 @@ h1[tabindex="-1"]:focus {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .question-card-artwork {
+    animation: none;
+  }
+
   .survival-window {
     transition: none;
   }
@@ -4620,6 +4754,34 @@ h1[tabindex="-1"]:focus {
   .account-screen,
   .site-footer {
     padding-inline: 16px;
+  }
+
+  .question-card-artwork {
+    top: 72px;
+    right: -64px;
+    width: 210px;
+    height: 190px;
+    opacity: 0.075;
+  }
+
+  .question-card-artwork.is-variant-1 {
+    top: 84px;
+    right: -52px;
+  }
+
+  .question-card-artwork.is-variant-2 {
+    top: 62px;
+    right: -76px;
+  }
+
+  .question-card-category svg {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+  }
+
+  .question-card > h1 {
+    max-width: 100%;
   }
 
   .board-titlebar {

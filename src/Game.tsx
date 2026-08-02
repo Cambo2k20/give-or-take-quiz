@@ -82,13 +82,13 @@ import {
 } from "./Progress";
 import { useProgress } from "./useProgress";
 import { EstimatePanel } from "./EstimatePanel";
+import { QuestionCardShell } from "./QuestionCardShell";
 import { HeroDemo } from "./HeroDemo";
 import { DailyHero } from "./DailyHero";
 import { JoinLeaderboardForm } from "./Leaderboard";
 import type { SubmittedDailyRound } from "../lib/leaderboard";
 import {
   formatPoints,
-  subtypeLabel,
   unitSuffix,
   useCountUp,
   verdictDetail,
@@ -1808,12 +1808,11 @@ export default function Game() {
             </p>
           )}
 
-          <article className="question-card">
-            <span className="question-tag">{subtypeLabel(question)}</span>
-            <h1 ref={focusHeadingRef} tabIndex={-1}>
-              {question.prompt}
-            </h1>
-
+          <QuestionCardShell
+            question={question}
+            progressLabel={`Question ${questionIndex + 1} of ${gameQuestions.length}`}
+            headingRef={focusHeadingRef}
+          >
             <EstimatePanel
               question={question}
               position={position}
@@ -1871,7 +1870,7 @@ export default function Game() {
                 </button>
               </div>
             )}
-          </article>
+          </QuestionCardShell>
         </section>
       )}
 
