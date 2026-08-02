@@ -17,27 +17,26 @@ and find out how close you were.
 - **Survival** — keep answering until the first miss. The acceptable range
   narrows every three questions, and the number survived is the score.
 
-The client understands ten subjects. Eight are live; Dinosaurs and Games are
-incubating behind disabled **Coming soon** cards until each reaches 20 regular
-questions.
+The client understands ten subjects, all live.
 
-| Subject | What it covers | Status | Regular questions |
-| --- | --- | --- | ---: |
-| Population | Countries, cities and online populations | Live | 35 |
-| History | Events, dates and historical money | Live | 42 |
-| Geography | Oceans, deserts, mountains and land | Live | 54 |
-| Science | Physics, chemistry and the human body | Live | 50 |
-| Animals | Size, speed, behaviour and lifespans | Live | 56 |
-| Space | Planets, missions, spacecraft and astronomy | Live | 55 |
-| Technology | Machines, infrastructure and inventions | Live | 50 |
-| Movies | Release dates, productions and box office | Live | 30 |
-| Dinosaurs | Dinosaurs, fossils, trackways and the Mesozoic | Coming soon | 5 |
-| Games | Video, board, card, tabletop and competitive games | Coming soon | 5 |
+| Subject | What it covers | Regular questions |
+| --- | --- | ---: |
+| Population | Countries, cities and online populations | 37 |
+| History | Events, dates and historical money | 49 |
+| Geography | Oceans, deserts, mountains and land | 59 |
+| Science | Physics, chemistry and the human body | 56 |
+| Animals | Size, speed, behaviour and lifespans | 62 |
+| Space | Planets, missions, spacecraft and astronomy | 62 |
+| Technology | Machines, infrastructure and inventions | 52 |
+| Movies | Release dates, productions and box office | 30 |
+| Dinosaurs | Dinosaurs, fossils, trackways and the Mesozoic | 25 |
+| Games | Video, board, card, tabletop and competitive games | 23 |
 
-For local testing only, set `VITE_ENABLE_INCUBATING_CATEGORIES=true` in a
-development environment. The override is ignored by production builds and only
-enables an incubating subject when its bundled bank contains at least five
-questions.
+A new subject launches behind a disabled **Coming soon** card until its bank
+reaches 20 regular questions, tracked in `lib/categories.ts`. For local
+testing only, set `VITE_ENABLE_INCUBATING_CATEGORIES=true` in a development
+environment to preview an incubating subject once its bank holds at least
+five questions. The override is ignored by production builds.
 
 Every question includes a source and explanation. The slider starts away from
 its midpoint at a deterministic position, so leaving it untouched is not a
@@ -70,7 +69,7 @@ three questions to a floor of ±0.04.
 
 ## Daily puzzles and question data
 
-The current build contains **382 regular questions**. Postgres is the source of
+The current build contains **455 regular questions**. Postgres is the source of
 truth for these records, and [`lib/questions.generated.ts`](lib/questions.generated.ts)
 is the committed offline snapshot used during play. Regenerate it with
 `npm run generate:questions` after changing the database.
@@ -80,6 +79,17 @@ The Daily schedule is authored separately in
 sets and 160 Daily-only questions**. Daily questions never enter Classic or
 Survival draws. [`data/daily-sets.example.json`](data/daily-sets.example.json)
 is a small template for authoring new dates.
+
+A Daily question moves through **reserved → scheduled → played → retired**: it
+is held out of category, Mixed, Survival and challenge play from the moment
+it's written, and only rejoins the regular bank once every date it was
+scheduled for has passed. A scheduled workflow
+([`.github/workflows/retire-expired-dailies.yml`](.github/workflows/retire-expired-dailies.yml))
+runs `npm run questions:retire` daily at 13:00 UTC — an hour after the last
+timezone closes the previous day — then regenerates and opens a pull request
+with the refreshed offline bank. See
+[docs/ADDING_CategoryQuestions.md](docs/ADDING_CategoryQuestions.md) for the
+full lifecycle.
 
 `npm run validate:data` checks both collections for valid IDs, shapes, slider
 bounds, units, scales, source URLs, category coverage and collisions between
@@ -92,6 +102,9 @@ production build.
 | `npm run validate:question-sync` | Require bundled and Supabase regular-question IDs to match |
 | `npm run generate:questions` | Regenerate the regular offline snapshot from Supabase |
 | `npm run build:daily-sql` | Regenerate `supabase/seed-daily.sql` from the Daily JSON |
+| `npm run questions:import -- <pack.json>` | Turn a reviewed question pack (e.g. a Question Lab export) into an additive migration |
+| `npm run questions:retire` | Retire expired Daily questions into the category pool via Supabase RPC |
+| `npm run questions:verify` | Regenerate, validate and run the full test/lint/build gate in one step |
 
 ## Accounts, progression and cosmetics
 

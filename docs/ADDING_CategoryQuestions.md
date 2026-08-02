@@ -57,18 +57,19 @@ Use one of the existing category identifiers:
 - `space`
 - `technology`
 - `movies`
-- `dinosaurs` (incubating)
-- `games` (incubating)
+- `dinosaurs`
+- `games`
 
 The canonical list, display metadata, rank titles and launch state live in
 `lib/categories.ts`. Do not create a second category list. Mixed, Survival,
 progression, leaderboards and challenges use the registry's currently playable
-categories; Mixed does not have its own question records.
+categories; Mixed does not have its own question records. All ten categories
+are currently `live`.
 
-An incubating category needs at least five regular questions for local testing
-and at least 20 before it can be changed to `live`. Set
-`VITE_ENABLE_INCUBATING_CATEGORIES=true` in development to test an incubating
-bank. Production ignores the override.
+A new category launches as `incubating`: it needs at least five regular
+questions for local testing and at least 20 before it can be changed to
+`live`. Set `VITE_ENABLE_INCUBATING_CATEGORIES=true` in development to test an
+incubating bank. Production ignores the override.
 
 Before adding several questions, check the existing distribution. Prefer categories with smaller banks unless the new questions are especially strong.
 
