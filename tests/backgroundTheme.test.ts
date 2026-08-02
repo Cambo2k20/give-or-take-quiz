@@ -167,6 +167,12 @@ describe("background theme mode contract", () => {
     ).toEqual({ category: "space", rank: 10 });
   });
 
+  it("gates Moonlit Library at History rank 5", () => {
+    expect(
+      BACKGROUND_THEMES.find((theme) => theme.id === "moonlit-library")?.gate,
+    ).toEqual({ category: "history", rank: 5 });
+  });
+
   it("defines every shipped theme as dark-only for now", () => {
     for (const theme of BACKGROUND_THEMES) {
       expect(supportedModesForTheme(theme), theme.id).toEqual(["dark"]);

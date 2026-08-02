@@ -196,7 +196,7 @@ describe("publishing a finished round", () => {
       homeHeader().getByRole("button", { name: /play today's daily/i }),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Ada" }));
+    await user.click(screen.getByRole("button", { name: "Profile, Ada" }));
 
     // The hero is home-screen only; the header control is what must survive
     // the trip to the account screen.

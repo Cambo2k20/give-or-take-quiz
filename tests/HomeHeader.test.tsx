@@ -63,7 +63,7 @@ describe("HomeHeader", () => {
     await user.click(screen.getByRole("button", { name: "Past dailies" }));
     await user.click(screen.getByRole("button", { name: "Give or Take home" }));
     await user.click(screen.getByRole("button", { name: "Leaderboard" }));
-    await user.click(screen.getByRole("button", { name: "Cambo" }));
+    await user.click(screen.getByRole("button", { name: "Profile, Cambo" }));
     await user.click(
       screen.getByRole("button", { name: "Switch to light mode" }),
     );
@@ -98,22 +98,34 @@ describe("HomeHeader", () => {
     ).toBeInTheDocument();
   });
 
-  it("keeps the theme control when leaderboard features are unavailable", () => {
-    renderHeader({ leaderboardEnabled: false });
+  it("keeps global navigation when leaderboard data is unavailable", async () => {
+    const user = userEvent.setup();
+    const callbacks = renderHeader({ leaderboardEnabled: false });
 
-    expect(screen.queryByRole("button", { name: "Leaderboard" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Cambo" })).toBeNull();
+    const leaderboard = screen.getByRole("button", { name: "Leaderboard" });
+    const profile = screen.getByRole("button", { name: "Profile, Cambo" });
+    expect(leaderboard).toHaveAttribute(
+      "title",
+      "Leaderboard data is unavailable in this local setup",
+    );
+    expect(profile).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Switch to light mode" }),
     ).toBeInTheDocument();
+
+    await user.click(leaderboard);
+    await user.click(profile);
+    expect(callbacks.onOpenLeaderboard).toHaveBeenCalledOnce();
+    expect(callbacks.onOpenAccount).toHaveBeenCalledOnce();
   });
 
   it("uses the existing sign-in destination for signed-out players", () => {
     renderHeader({ accountLabel: "Sign in" });
 
     expect(
-      screen.getByRole("button", { name: "Sign in" }),
+      screen.getByRole("button", { name: "Profile, sign in" }),
     ).toBeInTheDocument();
+    expect(screen.getByText("Profile")).toBeInTheDocument();
   });
 
 });

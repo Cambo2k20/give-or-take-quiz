@@ -156,38 +156,43 @@ export function HomeHeader({
       </button>
 
       <div className="home-header-side">
-        {leaderboardEnabled && (
-          <>
-            <button
-              className="board-button home-header-board"
-              type="button"
-              onClick={onOpenLeaderboard}
-              aria-label="Leaderboard"
+        <button
+          className="board-button home-header-board"
+          type="button"
+          onClick={onOpenLeaderboard}
+          aria-label="Leaderboard"
+          title={
+            leaderboardEnabled
+              ? undefined
+              : "Leaderboard data is unavailable in this local setup"
+          }
+        >
+          <span className="home-header-board-full">Leaderboard</span>
+          <span className="home-header-board-short" aria-hidden="true">
+            Board
+          </span>
+        </button>
+        <button
+          className="board-button home-header-account"
+          type="button"
+          onClick={onOpenAccount}
+          title={accountLabel}
+          aria-label={
+            accountLabel === "Sign in"
+              ? "Profile, sign in"
+              : `Profile, ${accountLabel}`
+          }
+        >
+          <span>Profile</span>
+          {socialUnreadCount > 0 && (
+            <span
+              className="home-header-social-badge"
+              aria-label={`${socialUnreadCount} unread friend updates`}
             >
-              <span className="home-header-board-full">Leaderboard</span>
-              <span className="home-header-board-short" aria-hidden="true">
-                Board
-              </span>
-            </button>
-            <button
-              className="board-button home-header-account"
-              type="button"
-              onClick={onOpenAccount}
-              title={accountLabel}
-            >
-              <span>{accountLabel}</span>
-              {socialUnreadCount > 0 && (
-                <span
-                  className="home-header-social-badge"
-                  aria-label={`${socialUnreadCount} unread friend updates`}
-                >
-                  {socialUnreadCount > 9 ? "9+" : socialUnreadCount}
-                </span>
-              )}
-            </button>
-          </>
-        )}
-
+              {socialUnreadCount > 9 ? "9+" : socialUnreadCount}
+            </span>
+          )}
+        </button>
       </div>
     </header>
   );
