@@ -2,6 +2,7 @@ import schedule from "../data/daily-sets.json";
 import type { DailySchedule, DailySet } from "./types";
 
 export const DAILY_PROGRESS_KEY = "give-or-take:daily:v2";
+const LEGACY_DAILY_PROGRESS_KEY = "give-or-take:daily:v1";
 
 export const DAILY_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -67,6 +68,10 @@ export type OfficialDailyResult = {
   attempts: number;
 };
 
+export type OfficialDailyHistoryEntry = OfficialDailyResult & {
+  date: string;
+};
+
 // Validated by `npm run validate:data` before every build, so the shape is
 // trusted here exactly as the generated question bank is.
 const loaded = schedule as DailySchedule;
@@ -120,16 +125,32 @@ export function readDailyProgress(storage?: StorageLike | null): DailyProgress {
     storage ?? (typeof window === "undefined" ? null : window.localStorage);
   if (!target) return { ...EMPTY_PROGRESS, dates: {} };
 
+  const legacy = parseLegacyDailyProgress(
+    target.getItem(LEGACY_DAILY_PROGRESS_KEY),
+  );
+  const current = parseStoredDailyProgress(target.getItem(DAILY_PROGRESS_KEY));
+  if (current) {
+    const merged = legacy ? mergeLegacyDailyProgress(current, legacy) : current;
+    if (merged !== current) writeDailyProgress(merged, target);
+    return merged;
+  }
+
+  if (legacy) {
+    writeDailyProgress(legacy, target);
+    return legacy;
+  }
+
+  return { ...EMPTY_PROGRESS, dates: {} };
+}
+
+function parseStoredDailyProgress(raw: string | null): DailyProgress | null {
+  if (!raw) return null;
   try {
-    const raw = target.getItem(DAILY_PROGRESS_KEY);
-    if (!raw) return { ...EMPTY_PROGRESS, dates: {} };
     const stored = JSON.parse(raw) as {
       version?: number;
       progress?: Partial<DailyProgress>;
     };
-    if (stored.version !== 2 || !stored.progress) {
-      return { ...EMPTY_PROGRESS, dates: {} };
-    }
+    if (stored.version !== 2 || !stored.progress) return null;
 
     const { current, longest, lastPlayedDate, dates } = stored.progress;
     const validDates: Record<string, DailyDateProgress> = {};
@@ -152,7 +173,73 @@ export function readDailyProgress(storage?: StorageLike | null): DailyProgress {
       dates: validDates,
     };
   } catch {
-    return { ...EMPTY_PROGRESS, dates: {} };
+    return null;
+  }
+}
+
+function mergeLegacyDailyProgress(
+  current: DailyProgress,
+  legacy: DailyProgress,
+): DailyProgress {
+  const missing = Object.entries(legacy.dates)
+    .filter(([date]) => current.dates[date] === undefined)
+    .map(([date, entry]) => ({
+      date,
+      score: entry.officialScore ?? 0,
+      attempts: entry.attemptCount,
+    }));
+  if (missing.length === 0) return current;
+
+  const merged = reconcileOfficialDailyHistory(current, missing);
+  return {
+    ...merged,
+    longest: Math.max(merged.longest, legacy.longest),
+  };
+}
+
+function parseLegacyDailyProgress(raw: string | null): DailyProgress | null {
+  if (!raw) return null;
+  try {
+    const stored = JSON.parse(raw) as {
+      version?: number;
+      progress?: {
+        current?: unknown;
+        longest?: unknown;
+        lastPlayedDate?: unknown;
+        scores?: Record<string, unknown>;
+      };
+    };
+    if (stored.version !== 1 || !stored.progress) return null;
+
+    const dates: Record<string, DailyDateProgress> = {};
+    for (const [date, score] of Object.entries(stored.progress.scores ?? {})) {
+      if (
+        DAILY_DATE_PATTERN.test(date) &&
+        typeof score === "number" &&
+        Number.isFinite(score) &&
+        score >= 0
+      ) {
+        dates[date] = {
+          officialScore: score,
+          practiceBest: null,
+          attemptCount: 1,
+        };
+      }
+    }
+
+    const lastPlayedDate = stored.progress.lastPlayedDate;
+    return {
+      current: countOrZero(stored.progress.current),
+      longest: countOrZero(stored.progress.longest),
+      lastPlayedDate:
+        typeof lastPlayedDate === "string" &&
+        DAILY_DATE_PATTERN.test(lastPlayedDate)
+          ? lastPlayedDate
+          : null,
+      dates,
+    };
+  } catch {
+    return null;
   }
 }
 
@@ -315,6 +402,84 @@ export function applyOfficialDailyResult(
   };
 
   return creditStreakOnce(progress, dates, date, now);
+}
+
+/**
+ * Overlays every official result known by the signed-in account onto the
+ * browser's records. Local practice scores remain device-specific, while the
+ * official score and attempt count come from the server. Streaks are rebuilt
+ * from the combined completed-date calendar so a fresh browser can recover
+ * them without replaying each day.
+ */
+export function reconcileOfficialDailyHistory(
+  progress: DailyProgress,
+  results: readonly OfficialDailyHistoryEntry[],
+): DailyProgress {
+  if (results.length === 0) return progress;
+
+  const dates = { ...progress.dates };
+  for (const result of results) {
+    if (!DAILY_DATE_PATTERN.test(result.date)) continue;
+    const prior = dates[result.date] ?? EMPTY_DATE_PROGRESS;
+    const keepsPoints =
+      prior.officialPoints !== undefined &&
+      prior.officialScore === result.score;
+    dates[result.date] = {
+      officialScore: result.score,
+      practiceBest: prior.practiceBest,
+      attemptCount: Math.max(prior.attemptCount, result.attempts),
+      ...(keepsPoints ? { officialPoints: prior.officialPoints } : {}),
+    };
+  }
+
+  const completed = new Set(
+    Object.entries(dates)
+      .filter(([, entry]) => entry.officialScore !== null)
+      .map(([date]) => date),
+  );
+  if (progress.lastPlayedDate) completed.add(progress.lastPlayedDate);
+  const ordered = [...completed].sort();
+  if (ordered.length === 0) return { ...progress, dates };
+
+  let longest = 0;
+  let run = 0;
+  let priorDate: string | null = null;
+  for (const date of ordered) {
+    run = priorDate === previousDay(date) ? run + 1 : 1;
+    longest = Math.max(longest, run);
+    priorDate = date;
+  }
+
+  const latest = ordered[ordered.length - 1];
+  let current = run;
+  if (progress.lastPlayedDate === latest) {
+    current = Math.max(current, progress.current);
+  } else if (progress.lastPlayedDate) {
+    let cursor = nextDay(progress.lastPlayedDate);
+    let extension = 0;
+    while (completed.has(cursor)) {
+      extension += 1;
+      if (cursor === latest) break;
+      cursor = nextDay(cursor);
+    }
+    if (cursor === latest && extension > 0) {
+      current = Math.max(current, progress.current + extension);
+    }
+  }
+
+  return {
+    current,
+    longest: Math.max(progress.longest, longest, current),
+    lastPlayedDate: latest,
+    dates,
+  };
+}
+
+function nextDay(date: string): string {
+  const [year, month, day] = date.split("-").map(Number);
+  const next = new Date(Date.UTC(year, month - 1, day));
+  next.setUTCDate(next.getUTCDate() + 1);
+  return next.toISOString().slice(0, 10);
 }
 
 /**

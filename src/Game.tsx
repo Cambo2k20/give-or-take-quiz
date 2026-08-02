@@ -45,10 +45,12 @@ import {
   dailySetFor,
   playableDailyDates,
   readDailyProgress,
+  reconcileOfficialDailyHistory,
   recordLocalDailyResult,
   todayIso,
   todaysDailySet,
   writeDailyProgress,
+  type OfficialDailyHistoryEntry,
 } from "../lib/daily";
 import type { GameMode, Question, QuestionCategory } from "../lib/types";
 import {
@@ -143,6 +145,13 @@ type Phase =
   | "public-profile"
   | "profile-editor";
 type RoundResult = { question: Question; guess: number; points: number };
+type DailyHistorySync = {
+  playerId: string;
+  status: "loading" | "ready" | "error";
+  results: readonly OfficialDailyHistoryEntry[];
+};
+
+const EMPTY_DAILY_HISTORY: readonly OfficialDailyHistoryEntry[] = [];
 
 function linkedChallengeId(): string | null {
   if (typeof window === "undefined") return null;
@@ -410,6 +419,9 @@ export default function Game() {
   const [bestScores, setBestScores] = useState<BestScores>(readBestScores);
   const [questionHistory, setQuestionHistory] = useState(readQuestionHistory);
   const [dailyProgress, setDailyProgress] = useState(readDailyProgress);
+  const [dailyHistorySync, setDailyHistorySync] =
+    useState<DailyHistorySync | null>(null);
+  const [dailyHistoryRetry, setDailyHistoryRetry] = useState(0);
   // Non-null while the round in play is a daily, and holds which day's it is.
   const [dailyDate, setDailyDate] = useState<string | null>(null);
   const [leaderboardFormat, setLeaderboardFormat] =
@@ -598,16 +610,14 @@ export default function Game() {
   const maxScore = gameQuestions.length * 1000;
   const todaysDaily = useMemo(() => todaysDailySet(), []);
   const archiveDates = useMemo(() => playableDailyDates(), []);
-  const streak = activeStreak(dailyProgress);
   const today = todayIso();
-  const playedToday = dailyProgress.lastPlayedDate === today;
 
   const {
     profile: player,
     updateAvatar,
     publish,
     publishDaily,
-    checkDailyOfficial,
+    loadDailyHistory,
     myDailyRank,
     publishSurvival,
     resetSubmit,
@@ -616,6 +626,20 @@ export default function Game() {
     loadSurvivalBoard,
   } = leaderboard;
   const canPublish = auth.canUseLeaderboard;
+  const playerId = player?.id ?? null;
+  const activeDailyHistorySync =
+    playerId && dailyHistorySync?.playerId === playerId
+      ? dailyHistorySync
+      : null;
+  const syncedDailyResults =
+    activeDailyHistorySync?.results ?? EMPTY_DAILY_HISTORY;
+  const shownDailyProgress = useMemo(
+    () => reconcileOfficialDailyHistory(dailyProgress, syncedDailyResults),
+    [dailyProgress, syncedDailyResults],
+  );
+  const streak = activeStreak(shownDailyProgress);
+  const playedToday =
+    shownDailyProgress.dates[today]?.officialScore != null;
 
   // A challenge link survives authentication and display-name setup. Only once
   // both are ready do we hand it to the participant-only Friends screen.
@@ -704,43 +728,62 @@ export default function Game() {
     loadProfileMatchHistory,
   ]);
 
-  // Checked once per sign-in, before the player has necessarily played today
-  // on this device. Without this, a device that has not played yet offers
-  // "Play today's Daily" even when the player already went official somewhere
-  // else, and only finds out when the submission is rejected.
+  // Restore every official result visible in the archive when an account is
+  // ready. The result stays keyed to that player, so signing out or switching
+  // accounts cannot leak one person's Daily history into another's screen.
   useEffect(() => {
-    if (!player || !canPublish || !todaysDaily) return;
-    // Nothing to correct if this device already believes today is done.
-    if (dailyProgress.dates[todaysDaily.date]?.officialScore !== null) return;
+    if (!playerId || !canPublish || archiveDates.length === 0) return;
+
     let cancelled = false;
-    void checkDailyOfficial(player.id, todaysDaily.date)
-      .then((result) => {
-        if (cancelled || !result) return;
-        setDailyProgress((current) => {
-          const updated = applyOfficialDailyResult(
-            current,
-            todaysDaily.date,
-            result,
-          );
-          writeDailyProgress(updated);
-          return updated;
-        });
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setDailyHistorySync((current) => ({
+        playerId,
+        status: "loading",
+        results:
+          current?.playerId === playerId
+            ? current.results
+            : EMPTY_DAILY_HISTORY,
+      }));
+    });
+
+    void loadDailyHistory(playerId, archiveDates)
+      .then((results) => {
+        if (!cancelled) {
+          setDailyHistorySync({ playerId, status: "ready", results });
+        }
       })
       .catch(() => {
-        // Best-effort: local state stands, and a real submission attempt
-        // will still get the authoritative answer from the server.
+        if (cancelled) return;
+        setDailyHistorySync((current) => ({
+          playerId,
+          status: "error",
+          results:
+            current?.playerId === playerId
+              ? current.results
+              : EMPTY_DAILY_HISTORY,
+        }));
       });
+
     return () => {
       cancelled = true;
     };
-    // dailyProgress is read for its current value above, not tracked as a
-    // dependency — including it would refire this on every local record.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [player, canPublish, todaysDaily, checkDailyOfficial]);
+  }, [
+    playerId,
+    canPublish,
+    archiveDates,
+    loadDailyHistory,
+    dailyHistoryRetry,
+  ]);
+
+  const retryDailyHistory = useCallback(() => {
+    setDailyHistoryRetry((current) => current + 1);
+  }, []);
 
   // The home hero shows a rank only once there is an official score to rank,
   // so this waits on the score rather than firing on every sign-in.
-  const todaysOfficialScore = dailyProgress.dates[today]?.officialScore ?? null;
+  const todaysOfficialScore =
+    shownDailyProgress.dates[today]?.officialScore ?? null;
   const rankKey =
     player && canPublish && todaysOfficialScore !== null
       ? `${player.id}:${today}`
@@ -773,7 +816,7 @@ export default function Game() {
   const isPracticeRound =
     dailyDate !== null &&
     (dailyDate !== today ||
-      dailyProgress.dates[dailyDate]?.officialScore != null);
+      shownDailyProgress.dates[dailyDate]?.officialScore != null);
 
   const survivalQuestion = survivalDeck[survivalIndex];
   const survivalNumber = survivalIndex + 1;
@@ -1456,7 +1499,7 @@ export default function Game() {
           date={todaysDaily.date}
           streak={streak}
           playedToday={playedToday}
-          score={dailyProgress.dates[today]?.officialScore ?? null}
+          score={shownDailyProgress.dates[today]?.officialScore ?? null}
           archiveCount={archiveDates.length}
           leaderboardEnabled={leaderboard.enabled}
           accountLabel={
@@ -1571,7 +1614,7 @@ export default function Game() {
             <DailyHero
               set={todaysDaily}
               streak={streak}
-              today={dailyProgress.dates[today]}
+              today={shownDailyProgress.dates[today]}
               rank={shownDailyRank}
               boardEnabled={leaderboard.enabled}
               onPlay={() => startDaily(todaysDaily.date)}
@@ -1580,8 +1623,8 @@ export default function Game() {
               onShare={() =>
                 void shareDailyScore(
                   todaysDaily.date,
-                  dailyProgress.dates[today]?.officialScore ?? 0,
-                  dailyProgress.dates[today]?.officialPoints ?? [],
+                  shownDailyProgress.dates[today]?.officialScore ?? 0,
+                  shownDailyProgress.dates[today]?.officialPoints ?? [],
                 )
               }
               shareStatus={shareStatus}
@@ -2156,9 +2199,36 @@ export default function Game() {
             </h1>
           </div>
 
+          {auth.status === "signed-out" && (
+            <p className="daily-sync-note">
+              Completed Dailies are saved in this browser. Sign in to sync them
+              across devices.
+            </p>
+          )}
+          {activeDailyHistorySync?.status === "loading" && (
+            <p className="daily-sync-note" role="status">
+              Syncing Daily history...
+            </p>
+          )}
+          {activeDailyHistorySync?.status === "error" && (
+            <div className="daily-sync-note is-error" role="alert">
+              <span>
+                Couldn't sync account history. Showing the Daily history
+                already available here.
+              </span>
+              <button
+                className="daily-sync-retry"
+                type="button"
+                onClick={retryDailyHistory}
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
           <DailyArchive
             dates={archiveDates}
-            progress={dailyProgress}
+            progress={shownDailyProgress}
             onPlay={startDaily}
           />
 

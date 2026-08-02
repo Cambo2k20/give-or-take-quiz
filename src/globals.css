@@ -737,6 +737,44 @@ h1[tabindex="-1"]:focus {
 
 /* ── Daily challenge ────────────────────────────────────────────────────── */
 
+.daily-sync-note {
+  width: min(100%, var(--wide));
+  margin: 18px auto 0;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.daily-sync-note.is-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  color: var(--bad);
+}
+
+.daily-sync-retry {
+  flex: 0 0 auto;
+  padding: 6px 2px;
+  border: 0;
+  background: transparent;
+  color: currentColor;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.daily-sync-retry:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
 .daily-archive {
   width: min(100%, var(--wide));
   margin: 20px auto 0;

@@ -5,6 +5,7 @@ import {
   applyOfficialDailyResult,
   previousDay,
   readDailyProgress,
+  reconcileOfficialDailyHistory,
   recordLocalDailyResult,
   todayIso,
   writeDailyProgress,
@@ -310,6 +311,72 @@ describe("applyOfficialDailyResult", () => {
   });
 });
 
+describe("reconcileOfficialDailyHistory", () => {
+  it("restores scores and streaks on a fresh browser", () => {
+    const reconciled = reconcileOfficialDailyHistory(progress(), [
+      { date: "2026-07-31", score: 3100, attempts: 1 },
+      { date: "2026-08-01", score: 4200, attempts: 2 },
+      { date: "2026-08-02", score: 3900, attempts: 1 },
+    ]);
+
+    expect(reconciled.current).toBe(3);
+    expect(reconciled.longest).toBe(3);
+    expect(reconciled.lastPlayedDate).toBe("2026-08-02");
+    expect(reconciled.dates["2026-08-01"]).toEqual({
+      officialScore: 4200,
+      practiceBest: null,
+      attemptCount: 2,
+    });
+  });
+
+  it("keeps device-only practice data while server truth replaces official data", () => {
+    const local = progress({
+      current: 1,
+      longest: 4,
+      lastPlayedDate: "2026-08-02",
+      dates: {
+        "2026-08-01": {
+          officialScore: 1200,
+          practiceBest: 4900,
+          attemptCount: 3,
+          officialPoints: [200, 200, 200, 200, 400],
+        },
+        "2026-08-02": {
+          officialScore: 3000,
+          practiceBest: null,
+          attemptCount: 1,
+          officialPoints: [600, 600, 600, 600, 600],
+        },
+      },
+    });
+
+    const reconciled = reconcileOfficialDailyHistory(local, [
+      { date: "2026-08-01", score: 4100, attempts: 2 },
+      { date: "2026-08-02", score: 3000, attempts: 1 },
+    ]);
+
+    expect(reconciled.dates["2026-08-01"]).toEqual({
+      officialScore: 4100,
+      practiceBest: 4900,
+      attemptCount: 3,
+    });
+    expect(reconciled.dates["2026-08-02"].officialPoints).toEqual([
+      600, 600, 600, 600, 600,
+    ]);
+    expect(reconciled.longest).toBe(4);
+  });
+
+  it("does not mutate the browser record", () => {
+    const local = progress();
+    const reconciled = reconcileOfficialDailyHistory(local, [
+      { date: "2026-08-02", score: 3000, attempts: 1 },
+    ]);
+
+    expect(reconciled).not.toBe(local);
+    expect(local.dates).toEqual({});
+  });
+});
+
 describe("activeStreak", () => {
   it("still counts a streak the day after it was last played", () => {
     const held = progress({ current: 6, lastPlayedDate: "2026-07-25" });
@@ -433,9 +500,7 @@ describe("daily progress storage", () => {
     expect(readDailyProgress(window.localStorage).current).toBe(0);
   });
 
-  it("discards the old v1 shape rather than misreading it", () => {
-    // v1 stored a flat scores map; there is no migration because there was
-    // nothing worth carrying forward (confirmed: no streaks existed yet).
+  it("does not mistake a v1 payload under the v2 key for current data", () => {
     window.localStorage.setItem(
       DAILY_PROGRESS_KEY,
       JSON.stringify({
@@ -450,6 +515,83 @@ describe("daily progress storage", () => {
     );
 
     expect(readDailyProgress(window.localStorage)).toEqual(progress());
+  });
+
+  it("migrates the legacy v1 key into the current per-date format", () => {
+    window.localStorage.setItem(
+      "give-or-take:daily:v1",
+      JSON.stringify({
+        version: 1,
+        progress: {
+          current: 2,
+          longest: 4,
+          lastPlayedDate: "2026-08-01",
+          scores: {
+            "2026-07-31": 3600,
+            "2026-08-01": 4100,
+            invalid: 9999,
+          },
+        },
+      }),
+    );
+
+    const migrated = readDailyProgress(window.localStorage);
+
+    expect(migrated).toEqual(
+      progress({
+        current: 2,
+        longest: 4,
+        lastPlayedDate: "2026-08-01",
+        dates: {
+          "2026-07-31": {
+            officialScore: 3600,
+            practiceBest: null,
+            attemptCount: 1,
+          },
+          "2026-08-01": {
+            officialScore: 4100,
+            practiceBest: null,
+            attemptCount: 1,
+          },
+        },
+      }),
+    );
+    expect(window.localStorage.getItem(DAILY_PROGRESS_KEY)).not.toBeNull();
+  });
+
+  it("keeps current records and fills missing dates from v1 storage", () => {
+    const current = progress({
+      dates: {
+        "2026-08-02": {
+          officialScore: 4200,
+          practiceBest: null,
+          attemptCount: 1,
+        },
+      },
+    });
+    writeDailyProgress(current, window.localStorage);
+    window.localStorage.setItem(
+      "give-or-take:daily:v1",
+      JSON.stringify({
+        version: 1,
+        progress: { scores: { "2026-08-01": 100 } },
+      }),
+    );
+
+    expect(readDailyProgress(window.localStorage)).toEqual({
+      ...current,
+      current: 2,
+      longest: 2,
+      lastPlayedDate: "2026-08-02",
+      dates: {
+        "2026-08-01": {
+          officialScore: 100,
+          practiceBest: null,
+          attemptCount: 1,
+        },
+        ...current.dates,
+      },
+    });
   });
 
   it("drops malformed dates and entries rather than trusting them", () => {
