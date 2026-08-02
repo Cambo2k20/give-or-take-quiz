@@ -1,6 +1,11 @@
 import { readFileSync } from "node:fs";
+import {
+  ALL_CATEGORIES,
+  CATEGORY_REGISTRY,
+  RANK_FLOORS,
+} from "../lib/categories";
 import { DAILY_QUESTIONS_PER_SET } from "../lib/daily";
-import { CATEGORIES, QUESTIONS_PER_GAME } from "../lib/game";
+import { QUESTIONS_PER_GAME } from "../lib/game";
 import { questions } from "../lib/questions";
 import type {
   DailySchedule,
@@ -49,7 +54,7 @@ const SUBTYPE_RULES: Record<
   temperature: { measure: "physics", units: ["celsius"] },
 };
 
-const VALID_CATEGORIES = new Set<string>(CATEGORIES);
+const VALID_CATEGORIES = new Set<string>(ALL_CATEGORIES);
 
 const report = (id: string, message: string) => {
   errors.push(`${id}: ${message}`);
@@ -269,16 +274,26 @@ if (counts.city < 15) {
   errors.push(`question bank has ${counts.city} cities; expected at least 15`);
 }
 
-// Each category is a mode of its own, so it must be able to deal a full round
-// without asking the same question twice.
-for (const category of CATEGORIES) {
+// Incubating subjects need one safe test round. A live subject needs four
+// five-question rounds before repetition; changing its registry entry to live
+// before reaching that launch threshold therefore fails every production build.
+for (const category of CATEGORY_REGISTRY) {
   const total = questions.filter(
-    (question) => question.category === category,
+    (question) => question.category === category.id,
   ).length;
-  if (total < QUESTIONS_PER_GAME) {
+  const minimum = category.availability === "live" ? 20 : QUESTIONS_PER_GAME;
+  if (total < minimum) {
     errors.push(
-      `question bank has ${total} ${category} records; expected at least ${QUESTIONS_PER_GAME}`,
+      `question bank has ${total} ${category.id} records; ${category.availability} categories require at least ${minimum}`,
     );
+  }
+
+  const titleRanks = category.rankTitles.map((entry) => entry.rank);
+  if (
+    titleRanks.length !== RANK_FLOORS.length ||
+    RANK_FLOORS.some((rank) => !titleRanks.includes(rank))
+  ) {
+    errors.push(`${category.id} does not define all six rank-title floors`);
   }
 }
 

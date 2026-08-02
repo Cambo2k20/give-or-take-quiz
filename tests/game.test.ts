@@ -366,6 +366,8 @@ describe("best-score storage", () => {
     space: 0,
     technology: 0,
     movies: 0,
+    dinosaurs: 0,
+    games: 0,
     mixed: 0,
   };
 
@@ -383,6 +385,8 @@ describe("best-score storage", () => {
       space: 6_700,
       technology: 7_450,
       movies: 8_010,
+      dinosaurs: 0,
+      games: 0,
       mixed: 9_100,
     };
 

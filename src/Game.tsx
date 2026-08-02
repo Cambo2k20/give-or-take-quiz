@@ -11,6 +11,7 @@ import {
   QUESTIONS_PER_GAME,
   accuracyTier,
   formatQuestionValue,
+  isPlayableCategory,
   positionToValue,
   questionCount,
   readBestScores,
@@ -21,6 +22,10 @@ import {
   writeBestScores,
   writeQuestionHistory,
 } from "../lib/game";
+import {
+  CATEGORY_REGISTRY,
+  type CategoryIcon as CategoryIconName,
+} from "../lib/categories";
 import { dailyResultGrid } from "../lib/share";
 import { signOut } from "../lib/auth";
 import {
@@ -294,79 +299,86 @@ const BoltIcon = () => (
   </svg>
 );
 
-const MODES: Array<{
+const FossilIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <path d="M8.4 13.7c-1.8-.4-3.5.7-3.9 2.4-.4 1.8.8 3.5 2.6 3.9 1.5.3 3-.5 3.6-1.9.8 1.1 2.2 1.7 3.6 1.4 1.8-.4 2.9-2.2 2.5-4-.4-1.6-1.9-2.7-3.5-2.5-.4-1.5-1.7-2.6-3.3-2.6-1.8 0-3.3 1.5-3.3 3.3 0 .2 0 .4.1.6.5-.5 1-.7 1.6-.6Z" strokeLinejoin="round" />
+    <ellipse cx="5.6" cy="9.2" rx="1.8" ry="2.3" />
+    <ellipse cx="10" cy="5.5" rx="1.8" ry="2.4" />
+    <ellipse cx="15.2" cy="5.8" rx="1.8" ry="2.4" />
+    <ellipse cx="19" cy="10" rx="1.8" ry="2.3" />
+  </svg>
+);
+
+const GamepadIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <path d="M7.5 8h9a4 4 0 0 1 3.8 2.8l1.2 4c.7 2.3-1.8 4.2-3.8 2.9l-2.3-1.5H8.6l-2.3 1.5c-2 1.3-4.5-.6-3.8-2.9l1.2-4A4 4 0 0 1 7.5 8Z" strokeLinejoin="round" />
+    <path d="M8 11v4M6 13h4" strokeLinecap="round" />
+    <circle cx="16" cy="12" r=".7" fill="currentColor" stroke="none" />
+    <circle cx="18" cy="14" r=".7" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+function CategoryIcon({ icon }: { icon: CategoryIconName }) {
+  switch (icon) {
+    case "people":
+      return <PeopleIcon />;
+    case "clock":
+      return <ClockIcon />;
+    case "globe":
+      return <GlobeIcon />;
+    case "bolt":
+      return <BoltIcon />;
+    case "paw":
+      return <PawIcon />;
+    case "rocket":
+      return <RocketIcon />;
+    case "stack":
+      return <StackIcon />;
+    case "film":
+      return <FilmIcon />;
+    case "fossil":
+      return <FossilIcon />;
+    case "gamepad":
+      return <GamepadIcon />;
+  }
+}
+
+type ModeDetail = {
   mode: GameMode;
   title: string;
   description: string;
   icon: ReactNode;
-}> = [
-  {
-    mode: "population",
-    title: "Population",
-    description: "How many people live in a country, a city, or online.",
-    icon: <PeopleIcon />,
-  },
-  {
-    mode: "history",
-    title: "History",
-    description: "Place turning points on the timeline, and price the past.",
-    icon: <ClockIcon />,
-  },
-  {
-    mode: "geography",
-    title: "Geography",
-    description: "Oceans, deserts, mountains and the shape of the land.",
-    icon: <GlobeIcon />,
-  },
-  {
-    mode: "science",
-    title: "Science",
-    description: "Physics, chemistry and the workings of the human body.",
-    icon: <BoltIcon />,
-  },
-  {
-    mode: "animals",
-    title: "Animals",
-    description: "What they weigh, how fast they run, how long they carry.",
-    icon: <PawIcon />,
-  },
-  {
-    mode: "space",
-    title: "Space",
-    description: "Orbits, planets and the machines we have sent up there.",
-    icon: <RocketIcon />,
-  },
-  {
-    mode: "technology",
-    title: "Technology",
-    description: "The tallest, heaviest and fastest things we have built.",
-    icon: <StackIcon />,
-  },
-  {
-    mode: "movies",
-    title: "Movies",
-    description: "When films landed, and what they took at the box office.",
-    icon: <FilmIcon />,
-  },
-  {
-    mode: "mixed",
-    title: "Mixed",
-    description: "A draw from every category at once.",
-    icon: <ShuffleIcon />,
-  },
+};
+
+const CATEGORY_MODES: readonly ModeDetail[] = CATEGORY_REGISTRY.map(
+  (category) => ({
+    mode: category.id,
+    title: category.label,
+    description: category.description,
+    icon: <CategoryIcon icon={category.icon} />,
+  }),
+);
+
+const MIXED_MODE: ModeDetail = {
+  mode: "mixed",
+  title: "Mixed",
+  description: "A draw from every playable category at once.",
+  icon: <ShuffleIcon />,
+};
+
+const MODES: readonly ModeDetail[] = [
+  ...CATEGORY_MODES.filter((detail) =>
+    isPlayableCategory(detail.mode as QuestionCategory),
+  ),
+  MIXED_MODE,
 ];
 
-const MODE_LABELS: Record<GameMode, string> = {
-  population: "Population",
-  history: "History",
-  geography: "Geography",
-  science: "Science",
-  animals: "Animals",
-  space: "Space",
-  technology: "Technology",
-  movies: "Movies",
+const MODE_LABELS = {
+  ...Object.fromEntries(
+    CATEGORY_REGISTRY.map((category) => [category.id, category.label]),
+  ),
   mixed: "Mixed",
-};
+} as Record<GameMode, string>;
 
 /** Read off the bank, so adding questions updates the chooser by itself. */
 function modeNote(mode: GameMode) {
@@ -528,7 +540,7 @@ export default function Game() {
   const categoryLabels = useMemo(
     () =>
       Object.fromEntries(
-        MODES.filter((detail) => detail.mode !== "mixed").map((detail) => [
+        CATEGORY_MODES.map((detail) => [
           detail.mode,
           { title: detail.title, icon: detail.icon },
         ]),
@@ -1688,18 +1700,30 @@ export default function Game() {
 
           <h2 className="mode-grid-label">All categories</h2>
           <div className="mode-grid" aria-label="Choose a category">
-            {MODES.map((detail) => (
+            {CATEGORY_MODES.map((detail) => (
               <button
-                className="mode-card"
+                className={`mode-card${
+                  isPlayableCategory(detail.mode as QuestionCategory)
+                    ? ""
+                    : " is-coming-soon"
+                }`}
                 type="button"
                 key={detail.mode}
+                disabled={!isPlayableCategory(detail.mode as QuestionCategory)}
                 onClick={() => startGame(detail.mode)}
               >
                 <span className="mode-icon">{detail.icon}</span>
                 <strong>{detail.title}</strong>
                 <span className="mode-description">{detail.description}</span>
-                <span className="mode-note">{modeNote(detail.mode)}</span>
+                <span className="mode-note">
+                  {isPlayableCategory(detail.mode as QuestionCategory)
+                    ? modeNote(detail.mode)
+                    : "Coming soon"}
+                </span>
                 {(() => {
+                  if (!isPlayableCategory(detail.mode as QuestionCategory)) {
+                    return null;
+                  }
                   // A title only appears once it has been earned — Newcomer is
                   // for the account screen, not the front page.
                   const earnedTitle = hasEarnedTitle(
@@ -1720,6 +1744,23 @@ export default function Game() {
                 })()}
               </button>
             ))}
+          </div>
+          <div className="mixed-mode-row">
+            <button
+              className="mode-card mixed-mode-card"
+              type="button"
+              onClick={() => startGame(MIXED_MODE.mode)}
+            >
+              <span className="mode-icon">{MIXED_MODE.icon}</span>
+              <strong>{MIXED_MODE.title}</strong>
+              <span className="mode-description">{MIXED_MODE.description}</span>
+              <span className="mode-note">{modeNote(MIXED_MODE.mode)}</span>
+              {bestScores.mixed > 0 && (
+                <span className="mode-best">
+                  Best {formatPoints(bestScores.mixed)}
+                </span>
+              )}
+            </button>
           </div>
           <div className="category-footer">
             <span>

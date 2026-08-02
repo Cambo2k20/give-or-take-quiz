@@ -5,6 +5,9 @@
 
 begin;
 
+create extension if not exists pgtap with schema extensions;
+select extensions.plan(1);
+
 create function pg_temp.assert_true(p_condition boolean, p_message text)
 returns void
 language plpgsql
@@ -115,6 +118,37 @@ select pg_temp.assert_true(
 select pg_temp.assert_true(
   (select count(*) from public.achievements) = 65,
   'the expanded catalogue must contain 65 distinct achievements'
+);
+select pg_temp.assert_true(
+  (
+    select count(*)
+    from pg_enum e
+    join pg_type t on t.oid = e.enumtypid
+    where t.typname = 'question_category'
+  ) = 10,
+  'question_category must contain ten subjects'
+);
+select pg_temp.assert_true(
+  (
+    select count(*)
+    from pg_enum e
+    join pg_type t on t.oid = e.enumtypid
+    where t.typname = 'game_mode'
+      and e.enumlabel not in ('mixed', 'daily', 'survival')
+  ) = 10,
+  'game_mode must contain ten subject values'
+);
+select pg_temp.assert_true(
+  (select count(*) from public.questions
+   where category = 'dinosaurs' and not is_daily) = 5
+  and (select count(*) from public.questions
+       where category = 'games' and not is_daily) = 5,
+  'incubating categories must each contain five starter questions'
+);
+select pg_temp.assert_true(
+  (select count(*) from public.rank_titles
+   where category in ('dinosaurs', 'games')) = 12,
+  'incubating categories must provide all twelve rank titles'
 );
 select pg_temp.assert_true(
   (
@@ -285,6 +319,16 @@ select pg_temp.assert_true(
     where deck.challenge_id = :'challenge_one'
   ),
   'a five-question Mixed deck must use five subjects'
+);
+select pg_temp.assert_true(
+  not exists (
+    select 1
+    from public.game_challenge_questions deck
+    join public.questions q on q.id = deck.question_id
+    where deck.challenge_id = :'challenge_one'
+      and q.category in ('dinosaurs', 'games')
+  ),
+  'production Mixed challenge decks must exclude incubating subjects'
 );
 
 set local role authenticated;
@@ -458,7 +502,7 @@ select pg_temp.assert_true(
   'completed matches must unlock only the social milestones actually reached'
 );
 
--- Survival uses every eligible non-Daily question in one shared order and
+-- Survival uses every live non-Daily question in one shared order and
 -- accepts only a prefix ending at the first miss.
 select public.create_game_challenge(:'bravo_id', 'survival', null)
   as challenge_survival \gset
@@ -471,8 +515,13 @@ select set_config(
 reset role;
 select pg_temp.assert_true(
   jsonb_array_length(current_setting('validation.survival_deck')::jsonb) =
-    (select count(*) from public.questions where not is_daily),
-  'Survival must include every eligible non-Daily question'
+    (select count(*) from public.questions
+     where not is_daily
+       and category in (
+         'population', 'history', 'geography', 'science',
+         'animals', 'space', 'technology', 'movies'
+       )),
+  'Survival must include every live non-Daily question'
 );
 
 set local role authenticated;
@@ -624,6 +673,9 @@ select pg_temp.assert_true(
   public.search_players_exact('Social Alpha QA') is null,
   'blocked players must receive a generic unavailable search result'
 );
+
+select extensions.pass('all transaction assertions passed');
+select * from extensions.finish();
 
 rollback;
 

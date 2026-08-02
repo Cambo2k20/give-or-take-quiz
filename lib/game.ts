@@ -1,4 +1,8 @@
 import { questions } from "./questions";
+import {
+  ALL_CATEGORIES,
+  getPlayableCategories,
+} from "./categories";
 import type {
   GameMode,
   Question,
@@ -13,19 +17,44 @@ export const STORAGE_KEY = "close-enough:v4";
 export const QUESTIONS_PER_GAME = 5;
 export const QUESTION_HISTORY_KEY = "give-or-take:question-history:v1";
 
-/** Every mode that draws from a single category, in mode-chooser order. */
-export const CATEGORIES: readonly QuestionCategory[] = [
-  "population",
-  "history",
-  "geography",
-  "science",
-  "animals",
-  "space",
-  "technology",
-  "movies",
-];
+const categoryQuestionCounts = Object.fromEntries(
+  ALL_CATEGORIES.map((category) => [
+    category,
+    questions.filter((question) => question.category === category).length,
+  ]),
+) as Record<QuestionCategory, number>;
 
-export const GAME_MODES: readonly GameMode[] = [...CATEGORIES, "mixed"];
+const viteEnv = (import.meta as ImportMeta & { readonly env?: ImportMetaEnv })
+  .env;
+
+/** Categories a game may draw from in this build. */
+export const PLAYABLE_CATEGORIES = getPlayableCategories(
+  categoryQuestionCounts,
+  {
+    mode: viteEnv?.MODE,
+    enableIncubating: viteEnv?.VITE_ENABLE_INCUBATING_CATEGORIES,
+  },
+);
+
+export const GAME_MODES: readonly GameMode[] = [
+  ...PLAYABLE_CATEGORIES,
+  "mixed",
+];
+const ALL_GAME_MODES: readonly GameMode[] = [...ALL_CATEGORIES, "mixed"];
+
+const playableCategorySet: ReadonlySet<QuestionCategory> = new Set(
+  PLAYABLE_CATEGORIES,
+);
+
+export function isPlayableCategory(
+  category: QuestionCategory,
+): boolean {
+  return playableCategorySet.has(category);
+}
+
+export function isPlayableGameMode(value: unknown): value is GameMode {
+  return value === "mixed" || playableCategorySet.has(value as QuestionCategory);
+}
 
 export type BestScores = Record<GameMode, number>;
 export type QuestionHistory = Partial<Record<GameMode, string[]>>;
@@ -39,6 +68,8 @@ const EMPTY_BEST_SCORES: BestScores = {
   space: 0,
   technology: 0,
   movies: 0,
+  dinosaurs: 0,
+  games: 0,
   mixed: 0,
 };
 
@@ -233,6 +264,12 @@ function byCategory(category: QuestionCategory): Question[] {
   return questions.filter((question) => question.category === category);
 }
 
+function playableQuestions(): Question[] {
+  return questions.filter((question) =>
+    playableCategorySet.has(question.category),
+  );
+}
+
 function drawAvoidingSeen(
   pool: readonly Question[],
   count: number,
@@ -278,7 +315,7 @@ function drawAvoidingSeen(
  * so the chooser cannot go stale the next time the bank grows.
  */
 export function questionCount(mode: GameMode): number {
-  return mode === "mixed" ? questions.length : byCategory(mode).length;
+  return mode === "mixed" ? playableQuestions().length : byCategory(mode).length;
 }
 
 /**
@@ -287,8 +324,9 @@ export function questionCount(mode: GameMode): number {
  * is never scored or recorded, so it ignores question history by design.
  */
 export function pickDemoQuestion(rng: () => number = Math.random): Question {
-  const index = Math.floor(rng() * questions.length);
-  return questions[Math.min(questions.length - 1, Math.max(0, index))];
+  const pool = playableQuestions();
+  const index = Math.floor(rng() * pool.length);
+  return pool[Math.min(pool.length - 1, Math.max(0, index))];
 }
 
 export function selectQuestions(
@@ -303,10 +341,14 @@ export function selectQuestionsWithHistory(
   history: QuestionHistory,
   rng: () => number = Math.random,
 ): { questions: Question[]; history: QuestionHistory } {
+  if (mode !== "mixed" && !isPlayableCategory(mode)) {
+    throw new Error(`${mode} is not playable in this build.`);
+  }
+
   if (mode === "mixed") {
     // Five distinct categories keep a short Mixed round genuinely varied.
     // Which five appear changes each time rather than favouring a fixed set.
-    const selectedCategories = shuffled(CATEGORIES, rng).slice(
+    const selectedCategories = shuffled(PLAYABLE_CATEGORIES, rng).slice(
       0,
       QUESTIONS_PER_GAME,
     );
@@ -360,7 +402,7 @@ export function readQuestionHistory(
     if (stored.version !== 1 || !stored.seenByMode) return {};
 
     const history: QuestionHistory = {};
-    for (const mode of GAME_MODES) {
+    for (const mode of ALL_GAME_MODES) {
       const ids = stored.seenByMode[mode];
       if (!Array.isArray(ids)) continue;
       const validIds = new Set(
@@ -419,7 +461,7 @@ export function readBestScores(storage?: StorageLike | null): BestScores {
     // Each mode is read independently so a record written before a mode
     // existed keeps its other scores instead of resetting the lot.
     const scores = { ...EMPTY_BEST_SCORES };
-    for (const mode of GAME_MODES) {
+    for (const mode of ALL_GAME_MODES) {
       const value = stored.bestScores[mode];
       if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
         scores[mode] = value;

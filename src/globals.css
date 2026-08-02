@@ -828,6 +828,14 @@ h1[tabindex="-1"]:focus {
   margin-top: 14px;
 }
 
+.mixed-mode-row {
+  margin-top: 14px;
+}
+
+.mixed-mode-card {
+  width: 100%;
+}
+
 .mode-card {
   padding: 22px 20px 20px;
   border: 1.5px solid var(--line);
@@ -854,6 +862,30 @@ h1[tabindex="-1"]:focus {
 .mode-card:active {
   transform: translateY(0);
   box-shadow: var(--shadow-card);
+}
+
+.mode-card.is-coming-soon:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.mode-card.is-coming-soon:disabled:hover,
+.mode-card.is-coming-soon:disabled:active {
+  transform: none;
+  border-color: var(--line);
+  box-shadow: var(--shadow-card);
+}
+
+.mode-card.is-coming-soon .mode-note {
+  align-self: flex-start;
+  margin-top: auto;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .mode-icon {
@@ -4926,6 +4958,11 @@ h1[tabindex="-1"]:focus {
 
   .mode-note {
     padding-top: 0;
+  }
+
+  .mode-card.is-coming-soon .mode-note {
+    flex-basis: auto;
+    padding: 5px 10px;
   }
 
   .result-actions {

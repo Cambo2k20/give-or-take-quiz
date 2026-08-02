@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "validate:data": "tsx scripts/validate-data.ts",
+    "validate:question-sync": "tsx --env-file=.env scripts/compare-question-ids.ts",
     "build:daily-sql": "tsx scripts/build-daily-sql.ts",
     "generate:questions": "tsx --env-file=.env scripts/generate-questions.ts",
     "lint": "eslint ."

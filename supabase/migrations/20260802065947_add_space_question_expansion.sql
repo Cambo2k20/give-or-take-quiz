@@ -2,6 +2,46 @@
 -- These intentionally avoid answer targets already used by Daily or regular
 -- questions, including the existing Sputnik 1 and Apollo 11 questions.
 
+-- The original question bank was loaded before migrations became the complete
+-- local bootstrap path. Keep the subtype reference data here so a clean replay
+-- can satisfy the foreign keys used by this and every later content migration.
+-- The live project already contains these rows, so the inserts are idempotent.
+insert into public.question_subtype_rules (subtype, measure) values
+  ('country', 'population'),
+  ('city', 'population'),
+  ('event', 'history'),
+  ('length', 'size'),
+  ('area', 'size'),
+  ('mass', 'size'),
+  ('count', 'quantity'),
+  ('percentage', 'quantity'),
+  ('money', 'quantity'),
+  ('duration', 'physics'),
+  ('speed', 'physics'),
+  ('temperature', 'physics')
+on conflict (subtype) do nothing;
+
+insert into public.question_subtype_units (subtype, unit) values
+  ('country', 'people'),
+  ('city', 'people'),
+  ('event', 'year'),
+  ('length', 'metre'),
+  ('length', 'kilometre'),
+  ('area', 'square-kilometre'),
+  ('mass', 'kilogram'),
+  ('mass', 'tonne'),
+  ('count', 'count'),
+  ('percentage', 'percent'),
+  ('money', 'usd'),
+  ('duration', 'second'),
+  ('duration', 'minute'),
+  ('duration', 'hour'),
+  ('duration', 'day'),
+  ('duration', 'duration-year'),
+  ('speed', 'kph'),
+  ('temperature', 'celsius')
+on conflict (subtype, unit) do nothing;
+
 insert into public.questions (
   id, category, measure, subtype, prompt, answer, min, max, scale, unit,
   reference_year, source_title, source_url, explanation, is_daily

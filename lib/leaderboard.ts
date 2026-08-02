@@ -1,4 +1,6 @@
 import { supabase } from "./supabase";
+import { isQuestionCategory } from "./categories";
+import { isPlayableCategory, isPlayableGameMode } from "./game";
 import type { OfficialDailyHistoryEntry } from "./daily";
 import type { GameMode, QuestionCategory } from "./types";
 
@@ -23,15 +25,19 @@ export type ProfileAvatarKey =
   | BuiltInProfileAvatarKey
   | `${QuestionCategory}-${PaddedBadgeRank}`;
 
-const PROFILE_AVATAR_PATTERN =
-  /^(population|history|geography|science|animals|space|technology|movies)-(05|10|15|20|25|30)$/;
+const PROFILE_AVATAR_PATTERN = /^([a-z0-9-]+)-(05|10|15|20|25|30)$/;
 
 export function isProfileAvatarKey(value: unknown): value is ProfileAvatarKey {
+  const match = typeof value === "string" ? value.match(PROFILE_AVATAR_PATTERN) : null;
   return (
     BUILT_IN_PROFILE_AVATARS.includes(
       value as (typeof BUILT_IN_PROFILE_AVATARS)[number],
     ) ||
-    (typeof value === "string" && PROFILE_AVATAR_PATTERN.test(value))
+    Boolean(
+      match &&
+        isQuestionCategory(match[1]) &&
+        isPlayableCategory(match[1]),
+    )
   );
 }
 
@@ -227,6 +233,10 @@ export async function submitRound(
   mode: GameMode,
   guesses: readonly RoundGuess[],
 ): Promise<SubmittedRound> {
+  if (!isPlayableGameMode(mode)) {
+    throw new Error(`${mode} is not playable in this build.`);
+  }
+
   const { data, error } = await client().rpc("submit_round", {
     p_mode: mode,
     p_guesses: guesses,
@@ -418,17 +428,19 @@ export async function fetchClassicLeaderboard(
     throw new Error(error.message);
   }
 
-  return (data ?? []).map((row) => ({
-    playerId: row.player_id,
-    displayName: row.display_name,
-    category: row.mode as GameMode,
-    bestScore: row.best_score,
-    roundsPlayed: row.rounds_played,
-    rank: row.rank,
-    correctAnswers: row.correct_answers,
-    accuracy: Number(row.accuracy),
-    bestDate: row.best_date,
-  }));
+  return (data ?? [])
+    .filter((row) => isPlayableGameMode(row.mode))
+    .map((row) => ({
+      playerId: row.player_id,
+      displayName: row.display_name,
+      category: row.mode,
+      bestScore: row.best_score,
+      roundsPlayed: row.rounds_played,
+      rank: row.rank,
+      correctAnswers: row.correct_answers,
+      accuracy: Number(row.accuracy),
+      bestDate: row.best_date,
+    }));
 }
 
 async function fetchClassicLeaderboardFromSource(
@@ -449,7 +461,10 @@ async function fetchClassicLeaderboardFromSource(
 
   const roundCount = new Map<string, number>();
   const bestRound = new Map<string, (typeof rounds)[number]>();
-  for (const round of rounds) {
+  const playableRounds = rounds.filter((round) =>
+    isPlayableGameMode(round.mode),
+  );
+  for (const round of playableRounds) {
     const key = `${round.player_id}:${round.mode}`;
     roundCount.set(key, (roundCount.get(key) ?? 0) + 1);
     const best = bestRound.get(key);
@@ -623,7 +638,7 @@ export async function fetchMyStandings(
 
   const categories: Partial<Record<GameMode, number>> = {};
   for (const row of categoryRows.data ?? []) {
-    categories[row.mode as GameMode] = row.rank;
+    if (isPlayableGameMode(row.mode)) categories[row.mode] = row.rank;
   }
 
   // A missing standing is not an error: it just means "never placed here".

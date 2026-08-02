@@ -3,6 +3,8 @@ import {
   isProfileAvatarKey,
   type ProfileAvatarKey,
 } from "./leaderboard";
+import { isQuestionCategory } from "./categories";
+import { isPlayableCategory, isPlayableGameMode } from "./game";
 import { supabase } from "./supabase";
 import type { BackgroundThemeId } from "./themes";
 import { BACKGROUND_THEMES } from "./themes";
@@ -99,10 +101,6 @@ function number(value: unknown): number {
   return Number.isFinite(result) ? result : 0;
 }
 
-function nullableText(value: unknown): string | null {
-  return typeof value === "string" && value.length > 0 ? value : null;
-}
-
 const THEME_IDS = new Set(BACKGROUND_THEMES.map((theme) => theme.id));
 
 function themeId(value: unknown): BackgroundThemeId | null {
@@ -124,6 +122,16 @@ function relationship(value: unknown): ProfileRelationship {
   }
 }
 
+function playableCategory(value: unknown): QuestionCategory | null {
+  return isQuestionCategory(value) && isPlayableCategory(value) ? value : null;
+}
+
+function playableBadgeKey(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const match = value.match(/^([a-z0-9-]+)-(05|10|15|20|25|30)$/);
+  return match && playableCategory(match[1]) ? value : null;
+}
+
 export function mapPublicPlayerProfile(value: unknown): PublicPlayerProfile {
   const row = object(value);
   const player = object(row.player);
@@ -131,6 +139,42 @@ export function mapPublicPlayerProfile(value: unknown): PublicPlayerProfile {
   const survival = object(row.survival);
   const daily = object(row.daily);
   const avatar = player.avatar_key;
+  const categoryRanks = array(row.category_ranks).flatMap((value) => {
+    const rank = object(value);
+    const category = playableCategory(rank.category);
+    return category
+      ? [{
+          category,
+          xp: number(rank.xp),
+          rank: number(rank.rank),
+          title: text(rank.title, "Newcomer"),
+        }]
+      : [];
+  });
+  const earnedBadges = array(row.earned_badges).flatMap((value) => {
+    const badge = object(value);
+    const category = playableCategory(badge.category);
+    const badgeKey = playableBadgeKey(badge.badge_key);
+    return category && badgeKey
+      ? [{
+          badgeKey,
+          category,
+          rankFloor: number(badge.rank_floor),
+          title: text(badge.title),
+        }]
+      : [];
+  });
+  const classicBests = array(row.classic_bests).flatMap((value) => {
+    const best = object(value);
+    if (!isPlayableGameMode(best.category)) return [];
+    return [{
+      category: best.category,
+      bestScore: number(best.best_score),
+      correctAnswers: number(best.correct_answers),
+      accuracy: number(best.accuracy),
+      bestDate: text(best.best_date),
+    }];
+  });
 
   return {
     player: {
@@ -142,8 +186,8 @@ export function mapPublicPlayerProfile(value: unknown): PublicPlayerProfile {
     },
     relationship: relationship(row.relationship),
     showcase: {
-      featuredBadgeKey: nullableText(showcase.featured_badge_key),
-      customFeaturedBadgeKey: nullableText(
+      featuredBadgeKey: playableBadgeKey(showcase.featured_badge_key),
+      customFeaturedBadgeKey: playableBadgeKey(
         showcase.custom_featured_badge_key,
       ),
       pinnedAchievementIds: array(showcase.pinned_achievement_ids).filter(
@@ -152,25 +196,9 @@ export function mapPublicPlayerProfile(value: unknown): PublicPlayerProfile {
       profileThemeId: themeId(showcase.profile_theme_id),
       customProfileThemeId: themeId(showcase.custom_profile_theme_id),
     },
-    totalXp: number(row.total_xp),
-    categoryRanks: array(row.category_ranks).map((value) => {
-      const rank = object(value);
-      return {
-        category: text(rank.category) as QuestionCategory,
-        xp: number(rank.xp),
-        rank: number(rank.rank),
-        title: text(rank.title, "Newcomer"),
-      };
-    }),
-    earnedBadges: array(row.earned_badges).map((value) => {
-      const badge = object(value);
-      return {
-        badgeKey: text(badge.badge_key),
-        category: text(badge.category) as QuestionCategory,
-        rankFloor: number(badge.rank_floor),
-        title: text(badge.title),
-      };
-    }),
+    totalXp: categoryRanks.reduce((sum, rank) => sum + rank.xp, 0),
+    categoryRanks,
+    earnedBadges,
     earnedAchievements: array(row.earned_achievements).map((value) => {
       const achievement = object(value);
       const tier = text(achievement.tier);
@@ -182,16 +210,7 @@ export function mapPublicPlayerProfile(value: unknown): PublicPlayerProfile {
           tier === "gold" || tier === "silver" ? tier : ("bronze" as const),
       };
     }),
-    classicBests: array(row.classic_bests).map((value) => {
-      const best = object(value);
-      return {
-        category: text(best.category) as QuestionCategory | "mixed",
-        bestScore: number(best.best_score),
-        correctAnswers: number(best.correct_answers),
-        accuracy: number(best.accuracy),
-        bestDate: text(best.best_date),
-      };
-    }),
+    classicBests,
     survival: {
       bestRun: number(survival.best_run),
       attempts: number(survival.attempts),

@@ -1,4 +1,4 @@
-import { shuffled, valueToPosition } from "./game";
+import { isPlayableCategory, shuffled, valueToPosition } from "./game";
 import { questions } from "./questions";
 import type { Question } from "./types";
 
@@ -76,7 +76,10 @@ export function survivalVerdict(
  * History is deliberately untouched, exactly as the daily leaves it alone.
  */
 export function buildSurvivalDeck(rng: () => number = Math.random): Question[] {
-  return shuffled(questions, rng);
+  return shuffled(
+    questions.filter((question) => isPlayableCategory(question.category)),
+    rng,
+  );
 }
 
 /** Device-local bests, one per format. The server board is the social layer. */

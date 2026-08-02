@@ -21,6 +21,8 @@ const labels = {
   space: "Space",
   technology: "Technology",
   movies: "Movies",
+  dinosaurs: "Dinosaurs",
+  games: "Games",
   mixed: "Mixed",
 } satisfies Record<GameMode, string>;
 

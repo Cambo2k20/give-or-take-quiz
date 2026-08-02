@@ -99,6 +99,18 @@ describe("Game", () => {
     expect(screen.getByRole("slider")).toBeInTheDocument();
   });
 
+  it("shows ten subject cards and keeps incubating categories disabled", () => {
+    render(<Game />);
+
+    expect(document.querySelectorAll(".mode-grid > .mode-card")).toHaveLength(10);
+    expect(
+      screen.getByRole("button", { name: /Dinosaurs.*Coming soon/i }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /Games.*Coming soon/i }),
+    ).toBeDisabled();
+  });
+
   it("locks the submitted guess before revealing the answer", async () => {
     const user = userEvent.setup();
     render(<Game />);
