@@ -27,6 +27,7 @@ type HomeHeaderProps = {
   archiveCount: number;
   leaderboardEnabled: boolean;
   accountLabel: string;
+  socialUnreadCount?: number;
   theme: Theme;
   onHome: () => void;
   onPlayDaily: () => void;
@@ -57,6 +58,7 @@ export function HomeHeader({
   archiveCount,
   leaderboardEnabled,
   accountLabel,
+  socialUnreadCount = 0,
   theme,
   onHome,
   onPlayDaily,
@@ -174,6 +176,14 @@ export function HomeHeader({
               title={accountLabel}
             >
               <span>{accountLabel}</span>
+              {socialUnreadCount > 0 && (
+                <span
+                  className="home-header-social-badge"
+                  aria-label={`${socialUnreadCount} unread friend updates`}
+                >
+                  {socialUnreadCount > 9 ? "9+" : socialUnreadCount}
+                </span>
+              )}
             </button>
           </>
         )}

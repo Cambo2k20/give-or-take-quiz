@@ -166,6 +166,10 @@ type ProfileDashboardProps = {
   onOpenRanks: (category?: QuestionCategory) => void;
   onOpenAchievements: () => void;
   onOpenUnlocks: () => void;
+  onOpenFriends: () => void;
+  friendCount: number;
+  activeChallengeCount: number;
+  socialUnreadCount: number;
   onSignOut: () => void;
   headingRef: RefObject<HTMLHeadingElement | null>;
 };
@@ -189,6 +193,10 @@ export function ProfileDashboard({
   onOpenRanks,
   onOpenAchievements,
   onOpenUnlocks,
+  onOpenFriends,
+  friendCount,
+  activeChallengeCount,
+  socialUnreadCount,
   onSignOut,
   headingRef,
 }: ProfileDashboardProps) {
@@ -361,6 +369,29 @@ export function ProfileDashboard({
           </p>
         </section>
       )}
+
+      <section className="profile-section profile-friends-card">
+        <div>
+          <p className="eyebrow">Play together, in your own time</p>
+          <h2>Friends</h2>
+          <p>
+            Private Classic and Survival challenges, plus your record against
+            every player you have faced.
+          </p>
+        </div>
+        <div className="profile-friends-summary" aria-label="Friends summary">
+          <span><strong>{friendCount}</strong> friends</span>
+          <span><strong>{activeChallengeCount}</strong> active</span>
+        </div>
+        <button className="profile-section-action" type="button" onClick={onOpenFriends}>
+          Open Friends
+          {socialUnreadCount > 0 && (
+            <span className="social-badge" aria-label={`${socialUnreadCount} unread friend updates`}>
+              {socialUnreadCount > 9 ? "9+" : socialUnreadCount}
+            </span>
+          )}
+        </button>
+      </section>
 
       <div className="profile-dashboard-grid">
         <section className="profile-section profile-subjects">
@@ -545,7 +576,7 @@ type RankPanelProps = {
   headingRef: RefObject<HTMLHeadingElement | null>;
 };
 
-function ProfileAvatarArtwork({
+export function ProfileAvatarArtwork({
   avatarKey,
   className,
 }: {

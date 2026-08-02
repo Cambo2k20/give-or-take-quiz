@@ -1,4 +1,11 @@
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   type BestScores,
   QUESTIONS_PER_GAME,
@@ -14,6 +21,7 @@ import {
   writeBestScores,
   writeQuestionHistory,
 } from "../lib/game";
+import { dailyResultGrid } from "../lib/share";
 import { signOut } from "../lib/auth";
 import {
   buildSurvivalDeck,
@@ -53,7 +61,7 @@ import {
 } from "../lib/backgroundTheme";
 import type { BackgroundThemeId } from "../lib/themes";
 import { ThemeArtwork } from "./themes/ThemeArtwork";
-import { DailyArchive } from "./Daily";
+import { DailyArchive, readableDate } from "./Daily";
 import { HomeHeader } from "./HomeHeader";
 import { BrandMark } from "./BrandMark";
 import {
@@ -86,6 +94,22 @@ import {
 } from "./theme";
 import { useAuth } from "./useAuth";
 import { useLeaderboard } from "./useLeaderboard";
+import { useSocial } from "./useSocial";
+import { FriendsScreen } from "./Friends";
+import {
+  submitGameChallenge,
+  type ChallengeSummary,
+} from "../lib/social";
+import {
+  ChallengePlayBanner,
+  ChallengeResultCallout,
+  type ChallengeSubmitState,
+} from "./ChallengeUI";
+import {
+  challengeIdFromUrl,
+  challengeShareUrl,
+  replaceChallengeLink,
+} from "../lib/challengeLink";
 
 type Phase =
   | "category"
@@ -93,6 +117,7 @@ type Phase =
   | "results"
   | "leaderboard"
   | "account"
+  | "friends"
   | "daily-archive"
   | "survival"
   | "survival-over"
@@ -100,6 +125,11 @@ type Phase =
   | "achievements"
   | "unlocks";
 type RoundResult = { question: Question; guess: number; points: number };
+
+function linkedChallengeId(): string | null {
+  if (typeof window === "undefined") return null;
+  return challengeIdFromUrl(window.location.href);
+}
 
 const SHIMMER_DURATION_MS = 2600;
 const SHIMMER_MIN_PAUSE_MS = 6000;
@@ -331,7 +361,10 @@ async function copyText(text: string) {
 }
 
 export default function Game() {
-  const [phase, setPhase] = useState<Phase>("category");
+  const [phase, setPhase] = useState<Phase>(() =>
+    linkedChallengeId() ? "account" : "category",
+  );
+  const [targetChallengeId, setTargetChallengeId] = useState(linkedChallengeId);
   const [rankSubject, setRankSubject] = useState<QuestionCategory | null>(null);
   const [mode, setMode] = useState<GameMode>("mixed");
   const [gameQuestions, setGameQuestions] = useState<Question[]>([]);
@@ -365,6 +398,11 @@ export default function Game() {
   const [survivalVerdictState, setSurvivalVerdictState] =
     useState<SurvivalVerdict | null>(null);
   const [shareStatus, setShareStatus] = useState("");
+  const [activeChallenge, setActiveChallenge] =
+    useState<ChallengeSummary | null>(null);
+  const [challengeSubmit, setChallengeSubmit] =
+    useState<ChallengeSubmitState>({ status: "idle" });
+  const [challengeOpenError, setChallengeOpenError] = useState("");
   // Tagged with the player and date it was fetched for, so a rank belonging to
   // a previous sign-in can never be shown to the next one.
   const [dailyRank, setDailyRank] = useState<{
@@ -377,7 +415,9 @@ export default function Game() {
   // Progression is derived on the server from recorded rounds, so it only
   // exists for a player who has a name to record them against.
   const progress = useProgress(leaderboard.profile?.id ?? null);
+  const social = useSocial(leaderboard.profile?.id ?? null);
   const { refresh: refreshProgress } = progress;
+  const { refresh: refreshSocial } = social;
 
   useEffect(() => {
     const startShimmer = (target: Element | null) => {
@@ -454,6 +494,7 @@ export default function Game() {
   };
   // One publish per finished round, whatever React does with effects.
   const publishedRef = useRef(false);
+  const challengePublishedRef = useRef(false);
 
   // Following a reset link drops the player back on the app with a recovery
   // session, so the account screen takes over until the new password is set.
@@ -522,6 +563,29 @@ export default function Game() {
     loadSurvivalBoard,
   } = leaderboard;
   const canPublish = auth.canUseLeaderboard;
+
+  // A challenge link survives authentication and display-name setup. Only once
+  // both are ready do we hand it to the participant-only Friends screen.
+  useEffect(() => {
+    // Once the deck is active, targetChallengeId is also used to keep the share
+    // URL intact. Do not let that restoration behavior pull an in-progress
+    // player back out of the game.
+    if (
+      !targetChallengeId ||
+      activeChallenge ||
+      auth.status !== "signed-in" ||
+      !player
+    ) {
+      return;
+    }
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) setPhase("friends");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [targetChallengeId, activeChallenge, auth.status, player]);
 
   // Checked once per sign-in, before the player has necessarily played today
   // on this device. Without this, a device that has not played yet offers
@@ -628,7 +692,7 @@ export default function Game() {
   // A daily goes to its own per-day board, never a category one: two days are
   // two different puzzles, so their scores must not rank together.
   useEffect(() => {
-    if (phase !== "results" || publishedRef.current) return;
+    if (activeChallenge || phase !== "results" || publishedRef.current) return;
     if (!player || !canPublish || results.length === 0) return;
     publishedRef.current = true;
     const guesses = results.map((result) => ({
@@ -659,12 +723,13 @@ export default function Game() {
     publishDaily,
     dailyDate,
     refreshProgress,
+    activeChallenge,
   ]);
 
   // A finished run posts the whole sequence, fatal guess included: the server
   // re-judges every one and refuses a run that did not actually end in a miss.
   useEffect(() => {
-    if (phase !== "survival-over" || publishedRef.current) return;
+    if (activeChallenge || phase !== "survival-over" || publishedRef.current) return;
     if (!player || !canPublish || survivalGuesses.length === 0) return;
     publishedRef.current = true;
     void publishSurvival(
@@ -675,7 +740,68 @@ export default function Game() {
     ).then((recorded) => {
       if (recorded) void refreshProgress();
     });
-  }, [phase, survivalGuesses, player, canPublish, publishSurvival, refreshProgress]);
+  }, [
+    phase,
+    survivalGuesses,
+    player,
+    canPublish,
+    publishSurvival,
+    refreshProgress,
+    activeChallenge,
+  ]);
+
+  const submitFinishedChallenge = useCallback(async () => {
+    if (!activeChallenge || challengePublishedRef.current) return;
+    const guesses = (
+      activeChallenge.format === "survival" ? survivalGuesses : results
+    ).map((result) => ({
+      question_id: result.question.id,
+      guess: result.guess,
+    }));
+    if (guesses.length === 0) return;
+
+    challengePublishedRef.current = true;
+    setChallengeSubmit({ status: "sending" });
+    try {
+      const submitted = await submitGameChallenge(activeChallenge.id, guesses);
+      setActiveChallenge(submitted.challenge);
+      setChallengeSubmit({ status: "sent", challenge: submitted.challenge });
+      setTargetChallengeId(activeChallenge.id);
+      replaceChallengeLink(activeChallenge.id);
+      await refreshSocial();
+      await refreshProgress();
+    } catch (caught) {
+      challengePublishedRef.current = false;
+      setChallengeSubmit({
+        status: "failed",
+        message:
+          caught instanceof Error
+            ? caught.message
+            : "Could not submit this challenge.",
+      });
+    }
+  }, [
+    activeChallenge,
+    results,
+    survivalGuesses,
+    refreshSocial,
+    refreshProgress,
+  ]);
+
+  useEffect(() => {
+    if (!activeChallenge) return;
+    const finished =
+      (activeChallenge.format === "classic" && phase === "results") ||
+      (activeChallenge.format === "survival" && phase === "survival-over");
+    if (!finished) return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) void submitFinishedChallenge();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeChallenge, phase, submitFinishedChallenge]);
 
   async function joinAndPublishSurvival(name: string) {
     await leaderboard.join(name);
@@ -756,11 +882,16 @@ export default function Game() {
     setResults([]);
     setShareStatus("");
     publishedRef.current = false;
+    challengePublishedRef.current = false;
+    setChallengeSubmit({ status: "idle" });
     resetSubmit();
     setPhase("playing");
   }
 
   function startGame(selectedMode: GameMode) {
+    setActiveChallenge(null);
+    setTargetChallengeId(null);
+    replaceChallengeLink(null);
     const draw = selectQuestionsWithHistory(selectedMode, questionHistory);
     setMode(selectedMode);
     setDailyDate(null);
@@ -774,7 +905,13 @@ export default function Game() {
    * untouched, as in the daily: a run is not a round, and letting it eat the
    * category rotation would starve normal play.
    */
-  function startSurvival(deck: Question[] = buildSurvivalDeck()) {
+  function startSurvival(
+    deck: Question[] = buildSurvivalDeck(),
+    challenge: ChallengeSummary | null = null,
+  ) {
+    setActiveChallenge(challenge);
+    setTargetChallengeId(challenge?.id ?? null);
+    replaceChallengeLink(challenge?.id ?? null);
     setSurvivalDeck(deck);
     setSurvivalIndex(0);
     setSurvivalGuesses([]);
@@ -785,6 +922,8 @@ export default function Game() {
     setShareStatus("");
     setDailyDate(null);
     publishedRef.current = false;
+    challengePublishedRef.current = false;
+    setChallengeSubmit({ status: "idle" });
     resetSubmit();
     setPhase("survival");
   }
@@ -839,8 +978,86 @@ export default function Game() {
   function startDaily(date: string) {
     const set = dailySetFor(date);
     if (!set) return;
+    setActiveChallenge(null);
+    setTargetChallengeId(null);
+    replaceChallengeLink(null);
     setDailyDate(date);
     beginRound([...set.questions]);
+  }
+
+  async function playChallenge(challenge: ChallengeSummary) {
+    setChallengeOpenError("");
+    const deck = await social.loadChallengeDeck(challenge.id);
+    setShareStatus("");
+    setTargetChallengeId(challenge.id);
+    replaceChallengeLink(challenge.id);
+    if (challenge.format === "survival") {
+      startSurvival(deck, challenge);
+      return;
+    }
+
+    setActiveChallenge(challenge);
+    setMode(challenge.classicMode ?? "mixed");
+    setDailyDate(null);
+    beginRound(deck);
+  }
+
+  function requestPlayChallenge(challenge: ChallengeSummary) {
+    void playChallenge(challenge).catch((caught) => {
+      setChallengeOpenError(
+        caught instanceof Error ? caught.message : "This challenge is unavailable.",
+      );
+      setPhase("friends");
+    });
+  }
+
+  function backToFriends() {
+    setActiveChallenge(null);
+    setChallengeSubmit({ status: "idle" });
+    setPhase("friends");
+    void social.enterFriends();
+  }
+
+  async function startRematch() {
+    if (!activeChallenge) return;
+    setChallengeSubmit({ status: "sending" });
+    try {
+      const id = await social.createChallenge(
+        activeChallenge.opponent.id,
+        activeChallenge.format,
+        activeChallenge.classicMode,
+      );
+      const rematch = await social.loadChallenge(id);
+      await playChallenge(rematch);
+    } catch (caught) {
+      setChallengeSubmit({
+        status: "failed",
+        message:
+          caught instanceof Error ? caught.message : "Could not start a rematch.",
+      });
+    }
+  }
+
+  async function shareChallenge() {
+    if (!activeChallenge) return;
+    const url = challengeShareUrl(activeChallenge.id, window.location.href);
+    const text = `${activeChallenge.opponent.displayName}, your Give or Take challenge is ready.`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Give or Take challenge", text, url });
+        setShareStatus("Challenge shared.");
+        return;
+      }
+      await copyText(`${text} ${url}`);
+      setShareStatus("Challenge link copied.");
+    } catch {
+      try {
+        await copyText(`${text} ${url}`);
+        setShareStatus("Challenge link copied.");
+      } catch {
+        setShareStatus("Sharing is unavailable on this device.");
+      }
+    }
   }
 
   function lockGuess() {
@@ -890,14 +1107,36 @@ export default function Game() {
   }
 
   /**
+   * The shareable form of a daily result: the day, a row of squares standing
+   * for how close each of the five guesses landed, and the score. The grid is
+   * dropped for a result recorded before breakdowns were stored, leaving the
+   * score to speak for itself rather than showing an empty row.
+   */
+  function dailyShareText(
+    date: string,
+    score: number,
+    pointsPerQuestion: readonly number[],
+  ) {
+    const grid =
+      pointsPerQuestion.length > 0
+        ? `\n${dailyResultGrid(pointsPerQuestion)}\n`
+        : " ";
+    return `Give or Take — ${readableDate(date)}${grid}${formatPoints(
+      score,
+    )}/${formatPoints(DAILY_MAX_SCORE)}\n\nHow close can you get?`;
+  }
+
+  /**
    * Shares a daily straight from the home hero, where no round is in play and
    * `results` belongs to whatever was last finished. The date and score are
    * passed in rather than read off round state for that reason.
    */
-  async function shareDailyScore(date: string, score: number) {
-    const text = `I scored ${formatPoints(score)}/${formatPoints(
-      DAILY_MAX_SCORE,
-    )} in Give or Take — the ${date} daily. How close can you get?`;
+  async function shareDailyScore(
+    date: string,
+    score: number,
+    pointsPerQuestion: readonly number[] = [],
+  ) {
+    const text = dailyShareText(date, score, pointsPerQuestion);
     const url = window.location.href;
     try {
       if (navigator.share) {
@@ -921,11 +1160,16 @@ export default function Game() {
     // Naming the day is the point of sharing a daily: the reader can play the
     // same ten questions and compare directly. A run shares its length, which
     // is the number the survival board ranks.
-    const label = dailyDate ? `the ${dailyDate} daily` : MODE_LABELS[mode];
     const text =
       phase === "survival-over"
         ? `I survived ${formatPoints(survivalSurvived)} questions in Give or Take. How far can you get?`
-        : `I scored ${formatPoints(totalScore)}/${formatPoints(maxScore)} in Give or Take — ${label}. How close can you get?`;
+        : dailyDate
+          ? dailyShareText(
+              dailyDate,
+              totalScore,
+              results.map((result) => result.points),
+            )
+          : `I scored ${formatPoints(totalScore)}/${formatPoints(maxScore)} in Give or Take — ${MODE_LABELS[mode]}. How close can you get?`;
     const url = window.location.href;
     try {
       if (navigator.share) {
@@ -965,6 +1209,7 @@ export default function Game() {
               ? (player?.displayName ?? auth.user?.email ?? "Account")
               : "Sign in"
           }
+          socialUnreadCount={social.unreadCount}
           theme={theme}
           onHome={() => setPhase("category")}
           onPlayDaily={() => startDaily(todaysDaily.date)}
@@ -1081,6 +1326,7 @@ export default function Game() {
                 void shareDailyScore(
                   todaysDaily.date,
                   dailyProgress.dates[today]?.officialScore ?? 0,
+                  dailyProgress.dates[today]?.officialPoints ?? [],
                 )
               }
               shareStatus={shareStatus}
@@ -1188,6 +1434,9 @@ export default function Game() {
 
       {activePhase === "playing" && question && (
         <section className="game-screen">
+          {activeChallenge && (
+            <ChallengePlayBanner challenge={activeChallenge} labels={MODE_LABELS} />
+          )}
           <div
             className="progress-dots"
             role="progressbar"
@@ -1301,6 +1550,16 @@ export default function Game() {
               <strong>{formatPoints(totalScore)}</strong>
               <span>/ {formatPoints(maxScore)}</span>
             </div>
+            {activeChallenge ? (
+              <ChallengeResultCallout
+                state={challengeSubmit}
+                onRetry={() => void submitFinishedChallenge()}
+                onShare={() => void shareChallenge()}
+                onBack={backToFriends}
+                onRematch={() => void startRematch()}
+                shareStatus={shareStatus}
+              />
+            ) : (
             <div className="result-summary">
               <p>
                 {dailyDate
@@ -1350,11 +1609,12 @@ export default function Game() {
                 {shareStatus}
               </p>
             </div>
+            )}
           </div>
 
           <ProgressRibbon change={progress.change} labels={categoryLabels} />
 
-          {leaderboard.enabled && leaderboard.ready && (
+          {!activeChallenge && leaderboard.enabled && leaderboard.ready && (
             <div className="board-callout">
               {auth.status === "signed-out" ? (
                 <>
@@ -1465,21 +1725,26 @@ export default function Game() {
       )}
 
       {activePhase === "survival" && survivalQuestion && (
-        <SurvivalRound
-          question={survivalQuestion}
-          questionNumber={survivalNumber}
-          survived={survivalSurvived}
-          position={position}
-          onPositionChange={setPosition}
-          windowHalfWidth={survivalWindow(survivalNumber)}
-          locked={locked}
-          revealing={revealing}
-          verdict={survivalVerdictState}
-          guess={survivalGuess}
-          onLock={lockSurvivalGuess}
-          onContinue={continueSurvival}
-          headingRef={focusHeadingRef}
-        />
+        <>
+          {activeChallenge && (
+            <ChallengePlayBanner challenge={activeChallenge} labels={MODE_LABELS} />
+          )}
+          <SurvivalRound
+            question={survivalQuestion}
+            questionNumber={survivalNumber}
+            survived={survivalSurvived}
+            position={position}
+            onPositionChange={setPosition}
+            windowHalfWidth={survivalWindow(survivalNumber)}
+            locked={locked}
+            revealing={revealing}
+            verdict={survivalVerdictState}
+            guess={survivalGuess}
+            onLock={lockSurvivalGuess}
+            onContinue={continueSurvival}
+            headingRef={focusHeadingRef}
+          />
+        </>
       )}
 
       {activePhase === "survival-over" && (
@@ -1497,11 +1762,23 @@ export default function Game() {
           onShare={shareResult}
           shareStatus={shareStatus}
           headingRef={focusHeadingRef}
+          challengeCallout={
+            activeChallenge ? (
+              <ChallengeResultCallout
+                state={challengeSubmit}
+                onRetry={() => void submitFinishedChallenge()}
+                onShare={() => void shareChallenge()}
+                onBack={backToFriends}
+                onRematch={() => void startRematch()}
+                shareStatus={shareStatus}
+              />
+            ) : undefined
+          }
           progressRibbon={
             <ProgressRibbon change={progress.change} labels={categoryLabels} />
           }
           boardCallout={
-            leaderboard.enabled && leaderboard.ready ? (
+            !activeChallenge && leaderboard.enabled && leaderboard.ready ? (
               <div className="board-callout">
                 {auth.status === "signed-out" ? (
                   <>
@@ -1622,6 +1899,13 @@ export default function Game() {
               onOpenRanks={openRanks}
               onOpenAchievements={() => setPhase("achievements")}
               onOpenUnlocks={() => setPhase("unlocks")}
+              onOpenFriends={() => {
+                setChallengeOpenError("");
+                setPhase("friends");
+              }}
+              friendCount={social.dashboard.friends.length}
+              activeChallengeCount={social.dashboard.activeChallenges.length}
+              socialUnreadCount={social.unreadCount}
               onSignOut={() => {
                 void signOut();
                 setPhase("category");
@@ -1678,6 +1962,23 @@ export default function Game() {
             </button>
           </div>
         </section>
+      )}
+
+      {activePhase === "friends" && player && (
+        <FriendsScreen
+          social={social}
+          modeLabels={MODE_LABELS}
+          initialChallengeId={targetChallengeId}
+          externalError={challengeOpenError}
+          onPlayChallenge={requestPlayChallenge}
+          onBack={() => {
+            setTargetChallengeId(null);
+            replaceChallengeLink(null);
+            setChallengeOpenError("");
+            setPhase("account");
+          }}
+          headingRef={focusHeadingRef}
+        />
       )}
 
       {(activePhase === "ranks" ||
