@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import type { OfficialDailyHistoryEntry } from "./daily";
 import type { GameMode, QuestionCategory } from "./types";
 
 export const DEFAULT_PROFILE_AVATAR = "event-horizon" as const;
@@ -289,6 +290,31 @@ export async function fetchMyOfficialDaily(
   if (error) throw new Error(error.message);
   if (!data) return null;
   return { score: data.score, attempts: data.attempts };
+}
+
+/**
+ * Restores the signed-in player's official results for every Daily currently
+ * visible in the archive. One batched read avoids a request per card and makes
+ * account history portable across browsers, devices, and site domains.
+ */
+export async function fetchMyOfficialDailies(
+  playerId: string,
+  dates: readonly string[],
+): Promise<OfficialDailyHistoryEntry[]> {
+  if (dates.length === 0) return [];
+
+  const { data, error } = await client()
+    .from("daily_leaderboard")
+    .select("puzzle_date, score, attempts")
+    .eq("player_id", playerId)
+    .in("puzzle_date", [...dates]);
+
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => ({
+    date: row.puzzle_date,
+    score: row.score,
+    attempts: row.attempts,
+  }));
 }
 
 /**

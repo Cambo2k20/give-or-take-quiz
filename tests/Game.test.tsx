@@ -269,6 +269,9 @@ describe("Game", () => {
       expect(
         await screen.findByRole("heading", { name: /past dailies/i }),
       ).toBeInTheDocument();
+      expect(
+        screen.getByText(/sign in to sync them across devices/i),
+      ).toBeInTheDocument();
       // Both the current day and the earlier one are playable.
       expect(screen.getAllByRole("button", { name: /^play$/i })).toHaveLength(2);
       expect(set.date >= earlier.date).toBe(true);

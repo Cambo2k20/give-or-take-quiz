@@ -2,12 +2,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { rpc, query } = vi.hoisted(() => {
   const limit = vi.fn();
+  const inFilter = vi.fn();
   const order = vi.fn();
   order.mockReturnValue({ order, limit });
-  const eq = vi.fn(() => ({ order }));
+  const eq = vi.fn(() => ({ order, in: inFilter }));
   const select = vi.fn(() => ({ eq, order }));
   const from = vi.fn(() => ({ select }));
-  return { rpc: vi.fn(), query: { from, select, eq, order, limit } };
+  return {
+    rpc: vi.fn(),
+    query: { from, select, eq, order, limit, inFilter },
+  };
 });
 
 vi.mock("@/lib/supabase", () => ({
@@ -18,6 +22,7 @@ vi.mock("@/lib/supabase", () => ({
 const {
   fetchClassicLeaderboard,
   fetchDailyLeaderboard,
+  fetchMyOfficialDailies,
   submitDailyRound,
 } = await import("@/lib/leaderboard");
 
@@ -103,6 +108,50 @@ describe("fetchDailyLeaderboard", () => {
     query.limit.mockResolvedValue({ data: null, error: null });
 
     await expect(fetchDailyLeaderboard("2026-08-02")).resolves.toEqual([]);
+  });
+});
+
+describe("fetchMyOfficialDailies", () => {
+  it("fetches the account's visible Daily history in one query", async () => {
+    query.inFilter.mockResolvedValue({
+      data: [
+        { puzzle_date: "2026-08-01", score: 4200, attempts: 2 },
+        { puzzle_date: "2026-08-02", score: 3900, attempts: 1 },
+      ],
+      error: null,
+    });
+
+    await expect(
+      fetchMyOfficialDailies("player-1", ["2026-08-02", "2026-08-01"]),
+    ).resolves.toEqual([
+      { date: "2026-08-01", score: 4200, attempts: 2 },
+      { date: "2026-08-02", score: 3900, attempts: 1 },
+    ]);
+    expect(query.from).toHaveBeenCalledWith("daily_leaderboard");
+    expect(query.select).toHaveBeenCalledWith(
+      "puzzle_date, score, attempts",
+    );
+    expect(query.eq).toHaveBeenCalledWith("player_id", "player-1");
+    expect(query.inFilter).toHaveBeenCalledWith("puzzle_date", [
+      "2026-08-02",
+      "2026-08-01",
+    ]);
+  });
+
+  it("skips Supabase when no Daily dates are visible", async () => {
+    await expect(fetchMyOfficialDailies("player-1", [])).resolves.toEqual([]);
+    expect(query.from).not.toHaveBeenCalled();
+  });
+
+  it("surfaces a failed history query", async () => {
+    query.inFilter.mockResolvedValue({
+      data: null,
+      error: { message: "history unavailable" },
+    });
+
+    await expect(
+      fetchMyOfficialDailies("player-1", ["2026-08-02"]),
+    ).rejects.toThrow("history unavailable");
   });
 });
 

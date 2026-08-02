@@ -34,6 +34,7 @@ const api = vi.hoisted(() => ({
   publishSurvival: vi.fn().mockResolvedValue(null),
   loadClassicBoard: vi.fn().mockResolvedValue(undefined),
   loadSurvivalBoard: vi.fn().mockResolvedValue(undefined),
+  loadDailyHistory: vi.fn().mockResolvedValue([]),
   join: vi.fn(),
   resetSubmit: vi.fn(),
 }));
@@ -58,6 +59,7 @@ vi.mock("@/src/useLeaderboard", () => ({
     publish: api.publish,
     publishDaily: api.publishDaily,
     publishSurvival: api.publishSurvival,
+    loadDailyHistory: api.loadDailyHistory,
     submit: { status: "idle" as const },
     resetSubmit: api.resetSubmit,
     board: [],

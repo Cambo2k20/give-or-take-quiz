@@ -9,6 +9,7 @@ import {
   fetchClassicLeaderboard,
   fetchDailyLeaderboard,
   fetchLeaderboard,
+  fetchMyOfficialDailies,
   fetchMyDailyRank,
   fetchMyOfficialDaily,
   fetchSurvivalLeaderboard,
@@ -138,6 +139,12 @@ export function useLeaderboard(userId: string | null) {
     [],
   );
 
+  const loadDailyHistory = useCallback(
+    (playerId: string, dates: readonly string[]) =>
+      fetchMyOfficialDailies(playerId, dates),
+    [],
+  );
+
   const myDailyRank = useCallback(
     (playerId: string, date: string) => fetchMyDailyRank(playerId, date),
     [],
@@ -204,6 +211,7 @@ export function useLeaderboard(userId: string | null) {
     publish,
     publishDaily,
     checkDailyOfficial,
+    loadDailyHistory,
     myDailyRank,
     publishSurvival,
     submit,

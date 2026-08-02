@@ -7,7 +7,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/data/daily-sets.json", () => ({
   default: {
     version: 1,
-    sets: [{ date: "2026-08-01", questions: fixtureQuestions("pub") }],
+    sets: [
+      { date: "2026-08-01", questions: fixtureQuestions("pub") },
+      { date: "2026-08-02", questions: fixtureQuestions("pub") },
+    ],
   },
 }));
 
@@ -31,6 +34,7 @@ function fixtureQuestions(prefix: string) {
 // A signed-in, confirmed player who already holds a name: the one state in
 // which a finished round publishes itself without any interaction.
 const api = vi.hoisted(() => ({
+  profileId: "user-1",
   publish: vi.fn().mockResolvedValue(null),
   publishDaily: vi.fn().mockResolvedValue(null),
   loadClassicBoard: vi.fn().mockResolvedValue(undefined),
@@ -39,6 +43,7 @@ const api = vi.hoisted(() => ({
   join: vi.fn(),
   resetSubmit: vi.fn(),
   myDailyRank: vi.fn().mockResolvedValue(null),
+  loadDailyHistory: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("@/src/useAuth", () => ({
@@ -56,10 +61,11 @@ vi.mock("@/src/useLeaderboard", () => ({
   useLeaderboard: () => ({
     enabled: true,
     ready: true,
-    profile: { id: "user-1", displayName: "Ada" },
+    profile: { id: api.profileId, displayName: "Ada" },
     join: api.join,
     publish: api.publish,
     publishDaily: api.publishDaily,
+    loadDailyHistory: api.loadDailyHistory,
     myDailyRank: api.myDailyRank,
     submit: { status: "idle" as const },
     resetSubmit: api.resetSubmit,
@@ -119,6 +125,7 @@ describe("publishing a finished round", () => {
     vi.useRealTimers();
     vi.clearAllMocks();
     window.localStorage.clear();
+    api.profileId = "user-1";
   });
 
   it("publishes the daily and links results to that day's Daily board", async () => {
@@ -216,5 +223,90 @@ describe("publishing a finished round", () => {
     expect(
       dailyHero().getByRole("button", { name: /play today's daily/i }),
     ).toBeInTheDocument();
+  });
+
+  it("restores today's score and Past Dailies from the signed-in account", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date("2026-08-02T09:00:00"));
+    api.loadDailyHistory.mockResolvedValueOnce([
+      { date: "2026-08-01", score: 4100, attempts: 1 },
+      { date: "2026-08-02", score: 4300, attempts: 2 },
+    ]);
+
+    const user = userEvent.setup();
+    render(<Game />);
+
+    await waitFor(() => {
+      expect(api.loadDailyHistory).toHaveBeenCalledWith("user-1", [
+        "2026-08-02",
+        "2026-08-01",
+      ]);
+    });
+    expect(
+      await dailyHero().findByRole("heading", { name: "Today's score" }),
+    ).toBeInTheDocument();
+    expect(dailyHero().getByText("4,300")).toBeInTheDocument();
+    expect(
+      dailyHero().getByRole("button", { name: /replay for practice/i }),
+    ).toBeInTheDocument();
+
+    await user.click(homeHeader().getByRole("button", { name: "Past dailies" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Past dailies" }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Replay" })).toHaveLength(2);
+    expect(screen.getByText("4,300 / 5,000")).toBeInTheDocument();
+    expect(screen.getByText("4,100 / 5,000")).toBeInTheDocument();
+  });
+
+  it("shows a recoverable error when account history cannot sync", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date("2026-08-02T09:00:00"));
+    api.loadDailyHistory
+      .mockRejectedValueOnce(new Error("network unavailable"))
+      .mockResolvedValueOnce([
+        { date: "2026-08-02", score: 4300, attempts: 1 },
+      ]);
+
+    const user = userEvent.setup();
+    render(<Game />);
+    await user.click(homeHeader().getByRole("button", { name: "Past dailies" }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/couldn't sync account history/i);
+    await user.click(within(alert).getByRole("button", { name: "Retry" }));
+
+    await waitFor(() => expect(api.loadDailyHistory).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText("4,300 / 5,000")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("does not show one account's history after the active player changes", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date("2026-08-02T09:00:00"));
+    api.loadDailyHistory.mockResolvedValueOnce([
+      { date: "2026-08-02", score: 4300, attempts: 1 },
+    ]);
+
+    const { rerender } = render(<Game />);
+    expect(
+      await dailyHero().findByRole("heading", { name: "Today's score" }),
+    ).toBeInTheDocument();
+
+    api.profileId = "user-2";
+    api.loadDailyHistory.mockImplementationOnce(() => new Promise(() => {}));
+    rerender(<Game />);
+
+    await waitFor(() => {
+      expect(api.loadDailyHistory).toHaveBeenCalledWith("user-2", [
+        "2026-08-02",
+        "2026-08-01",
+      ]);
+    });
+    expect(
+      dailyHero().getByRole("button", { name: /play today's daily/i }),
+    ).toBeInTheDocument();
+    expect(dailyHero().queryByText("4,300")).not.toBeInTheDocument();
   });
 });

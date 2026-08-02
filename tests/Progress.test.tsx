@@ -10,6 +10,7 @@ import type { QuestionCategory } from "@/lib/types";
 
 const avatarApi = vi.hoisted(() => ({
   updateAvatar: vi.fn(),
+  loadDailyHistory: vi.fn().mockResolvedValue([]),
 }));
 
 // A player mid-ladder: two subjects titled, the rest still Newcomer, and a
@@ -180,6 +181,7 @@ vi.mock("@/src/useLeaderboard", () => ({
     publish: vi.fn().mockResolvedValue(null),
     publishDaily: vi.fn().mockResolvedValue(null),
     publishSurvival: vi.fn().mockResolvedValue(null),
+    loadDailyHistory: avatarApi.loadDailyHistory,
     submit: { status: "idle" as const },
     resetSubmit: vi.fn(),
     board: [],
