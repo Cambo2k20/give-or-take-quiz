@@ -84,6 +84,14 @@ export const MASCOT_LIMITS = {
   rapidArmReach: 88,
   /** Idle breathing travel, in artwork units. */
   breath: 2.4,
+  /** Slow idle lean around the gripping hand, in degrees. */
+  idleSway: 3.4,
+  /** Delayed head follow-through during the idle sway, in degrees. */
+  idleHeadFollow: 1.35,
+  /** Alternating movement in each dangling leg, in degrees. */
+  idleLegSwing: 5,
+  /** Tail rotation around its body attachment, in degrees. */
+  idleTailWag: 14,
 } as const;
 
 /** Thumb-velocity thresholds and timings shared by the simulation and tests. */
@@ -106,6 +114,10 @@ export const MASCOT_MOTION = {
   releasePleasedMs: 700,
   /** Sweat fades quickly enough not to leak into idle. */
   sweatFadeMs: 420,
+  /** One complete side-to-side body sway. */
+  idleSwayCycleMs: 4200,
+  /** The tail moves more eagerly than the body. */
+  idleTailCycleMs: 2500,
 } as const;
 
 export type RapidDragState = {

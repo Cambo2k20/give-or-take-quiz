@@ -102,6 +102,7 @@ type Sim = {
   gazeX: number;
   gazeY: number;
   focus: number;
+  idleBlend: number;
   rapidBlend: number;
   sweat: number;
   position: number;
@@ -177,6 +178,9 @@ function WarmupSliderMascotComponent({
   const frontRef = useRef<HTMLDivElement | null>(null);
   const rootRef = useRef<SVGGElement | null>(null);
   const chestRef = useRef<SVGGElement | null>(null);
+  const tailRef = useRef<SVGGElement | null>(null);
+  const leftLegRef = useRef<SVGGElement | null>(null);
+  const rightLegRef = useRef<SVGGElement | null>(null);
   const headRef = useRef<SVGGElement | null>(null);
   const eyeLeftRef = useRef<SVGGElement | null>(null);
   const eyeRightRef = useRef<SVGGElement | null>(null);
@@ -232,6 +236,7 @@ function WarmupSliderMascotComponent({
     gazeX: 0.4,
     gazeY: 0.3,
     focus: 0,
+    idleBlend: 1,
     rapidBlend: 0,
     sweat: 0,
     position: 0,
@@ -583,6 +588,7 @@ function WarmupSliderMascotComponent({
       sim.previousPosition = readPosition();
       sim.motionAt = performance.now();
       sim.rapid = false;
+      sim.idleBlend = 0;
       sim.rapidBlend = 0;
       sim.sweat = 0;
       sim.gripSide = "right";
@@ -592,6 +598,9 @@ function WarmupSliderMascotComponent({
       front.style.transform = transform;
       rootRef.current?.setAttribute("transform", "");
       chestRef.current?.setAttribute("transform", "");
+      tailRef.current?.setAttribute("transform", "");
+      leftLegRef.current?.setAttribute("transform", "");
+      rightLegRef.current?.setAttribute("transform", "");
       headRef.current?.setAttribute("transform", "");
       sweatRefs.current.forEach((node) => {
         if (node) node.style.opacity = "0";
@@ -744,6 +753,9 @@ function WarmupSliderMascotComponent({
 
       sim.rapidBlend +=
         ((sim.pose === "rapidDrag" ? 1 : 0) - sim.rapidBlend) * 0.2 * dt;
+      sim.idleBlend +=
+        ((sim.pose === "idle" ? 1 : 0) - sim.idleBlend) *
+        clamp(0.09 * dt, 0, 1);
       const sweatTarget =
         sim.pose === "rapidDrag" ? 1 : precisionNervous ? 0.24 : 0;
       const sweatFollow =
@@ -798,9 +810,23 @@ function WarmupSliderMascotComponent({
           : sim.pose === "ready"
             ? Math.sin(now / 1450) * MASCOT_LIMITS.breath * 0.35
             : 0;
-      let lift = 0;
-      let lean = sim.lean;
-      let head = sim.head;
+      const idleSwayPhase =
+        (now / MASCOT_MOTION.idleSwayCycleMs) * Math.PI * 2;
+      const idleTailPhase =
+        (now / MASCOT_MOTION.idleTailCycleMs) * Math.PI * 2;
+      const idleSway =
+        Math.sin(idleSwayPhase) *
+        MASCOT_LIMITS.idleSway *
+        sim.idleBlend;
+      const idleBounce =
+        Math.sin(idleSwayPhase * 2 + 0.4) * 0.75 * sim.idleBlend;
+      let lift = idleBounce;
+      let lean = sim.lean + idleSway;
+      let head =
+        sim.head +
+        Math.sin(idleSwayPhase - 0.48) *
+          MASCOT_LIMITS.idleHeadFollow *
+          sim.idleBlend;
       let eyeOpen = 1 - sim.focus * 0.24;
 
       /* ── Expression ──────────────────────────────────────────────────────── */
@@ -943,6 +969,26 @@ function WarmupSliderMascotComponent({
       chestRef.current?.setAttribute(
         "transform",
         `translate(${ART.pivotX} 108) scale(1 ${chestScaleY.toFixed(4)}) translate(${-ART.pivotX} -108)`,
+      );
+      const legSwing =
+        Math.sin(idleSwayPhase + 0.55) *
+        MASCOT_LIMITS.idleLegSwing *
+        sim.idleBlend;
+      const tailWag =
+        (Math.sin(idleTailPhase - 0.7) * MASCOT_LIMITS.idleTailWag +
+          idleSway * 0.65) *
+        sim.idleBlend;
+      tailRef.current?.setAttribute(
+        "transform",
+        `rotate(${tailWag.toFixed(2)} 88 110)`,
+      );
+      leftLegRef.current?.setAttribute(
+        "transform",
+        `rotate(${legSwing.toFixed(2)} 52 116)`,
+      );
+      rightLegRef.current?.setAttribute(
+        "transform",
+        `rotate(${(-legSwing).toFixed(2)} 72 116)`,
       );
       headRef.current?.setAttribute(
         "transform",
@@ -1100,10 +1146,10 @@ function WarmupSliderMascotComponent({
               </linearGradient>
             </defs>
 
-            <g ref={rootRef}>
+            <g ref={rootRef} data-mascot-part="body-root">
               {/* Chest, crossed by the rail so the mascot reads as standing behind it. */}
               <g ref={chestRef}>
-                <g data-mascot-part="tail">
+                <g ref={tailRef} data-mascot-part="tail">
                   <path
                     d="M88 110C99 109 106 103 108 94"
                     fill="none"
@@ -1119,7 +1165,7 @@ function WarmupSliderMascotComponent({
                     strokeLinecap="round"
                   />
                 </g>
-                <g data-mascot-part="left-leg">
+                <g ref={leftLegRef} data-mascot-part="left-leg">
                   <path
                     d="M52 116C48 130 47 144 48 154"
                     fill="none"
@@ -1154,7 +1200,7 @@ function WarmupSliderMascotComponent({
                     </g>
                   </g>
                 </g>
-                <g data-mascot-part="right-leg">
+                <g ref={rightLegRef} data-mascot-part="right-leg">
                   <path
                     d="M72 116C76 130 77 144 76 154"
                     fill="none"

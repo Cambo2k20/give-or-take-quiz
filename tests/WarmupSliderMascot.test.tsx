@@ -140,6 +140,46 @@ describe("WarmupSliderMascot", () => {
     expect(readProjectedGripX()).toBeCloseTo(285, 1);
   });
 
+  it("coordinates body sway, tail wag, and dangling legs while idle", () => {
+    installMotionPreference(false);
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(
+      function clientWidth(this: HTMLElement) {
+        return this.classList.contains("slider-wrap") ? 300 : 0;
+      },
+    );
+    let scheduledFrame: FrameRequestCallback | undefined;
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
+      scheduledFrame = callback;
+      return 1;
+    });
+    renderMascot();
+
+    expect(scheduledFrame).toBeDefined();
+    scheduledFrame?.(1100);
+
+    const root = document.querySelector('[data-mascot-part="body-root"]');
+    const tail = document.querySelector('[data-mascot-part="tail"]');
+    const leftLeg = document.querySelector('[data-mascot-part="left-leg"]');
+    const rightLeg = document.querySelector('[data-mascot-part="right-leg"]');
+    const firstFrame = {
+      root: root?.getAttribute("transform"),
+      tail: tail?.getAttribute("transform"),
+      leftLeg: leftLeg?.getAttribute("transform"),
+      rightLeg: rightLeg?.getAttribute("transform"),
+    };
+
+    expect(firstFrame.root).toContain("rotate(");
+    expect(firstFrame.tail).toContain("rotate(");
+    expect(firstFrame.leftLeg).toContain("rotate(");
+    expect(firstFrame.rightLeg).toContain("rotate(");
+
+    scheduledFrame?.(1800);
+    expect(root?.getAttribute("transform")).not.toBe(firstFrame.root);
+    expect(tail?.getAttribute("transform")).not.toBe(firstFrame.tail);
+    expect(leftLeg?.getAttribute("transform")).not.toBe(firstFrame.leftLeg);
+    expect(rightLeg?.getAttribute("transform")).not.toBe(firstFrame.rightLeg);
+  });
+
   it("clears an interrupted answer reaction when the prop returns to null", () => {
     installMotionPreference(true);
     const view = renderMascot({ reaction: "farAnswer", reactionNonce: 1 });
@@ -180,6 +220,11 @@ describe("WarmupSliderMascot", () => {
     expect(requestFrame).toHaveBeenCalled();
     preference.setMatches(true);
     expect(cancelFrame).toHaveBeenCalledWith(1);
+    expect(
+      document
+        .querySelector('[data-mascot-part="tail"]')
+        ?.getAttribute("transform"),
+    ).toBe("");
 
     const slider = document.querySelector<HTMLInputElement>(
       'input[type="range"]',
