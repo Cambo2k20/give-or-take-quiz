@@ -179,15 +179,17 @@ export function validateQuestion(
     const statesDefinition =
       question.subtype === "country"
         ? prompt.includes("country-total") || /\bcensus\b/.test(prompt)
-        : prompt.includes("city proper");
+        : prompt.includes("city proper") ||
+          prompt.includes("urban area") ||
+          prompt.includes("urban agglomeration");
 
     if (!statesDefinition) {
       report(
-        question.id,
-        question.subtype === "country"
-          ? "population prompt must say country-total, or name the census it counts"
-          : "population prompt must state the city proper definition",
-      );
+      question.id,
+      question.subtype === "country"
+        ? "population prompt must say country-total, or name the census it counts"
+        : "population prompt must state whether it counts the city proper or urban area",
+    );
     }
   }
 
