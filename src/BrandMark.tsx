@@ -1,22 +1,11 @@
-import type { CSSProperties } from "react";
-import accentMaskUrl from "./assets/brand/give-or-take-mark-accent.png";
-import neutralMaskUrl from "./assets/brand/give-or-take-mark-neutral.png";
-
-type BrandMarkStyle = CSSProperties & {
-  "--brand-mark-accent-mask": string;
-  "--brand-mark-neutral-mask": string;
-};
-
-const brandMarkStyle: BrandMarkStyle = {
-  "--brand-mark-accent-mask": `url("${accentMaskUrl}")`,
-  "--brand-mark-neutral-mask": `url("${neutralMaskUrl}")`,
-};
+import logoUrl from "./assets/brand/give-or-take-logo.svg";
 
 export function BrandMark() {
   return (
-    <span
+    <img
       className="wordmark-mark"
-      style={brandMarkStyle}
+      src={logoUrl}
+      alt=""
       aria-hidden="true"
     />
   );

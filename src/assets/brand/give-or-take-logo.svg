@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320" role="img" aria-labelledby="title desc">
+  <title id="title">Give or Take logo</title>
+  <desc id="desc">Circular Give or Take logo with a plus and minus symbol.</desc>
+  <style>
+    :root {
+      --bg: transparent;
+      --icon-outer-ring: #22201c;
+      --icon-middle-ring: #f4efe6;
+      --icon-inner-ring: #22201c;
+      --icon-fill: #ee7440;
+      --symbol-fill: #ffffff;
+    }
+
+    .bg { fill: var(--bg); }
+    .outer-ring { fill: var(--icon-outer-ring); }
+    .middle-ring { fill: var(--icon-middle-ring); }
+    .inner-ring { fill: var(--icon-inner-ring); }
+    .core { fill: var(--icon-fill); }
+    .symbol { fill: var(--symbol-fill); }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="320" height="320" />
+  <circle class="outer-ring" cx="160" cy="160" r="152" />
+  <circle class="middle-ring" cx="160" cy="160" r="138" />
+  <circle class="inner-ring" cx="160" cy="160" r="108" />
+  <circle class="core" cx="160" cy="160" r="94" />
+  <rect class="symbol" x="143" y="83" width="34" height="94" rx="12" />
+  <rect class="symbol" x="113" y="113" width="94" height="34" rx="12" />
+  <rect class="symbol" x="111" y="196" width="98" height="30" rx="12" />
+</svg>
