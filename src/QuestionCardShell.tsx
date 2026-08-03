@@ -2,6 +2,7 @@ import type { ReactNode, Ref } from "react";
 import { CATEGORY_BY_ID } from "../lib/categories";
 import type { Question } from "../lib/types";
 import { CATEGORY_ARTWORK } from "./categoryArtwork";
+import { CategoryIcon } from "./CategoryIcon";
 import { subtypeLabel } from "./questionText";
 
 /** Stable across browsers and renders; changing question order never changes art. */
@@ -31,7 +32,6 @@ export function QuestionCardShell({
   const variant = questionArtworkVariant(question.id);
   const PrimaryArtwork = artwork.icons[variant];
   const SecondaryArtwork = artwork.icons[(variant + 1) % artwork.icons.length];
-  const HeaderCategoryIcon = artwork.icons[0];
 
   return (
     <article
@@ -56,7 +56,10 @@ export function QuestionCardShell({
 
       <header className="question-card-header">
         <span className="question-card-category">
-          <HeaderCategoryIcon weight="regular" aria-hidden="true" />
+          <CategoryIcon
+            category={question.category}
+            className="question-card-category-icon"
+          />
           <span>{category.label}</span>
         </span>
         <span className="question-card-counter">{progressLabel}</span>

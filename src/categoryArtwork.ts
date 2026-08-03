@@ -32,13 +32,10 @@ import { UsersThreeIcon } from "@phosphor-icons/react/dist/csr/UsersThree";
 import type { QuestionCategory } from "../lib/categories";
 
 /**
- * The icons that stand for each subject, shared by the question card and
- * every place a subject is named outside a round.
+ * Supporting line artwork used behind question content.
  *
- * The first icon is the subject's signature: it is what the card header, the
- * mode chooser and the progress screens all show, so a subject looks the same
- * before, during and after play. The other two only vary the large background
- * artwork on a card, keyed off the question id.
+ * The three variants keep repeated questions visually varied. CategoryIcon is
+ * the shared subject identity used in headers, selectors and progress screens.
  */
 
 type CategoryArtworkDefinition = {
@@ -88,8 +85,3 @@ export const CATEGORY_ARTWORK = {
     icons: [GameControllerIcon, DiceFiveIcon, TrophyIcon],
   },
 } as const satisfies Record<QuestionCategory, CategoryArtworkDefinition>;
-
-/** The single icon that represents a subject wherever it is named. */
-export function categoryIcon(category: QuestionCategory): Icon {
-  return CATEGORY_ARTWORK[category].icons[0];
-}
