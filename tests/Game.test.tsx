@@ -39,13 +39,9 @@ import { dailySets, readDailyProgress } from "@/lib/daily";
 function categoryButton(
   mode: "Geography" | "History" | "Dinosaurs" | "Games" | "Mixed",
 ) {
-  const label = screen.getByText(mode, { exact: true, selector: "strong" });
-  const button = label.closest("button");
-
-  if (!button) {
-    throw new Error(`The ${mode} label is not inside a button.`);
-  }
-  return button;
+  return screen.getByRole("button", {
+    name: new RegExp(`^${mode}`),
+  });
 }
 
 async function startGame(

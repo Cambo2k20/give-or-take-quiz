@@ -344,13 +344,8 @@ describe("progression screens", () => {
     );
 
     await user.click(screen.getByRole("button", { name: /give or take home/i }));
-    const historyLabel = screen.getByText("History", {
-      exact: true,
-      selector: "strong",
-    });
-    const historyButton = historyLabel.closest("button");
-    expect(historyButton).not.toBeNull();
-    await user.click(historyButton!);
+    const historyButton = screen.getByRole("button", { name: /^History/ });
+    await user.click(historyButton);
 
     await screen.findByRole("button", { name: /lock in guess/i });
     expect(
