@@ -306,3 +306,54 @@
 - `npm.cmd run build` passed, including data validation, TypeScript and production Vite output. The existing large-chunk advisory remains.
 
 final result: passed
+## Category selection redesign
+
+## Comparison Target
+
+- Source visual truth:
+  - `C:\Users\Cambo\AppData\Local\Temp\codex-clipboard-8ae6aa8a-5122-43c9-bfeb-285c20791197.png` (desktop rest and hover direction)
+  - `C:\Users\Cambo\AppData\Local\Temp\codex-clipboard-65db9f41-54f6-42cf-9f7b-8af9cc2005c8.png` (mobile layout)
+  - `C:\Users\Cambo\Downloads\Category selection redesign.zip` (supplied icon assets and design source)
+- Browser-rendered implementation: `design-qa-implementation-mobile.png`
+- Normalized source: `design-qa-reference-mobile-normalized.png`
+- Side-by-side evidence: `design-qa-mobile-comparison.png`
+- Route: `http://127.0.0.1:4175/give-or-take-quiz/?v=idle-sway`
+- State: signed-in category screen, Deep Space/dark theme, category tiles at rest.
+
+## Viewport And Normalization
+
+- CSS viewport: 473 x 1237.
+- Source pixels: 473 x 1237.
+- Browser screenshot pixels: 458 x 1198 after the in-app browser's viewport chrome/scale.
+- The source was bicubic-resampled to 458 x 1198 before the side-by-side comparison. Both comparison panels therefore use identical pixel dimensions and density.
+- Desktop responsiveness was additionally checked at a 1100 x 1100 CSS viewport.
+
+## Findings
+
+- No actionable P0, P1, or P2 differences remain.
+- Fonts and typography: the existing Fraunces display face and Nunito UI face preserve the reference hierarchy. Subject names, one-line counts, and compact earned badges remain readable at the supplied mobile width.
+- Spacing and layout rhythm: the mobile panel is 384 px wide, uses a two-column grid, keeps the Mixed card horizontal, and closely matches the supplied card heights, gaps, radii, and icon scale. Desktop uses the requested Mixed-first, three-column layout and centers the final unpaired tile.
+- Colors and visual tokens: card surfaces, borders, icon tint, glow, and metadata use the existing theme variables. Light and dark theme toggles were checked; the icon masks and panel surface recolor without fixed asset colors.
+- Image quality and asset fidelity: all eleven supplied PNG icons were resized to 256 x 256 with transparency preserved, then used as CSS masks. No emoji, replacement SVG, or placeholder art remains in category identity positions.
+- Copy and content: the implementation intentionally retains the live question totals and earned player data. The Games count differs from the mock because the current bank contains 57 playable Games questions rather than the mock's sample value.
+- Follow-up polish (P3): the existing floating music control can temporarily sit over the bottom-right tile at one scroll position. The page remains scrollable and the tile remains usable; this global control is outside the requested category-section scope.
+
+## Comparison History
+
+1. Initial mobile comparison found two P2 fidelity issues: subject icons were undersized and question counts wrapped onto two lines.
+2. The mobile subject icon frame was increased to 102 px and the count was tightened to a single line, with a narrower fallback retained below 420 px.
+3. The normalized side-by-side comparison shows the corrected icon scale, card density, count placement, Mixed layout, and earned badges with no remaining P0-P2 mismatch.
+
+## Interaction And Runtime Checks
+
+- Selecting Population launched a five-question Population round.
+- The in-game question header rendered the new Population mask at 36 x 36 px.
+- Desktop pointer hover reached the card and began the metadata cross-fade; keyboard focus uses the same `:focus-visible` reveal rule.
+- Light and dark themes produced different computed icon and panel colors from the existing tokens.
+- Browser console warnings/errors: none.
+- `npm.cmd run lint`: passed.
+- `npm.cmd run build`: passed, including data validation and TypeScript checking.
+
+Focused-region evidence was not split into a second crop because the supplied mobile source is already a focused component view and the normalized side-by-side keeps icon edges, copy, badges, and card spacing readable at 1:1.
+
+final result: passed

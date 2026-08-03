@@ -172,12 +172,7 @@ describe("publishing a finished round", () => {
     const user = userEvent.setup();
     render(<Game />);
 
-    const label = screen.getByText("History", {
-      exact: true,
-      selector: "strong",
-    });
-    const button = label.closest("button");
-    if (!button) throw new Error("The History label is not inside a button.");
+    const button = screen.getByRole("button", { name: /^History/ });
     await user.click(button);
     await playThrough(user, 5);
 

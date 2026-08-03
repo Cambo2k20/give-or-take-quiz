@@ -23,7 +23,7 @@ import {
   writeQuestionHistory,
 } from "../lib/game";
 import { CATEGORY_REGISTRY } from "../lib/categories";
-import { categoryIcon } from "./categoryArtwork";
+import { CategoryIcon } from "./CategoryIcon";
 import { dailyResultGrid } from "../lib/share";
 import { signOut } from "../lib/auth";
 import {
@@ -235,13 +235,6 @@ const SHIMMER_CUE_SELECTOR = [
   ".account-screen-profile > .result-actions .secondary-button",
 ].join(", ");
 
-const ShuffleIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-    <path d="M4 7h3.5l9 10H20M4 17h3.5l9-10H20" strokeLinecap="round" />
-    <path d="M17 4l3 3-3 3M17 14l3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
 type ModeDetail = {
   mode: GameMode;
   title: string;
@@ -249,24 +242,21 @@ type ModeDetail = {
   icon: ReactNode;
 };
 
-/** Each subject shows the icon its question cards use, so it reads as one thing. */
+/** The chooser and the rest of the app share the same themed category artwork. */
 const CATEGORY_MODES: readonly ModeDetail[] = CATEGORY_REGISTRY.map(
-  (category) => {
-    const Icon = categoryIcon(category.id);
-    return {
-      mode: category.id,
-      title: category.label,
-      description: category.description,
-      icon: <Icon weight="regular" aria-hidden="true" />,
-    };
-  },
+  (category) => ({
+    mode: category.id,
+    title: category.label,
+    description: category.description,
+    icon: <CategoryIcon category={category.id} />,
+  }),
 );
 
 const MIXED_MODE: ModeDetail = {
   mode: "mixed",
   title: "Mixed",
   description: "A draw from every playable category at once.",
-  icon: <ShuffleIcon />,
+  icon: <CategoryIcon category="mixed" />,
 };
 
 const MODES: readonly ModeDetail[] = [
@@ -1608,10 +1598,35 @@ export default function Game() {
             </div>
           )}
 
-          <h2 className="mode-grid-label">All categories</h2>
-          <div className="mode-grid" aria-label="Choose a category">
-            {CATEGORY_MODES.map((detail) => (
+          <div className="category-picker">
+            <h2 className="mode-grid-label">All categories</h2>
+            <div className="mixed-mode-row">
               <button
+                className="mode-card mixed-mode-card"
+                type="button"
+                onClick={() => startGame(MIXED_MODE.mode)}
+              >
+                <span className="mode-card-rest">
+                  <span className="mode-icon">{MIXED_MODE.icon}</span>
+                  <strong>{MIXED_MODE.title}</strong>
+                </span>
+                <span className="mode-card-details">
+                  <strong className="mode-detail-title" aria-hidden="true">
+                    {MIXED_MODE.title}
+                  </strong>
+                  <span className="mode-description">{MIXED_MODE.description}</span>
+                  <span className="mode-note">{modeNote(MIXED_MODE.mode)}</span>
+                  {bestScores.mixed > 0 && (
+                    <span className="mode-best">
+                      Best {formatPoints(bestScores.mixed)}
+                    </span>
+                  )}
+                </span>
+              </button>
+            </div>
+            <div className="mode-grid" aria-label="Choose a category">
+              {CATEGORY_MODES.map((detail) => (
+                <button
                 className={`mode-card${
                   isPlayableCategory(detail.mode as QuestionCategory)
                     ? ""
@@ -1622,55 +1637,46 @@ export default function Game() {
                 disabled={!isPlayableCategory(detail.mode as QuestionCategory)}
                 onClick={() => startGame(detail.mode)}
               >
-                <span className="mode-icon">{detail.icon}</span>
-                <strong>{detail.title}</strong>
-                <span className="mode-description">{detail.description}</span>
-                <span className="mode-note">
-                  {isPlayableCategory(detail.mode as QuestionCategory)
-                    ? modeNote(detail.mode)
-                    : "Coming soon"}
-                </span>
-                {(() => {
-                  if (!isPlayableCategory(detail.mode as QuestionCategory)) {
-                    return null;
-                  }
-                  // A title only appears once it has been earned — Newcomer is
-                  // for the account screen, not the front page.
-                  const earnedTitle = hasEarnedTitle(
-                    rankByCategory.get(detail.mode as QuestionCategory)?.title,
-                  )
-                    ? rankByCategory.get(detail.mode as QuestionCategory)?.title
-                    : null;
-                  const best = bestScores[detail.mode];
-                  if (best <= 0 && !earnedTitle) return null;
-
-                  return (
-                    <span className="mode-best">
-                      {best > 0 && `Best ${formatPoints(best)}`}
-                      {best > 0 && earnedTitle && " · "}
-                      {earnedTitle}
+                  <span className="mode-card-rest">
+                    <span className="mode-icon">{detail.icon}</span>
+                    <strong>{detail.title}</strong>
+                  </span>
+                  <span className="mode-card-details">
+                    <strong className="mode-detail-title" aria-hidden="true">
+                      {detail.title}
+                    </strong>
+                    <span className="mode-description">{detail.description}</span>
+                    <span className="mode-note">
+                      {isPlayableCategory(detail.mode as QuestionCategory)
+                        ? modeNote(detail.mode)
+                        : "Coming soon"}
                     </span>
-                  );
-                })()}
-              </button>
-            ))}
-          </div>
-          <div className="mixed-mode-row">
-            <button
-              className="mode-card mixed-mode-card"
-              type="button"
-              onClick={() => startGame(MIXED_MODE.mode)}
-            >
-              <span className="mode-icon">{MIXED_MODE.icon}</span>
-              <strong>{MIXED_MODE.title}</strong>
-              <span className="mode-description">{MIXED_MODE.description}</span>
-              <span className="mode-note">{modeNote(MIXED_MODE.mode)}</span>
-              {bestScores.mixed > 0 && (
-                <span className="mode-best">
-                  Best {formatPoints(bestScores.mixed)}
-                </span>
-              )}
-            </button>
+                    {(() => {
+                      if (!isPlayableCategory(detail.mode as QuestionCategory)) {
+                        return null;
+                      }
+                      // A title only appears once it has been earned — Newcomer is
+                      // for the account screen, not the front page.
+                      const earnedTitle = hasEarnedTitle(
+                        rankByCategory.get(detail.mode as QuestionCategory)?.title,
+                      )
+                        ? rankByCategory.get(detail.mode as QuestionCategory)?.title
+                        : null;
+                      const best = bestScores[detail.mode];
+                      if (best <= 0 && !earnedTitle) return null;
+
+                      return (
+                        <span className="mode-best">
+                          {best > 0 && `Best ${formatPoints(best)}`}
+                          {best > 0 && earnedTitle && " · "}
+                          {earnedTitle}
+                        </span>
+                      );
+                    })()}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
           <div className="category-footer">
             <span>
