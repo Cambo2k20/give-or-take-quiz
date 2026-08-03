@@ -220,6 +220,7 @@ vi.mock("@/src/useProgress", () => ({ useProgress: vi.fn() }));
 
 import Game from "@/src/Game";
 import { ProgressRibbon } from "@/src/Progress";
+import { MASCOT_IN_GAMES_STORAGE_KEY } from "@/src/mascot/mascotPreference";
 import { useProgress } from "@/src/useProgress";
 
 beforeEach(() => {
@@ -265,6 +266,92 @@ describe("progression screens", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Crowd Counter")).toBeInTheDocument();
     expect(screen.getByText("First Steps")).toBeInTheDocument();
+  });
+
+  it("pairs social cards and jumps to the mascot companion accessibly", async () => {
+    const user = userEvent.setup();
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    });
+    let reducedMotion = true;
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({
+        get matches() {
+          return reducedMotion;
+        },
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+
+    render(<Game />);
+    await openAccount(user);
+
+    const publicCard = screen
+      .getByRole("heading", { name: /public profile/i })
+      .closest("section");
+    const friendsCard = screen
+      .getByRole("heading", { name: /^friends$/i })
+      .closest("section");
+    expect(publicCard?.parentElement).toBe(friendsCard?.parentElement);
+    expect(publicCard?.parentElement).toHaveClass("profile-social-row");
+
+    const companion = screen.getByRole("region", {
+      name: /mascot companion/i,
+    });
+    await user.click(
+      screen.getByRole("button", { name: /visit mascot/i }),
+    );
+
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      behavior: "auto",
+      block: "center",
+    });
+    expect(companion).toHaveFocus();
+    expect(companion).toHaveClass("is-highlighted");
+
+    reducedMotion = false;
+    await user.click(
+      screen.getByRole("button", { name: /visit mascot/i }),
+    );
+    expect(scrollIntoView).toHaveBeenLastCalledWith({
+      behavior: "smooth",
+      block: "center",
+    });
+  });
+
+  it("adds the mascot to scored games from the profile preference", async () => {
+    const user = userEvent.setup();
+    render(<Game />);
+    await openAccount(user);
+
+    const toggle = screen.getByRole("switch", {
+      name: /show mascot in real games/i,
+    });
+    expect(toggle).toHaveAttribute("aria-checked", "false");
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-checked", "true");
+    expect(window.localStorage.getItem(MASCOT_IN_GAMES_STORAGE_KEY)).toBe(
+      "true",
+    );
+
+    await user.click(screen.getByRole("button", { name: /give or take home/i }));
+    const historyLabel = screen.getByText("History", {
+      exact: true,
+      selector: "strong",
+    });
+    const historyButton = historyLabel.closest("button");
+    expect(historyButton).not.toBeNull();
+    await user.click(historyButton!);
+
+    await screen.findByRole("button", { name: /lock in guess/i });
+    expect(
+      document.querySelector(".game-screen .gt-mascot-layer"),
+    ).toBeInTheDocument();
   });
 
   it("changes the profile avatar to an earned rank badge", async () => {

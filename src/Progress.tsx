@@ -1,4 +1,10 @@
-import { useState, type ReactNode, type RefObject } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import {
   DEFAULT_PROFILE_AVATAR,
   isProfileAvatarKey,
@@ -36,6 +42,8 @@ import { formatPoints } from "./questionText";
 import { RankBadgeArtwork } from "./RankBadgeArtwork";
 import type { Theme } from "./theme";
 import { ThemeArtwork } from "./themes/ThemeArtwork";
+
+const MASCOT_ICON_URL = `${import.meta.env.BASE_URL}give-or-take-mascot-icon.svg`;
 
 const BUILT_IN_AVATAR_OPTIONS = [
   {
@@ -245,12 +253,77 @@ type ProfileDashboardProps = {
   onOpenUnlocks: () => void;
   onOpenFriends: () => void;
   onCustomisePublicProfile: () => void;
+  mascotInGames: boolean;
+  onMascotInGamesChange: (enabled: boolean) => void;
   friendCount: number;
   activeChallengeCount: number;
   socialUnreadCount: number;
   onSignOut: () => void;
   headingRef: RefObject<HTMLHeadingElement | null>;
 };
+
+export function MascotGamePreference({
+  enabled,
+  onChange,
+  companion = false,
+  sectionRef,
+  highlighted = false,
+}: {
+  enabled: boolean;
+  onChange: (enabled: boolean) => void;
+  companion?: boolean;
+  sectionRef?: RefObject<HTMLElement | null>;
+  highlighted?: boolean;
+}) {
+  const titleId = companion
+    ? "profile-mascot-companion-title"
+    : "profile-mascot-preference-title";
+
+  return (
+    <section
+      ref={sectionRef}
+      className={`profile-mascot-preference${
+        companion ? " is-companion" : ""
+      }${highlighted ? " is-highlighted" : ""}`}
+      aria-labelledby={titleId}
+      tabIndex={companion ? -1 : undefined}
+    >
+      <div className="profile-mascot-copy">
+        {companion && (
+          <img src={MASCOT_ICON_URL} alt="" aria-hidden="true" />
+        )}
+        <div>
+          {companion ? (
+            <>
+              <p className="eyebrow">Your slider sidekick</p>
+              <h2 id={titleId}>Mascot Companion</h2>
+              <p>
+                Choose whether the mascot joins your Classic, Daily and Survival
+                sliders. This preference is saved on this device.
+              </p>
+            </>
+          ) : (
+            <>
+              <strong id={titleId}>Mascot in games</strong>
+              <span>Bring him onto Classic, Daily and Survival sliders.</span>
+            </>
+          )}
+        </div>
+      </div>
+      <button
+        className="profile-mascot-toggle"
+        type="button"
+        role="switch"
+        aria-checked={enabled}
+        aria-label="Show mascot in real games"
+        onClick={() => onChange(!enabled)}
+      >
+        <span aria-hidden="true" />
+        {enabled ? "On" : "Off"}
+      </button>
+    </section>
+  );
+}
 
 /**
  * The signed-in profile is a dashboard rather than a menu. Subjects, earned
@@ -273,6 +346,8 @@ export function ProfileDashboard({
   onOpenUnlocks,
   onOpenFriends,
   onCustomisePublicProfile,
+  mascotInGames,
+  onMascotInGamesChange,
   friendCount,
   activeChallengeCount,
   socialUnreadCount,
@@ -282,6 +357,10 @@ export function ProfileDashboard({
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [avatarSaving, setAvatarSaving] = useState(false);
   const [avatarMessage, setAvatarMessage] = useState("");
+  const [mascotSectionHighlighted, setMascotSectionHighlighted] =
+    useState(false);
+  const mascotSectionRef = useRef<HTMLElement>(null);
+  const mascotHighlightTimerRef = useRef<number | null>(null);
   const highest = progress.categories.reduce(
     (best, entry) => (entry.rank > best.rank ? entry : best),
     progress.categories[0],
@@ -315,6 +394,39 @@ export function ProfileDashboard({
   ];
   const currentAvatar =
     avatarOptions.find((option) => option.key === avatarKey) ?? avatarOptions[0];
+
+  useEffect(
+    () => () => {
+      if (mascotHighlightTimerRef.current !== null) {
+        window.clearTimeout(mascotHighlightTimerRef.current);
+      }
+    },
+    [],
+  );
+
+  function visitMascotSection() {
+    const section = mascotSectionRef.current;
+    if (!section) return;
+
+    const reduceMotion =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    section.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "center",
+    });
+    section.focus({ preventScroll: true });
+    setMascotSectionHighlighted(true);
+
+    if (mascotHighlightTimerRef.current !== null) {
+      window.clearTimeout(mascotHighlightTimerRef.current);
+    }
+    mascotHighlightTimerRef.current = window.setTimeout(() => {
+      setMascotSectionHighlighted(false);
+      mascotHighlightTimerRef.current = null;
+    }, 1600);
+  }
 
   async function selectAvatar(nextAvatar: ProfileAvatarKey) {
     if (nextAvatar === avatarKey || avatarSaving) return;
@@ -374,6 +486,14 @@ export function ProfileDashboard({
             {earned.length} of {progress.achievements.length} achievements
           </span>
           <span>{emailConfirmed ? "Email confirmed" : "Email not confirmed"}</span>
+          <button
+            className="profile-hero-shortcut"
+            type="button"
+            onClick={visitMascotSection}
+          >
+            <img src={MASCOT_ICON_URL} alt="" aria-hidden="true" />
+            Visit mascot <span aria-hidden="true">↓</span>
+          </button>
         </div>
       </section>
 
@@ -440,46 +560,59 @@ export function ProfileDashboard({
         </section>
       )}
 
-      <section className="profile-section profile-public-card">
-        <div>
-          <p className="eyebrow">Seen from the leaderboard</p>
-          <h2>Public profile</h2>
-          <p>
-            Feature an earned title, pin achievements and choose an unlocked
-            banner without changing your own game background.
-          </p>
-        </div>
-        <button
-          className="profile-section-action"
-          type="button"
-          onClick={onCustomisePublicProfile}
-        >
-          Customise public profile
-        </button>
-      </section>
+      <div className="profile-social-row">
+        <section className="profile-section profile-public-card">
+          <div>
+            <p className="eyebrow">Seen from the leaderboard</p>
+            <h2>Public profile</h2>
+            <p>
+              Feature an earned title, pin achievements and choose an unlocked
+              banner without changing your own game background.
+            </p>
+          </div>
+          <button
+            className="profile-section-action"
+            type="button"
+            onClick={onCustomisePublicProfile}
+          >
+            Customise public profile
+          </button>
+        </section>
 
-      <section className="profile-section profile-friends-card">
-        <div>
-          <p className="eyebrow">Play together, in your own time</p>
-          <h2>Friends</h2>
-          <p>
-            Private Classic and Survival challenges, plus your record against
-            every player you have faced.
-          </p>
-        </div>
-        <div className="profile-friends-summary" aria-label="Friends summary">
-          <span><strong>{friendCount}</strong> friends</span>
-          <span><strong>{activeChallengeCount}</strong> active</span>
-        </div>
-        <button className="profile-section-action" type="button" onClick={onOpenFriends}>
-          Open Friends
-          {socialUnreadCount > 0 && (
-            <span className="social-badge" aria-label={`${socialUnreadCount} unread friend updates`}>
-              {socialUnreadCount > 9 ? "9+" : socialUnreadCount}
+        <section className="profile-section profile-friends-card">
+          <div>
+            <p className="eyebrow">Play together, in your own time</p>
+            <h2>Friends</h2>
+            <p>
+              Private Classic and Survival challenges, plus your record against
+              every player you have faced.
+            </p>
+          </div>
+          <div className="profile-friends-summary" aria-label="Friends summary">
+            <span>
+              <strong>{friendCount}</strong> friends
             </span>
-          )}
-        </button>
-      </section>
+            <span>
+              <strong>{activeChallengeCount}</strong> active
+            </span>
+          </div>
+          <button
+            className="profile-section-action"
+            type="button"
+            onClick={onOpenFriends}
+          >
+            Open Friends
+            {socialUnreadCount > 0 && (
+              <span
+                className="social-badge"
+                aria-label={`${socialUnreadCount} unread friend updates`}
+              >
+                {socialUnreadCount > 9 ? "9+" : socialUnreadCount}
+              </span>
+            )}
+          </button>
+        </section>
+      </div>
 
       <div className="profile-dashboard-grid">
         <section className="profile-section profile-subjects">
@@ -646,6 +779,14 @@ export function ProfileDashboard({
           Sign out
         </button>
       </section>
+
+      <MascotGamePreference
+        enabled={mascotInGames}
+        onChange={onMascotInGamesChange}
+        companion
+        sectionRef={mascotSectionRef}
+        highlighted={mascotSectionHighlighted}
+      />
     </div>
   );
 }

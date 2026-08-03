@@ -5,6 +5,8 @@ import type { Question } from "../lib/types";
 import { EstimatePanel } from "./EstimatePanel";
 import { QuestionCardShell } from "./QuestionCardShell";
 import { formatPoints, verdictDetail } from "./questionText";
+import { WarmupSliderMascot } from "./mascot/WarmupSliderMascot";
+import { reactionForTier } from "./mascot/mascotState";
 
 /**
  * How close the window is, in words. The posts on the rail are the real
@@ -30,6 +32,7 @@ type SurvivalRoundProps = {
   locked: boolean;
   revealing: boolean;
   verdict: SurvivalVerdict | null;
+  mascotInGames: boolean;
   guess: number;
   onLock: () => void;
   onContinue: () => void;
@@ -46,6 +49,7 @@ export function SurvivalRound({
   locked,
   revealing,
   verdict,
+  mascotInGames,
   guess,
   onLock,
   onContinue,
@@ -75,6 +79,18 @@ export function SurvivalRound({
           tierId={verdict ? (verdict.survived ? "close" : "far") : undefined}
           sliderId="survival-slider"
           windowHalfWidth={locked ? undefined : windowHalfWidth}
+          sliderOverlay={
+            mascotInGames ? (
+              <WarmupSliderMascot
+                reaction={
+                  verdict
+                    ? reactionForTier(verdict.survived ? "close" : "far")
+                    : null
+                }
+                reactionNonce={questionNumber}
+              />
+            ) : undefined
+          }
         />
 
         {!locked ? (

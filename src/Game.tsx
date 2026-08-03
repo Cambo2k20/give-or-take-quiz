@@ -72,6 +72,7 @@ import { HomeHeader } from "./HomeHeader";
 import { BrandMark } from "./BrandMark";
 import {
   AchievementPanel,
+  MascotGamePreference,
   ProfileDashboard,
   ProgressRibbon,
   RankPanel,
@@ -126,6 +127,12 @@ import {
   replacePlayerProfileLink,
 } from "../lib/playerProfileLink";
 import { usePublicProfile } from "./usePublicProfile";
+import { WarmupSliderMascot } from "./mascot/WarmupSliderMascot";
+import { reactionForTier } from "./mascot/mascotState";
+import {
+  readMascotInGames,
+  writeMascotInGames,
+} from "./mascot/mascotPreference";
 import {
   PublicProfileEditor,
   PublicProfileEditorState,
@@ -346,6 +353,7 @@ export default function Game() {
   // warm-up; picking Survival is the act of intent that starts a real run.
   const [heroFormat, setHeroFormat] = useState<PlayFormat>("classic");
   const [formatRecords, setFormatRecords] = useState(readFormatRecords);
+  const [mascotInGames, setMascotInGames] = useState(readMascotInGames);
   const [survivalDeck, setSurvivalDeck] = useState<Question[]>([]);
   const [survivalIndex, setSurvivalIndex] = useState(0);
   const [survivalGuesses, setSurvivalGuesses] = useState<RoundResult[]>([]);
@@ -390,6 +398,11 @@ export default function Game() {
   const publicProfile = usePublicProfile(targetPlayerId);
   const { refresh: refreshProgress } = progress;
   const { refresh: refreshSocial } = social;
+
+  function updateMascotInGames(enabled: boolean) {
+    setMascotInGames(enabled);
+    writeMascotInGames(enabled);
+  }
 
   useEffect(() => {
     const startShimmer = (target: Element | null) => {
@@ -1716,6 +1729,14 @@ export default function Game() {
               revealing={revealing}
               tierId={tier?.id}
               sliderId="estimate-slider"
+              sliderOverlay={
+                mascotInGames ? (
+                  <WarmupSliderMascot
+                    reaction={tier ? reactionForTier(tier.id) : null}
+                    reactionNonce={questionIndex}
+                  />
+                ) : undefined
+              }
             />
 
             {!locked ? (
@@ -2034,6 +2055,7 @@ export default function Game() {
             locked={locked}
             revealing={revealing}
             verdict={survivalVerdictState}
+            mascotInGames={mascotInGames}
             guess={survivalGuess}
             onLock={lockSurvivalGuess}
             onContinue={continueSurvival}
@@ -2232,6 +2254,8 @@ export default function Game() {
                 openPlayerProfile(player.id, "account");
                 setPhase("profile-editor");
               }}
+              mascotInGames={mascotInGames}
+              onMascotInGamesChange={updateMascotInGames}
               friendCount={social.dashboard.friends.length}
               activeChallengeCount={social.dashboard.activeChallenges.length}
               socialUnreadCount={social.unreadCount}
@@ -2282,6 +2306,17 @@ export default function Game() {
               onSignedIn={() =>
                 setPhase(targetPlayerId ? "public-profile" : "category")
               }
+            />
+          )}
+
+          {!(
+            auth.status === "signed-in" &&
+            progress.progress &&
+            player
+          ) && (
+            <MascotGamePreference
+              enabled={mascotInGames}
+              onChange={updateMascotInGames}
             />
           )}
 

@@ -77,8 +77,10 @@ export const MASCOT_LIMITS = {
    * How far the knob may run ahead of the body before the body is dragged
    * along, in artwork units. The arm covers the difference; its own reach is
    * artwork geometry, so it lives with the artwork.
-   */
+  */
   armReach: 30,
+  /** Maximum fast-drag travel needed for the thumb to cross the body. */
+  rapidArmReach: 88,
   /** Idle breathing travel, in artwork units. */
   breath: 2.4,
 } as const;
@@ -109,6 +111,8 @@ export type RapidDragState = {
   active: boolean;
   holdUntil: number;
 };
+
+export type MascotGripSide = "left" | "right";
 
 /** Smooth a measured thumb delta into normalised slider lengths per second. */
 export function smoothThumbVelocity(
@@ -145,6 +149,41 @@ export function resolveRapidDrag(
     return state;
   }
   return { active: false, holdUntil: 0 };
+}
+
+/** Speed-scaled reach lets a fast thumb escape before it drags the body. */
+export function rapidDragReach(speed: number): number {
+  const fullReachSpeed = MASCOT_MOTION.rapidEnterSpeed * 2;
+  const progress = Math.max(
+    0,
+    Math.min(
+      1,
+      (speed - MASCOT_MOTION.rapidExitSpeed) /
+        (fullReachSpeed - MASCOT_MOTION.rapidExitSpeed),
+    ),
+  );
+  return (
+    MASCOT_LIMITS.armReach +
+    (MASCOT_LIMITS.rapidArmReach - MASCOT_LIMITS.armReach) * progress
+  );
+}
+
+/** Swap hands only after a rapid thumb movement has crossed the torso. */
+export function resolveGripSide(
+  currentSide: MascotGripSide,
+  thumbX: number,
+  bodyCenterX: number,
+  rapidDrag: boolean,
+  hysteresis = 8,
+): MascotGripSide {
+  if (!rapidDrag) return currentSide;
+  if (currentSide === "right" && thumbX < bodyCenterX - hysteresis) {
+    return "left";
+  }
+  if (currentSide === "left" && thumbX > bodyCenterX + hysteresis) {
+    return "right";
+  }
+  return currentSide;
 }
 
 /** Precision is based only on real thumb movement, never body spring velocity. */
