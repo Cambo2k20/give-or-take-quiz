@@ -302,6 +302,10 @@ describe("progression screens", () => {
     const companion = screen.getByRole("region", {
       name: /mascot companion/i,
     });
+    expect(
+      companion.querySelector(".profile-mascot-companion-art"),
+    ).toHaveClass("gt-mascot-pose-sleeping");
+    expect(companion.querySelector(".gt-pose-sleep-tail")).not.toBeNull();
     await user.click(
       screen.getByRole("button", { name: /visit mascot/i }),
     );

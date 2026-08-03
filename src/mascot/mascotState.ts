@@ -27,6 +27,9 @@ export type MascotPose =
 /** The face. Poses pick one; reactions override it for their duration. */
 export type MascotExpression =
   | "panting"
+  | "barking"
+  | "growling"
+  | "howling"
   | "neutral"
   | "anticipating"
   | "focused"
@@ -38,6 +41,7 @@ export type MascotExpression =
 export type MascotReaction =
   | "closeAnswer"
   | "averageAnswer"
+  | "wideAnswer"
   | "farAnswer"
   | "perfectAnswer";
 
@@ -52,16 +56,18 @@ export type MascotSnapshot = {
 
 /** How long each reaction runs before the mascot returns to idle, in ms. */
 export const MASCOT_REACTION_MS: Record<MascotReaction, number> = {
-  closeAnswer: 900,
-  averageAnswer: 820,
+  closeAnswer: 1850,
+  averageAnswer: 2050,
+  wideAnswer: 1250,
   farAnswer: 940,
-  perfectAnswer: 1280,
+  perfectAnswer: 1850,
 };
 
 /** The face each reaction wears. */
 export const MASCOT_REACTION_FACE: Record<MascotReaction, MascotExpression> = {
-  closeAnswer: "pleased",
-  averageAnswer: "pleased",
+  closeAnswer: "howling",
+  averageAnswer: "barking",
+  wideAnswer: "growling",
   farAnswer: "surprised",
   perfectAnswer: "delighted",
 };
@@ -225,6 +231,8 @@ export function reactionForTier(tier: AccuracyTierId): MascotReaction {
       return "closeAnswer";
     case "fair":
       return "averageAnswer";
+    case "wide":
+      return "wideAnswer";
     default:
       return "farAnswer";
   }
@@ -240,5 +248,6 @@ export function reactionForPoints(points: number, max = 1000): MascotReaction {
   if (share >= 0.98) return "perfectAnswer";
   if (share >= 0.85) return "closeAnswer";
   if (share >= 0.6) return "averageAnswer";
+  if (share >= 0.3) return "wideAnswer";
   return "farAnswer";
 }

@@ -290,7 +290,7 @@ export function MascotGamePreference({
       <div className="profile-mascot-copy">
         {companion && (
           <MascotPose
-            pose="sitting"
+            pose="sleeping"
             decorative
             animated
             className="profile-mascot-companion-art"

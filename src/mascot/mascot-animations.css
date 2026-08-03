@@ -29,12 +29,43 @@
 }
 
 .gt-pose-sleep {
-  animation: gt-mascot-pose-sleep 5s ease-in-out infinite;
-  transform-origin: 200px 126px;
+  animation: gt-mascot-pose-sleep 4.6s ease-in-out infinite;
+  transform-origin: 196px 134px;
 }
 
 .gt-pose-sleep-head {
-  animation: gt-mascot-pose-sleep-head 5s ease-in-out infinite;
+  animation: gt-mascot-pose-sleep-head 4.6s ease-in-out infinite;
+  transform-origin: 148px 92px;
+}
+
+.gt-pose-sleep-muzzle {
+  animation: gt-mascot-pose-sleep-muzzle 4.6s ease-in-out infinite;
+  transform-origin: 0 14px;
+}
+
+.gt-pose-sleep-tail {
+  animation: gt-mascot-pose-sleep-tail 7s ease-in-out infinite;
+  transform-origin: 236px 116px;
+}
+
+.gt-pose-snore-mark {
+  fill: var(--gt-mascot-pose-accent);
+  stroke: var(--gt-mascot-pose-ink);
+  stroke-width: 0.45px;
+  paint-order: stroke fill;
+  opacity: 0;
+  font: 900 10px/1 var(--font-sans, "Nunito", sans-serif);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: gt-mascot-pose-snore-mark 6s ease-out infinite;
+}
+
+.gt-pose-snore-mark:nth-child(2) {
+  animation-delay: -2s;
+}
+
+.gt-pose-snore-mark:nth-child(3) {
+  animation-delay: -4s;
 }
 
 .gt-pose-float {
@@ -58,8 +89,16 @@
     transform: scale(1);
   }
 
-  50% {
-    transform: scale(1.01, 1.024);
+  42% {
+    transform: scale(1.012, 1.035);
+  }
+
+  55% {
+    transform: scale(1.018, 1.052);
+  }
+
+  68% {
+    transform: scale(1.006, 1.018);
   }
 }
 
@@ -69,8 +108,64 @@
     transform: translateY(0);
   }
 
+  42% {
+    transform: translateY(1px) rotate(0.4deg);
+  }
+
+  55% {
+    transform: translateY(2px) rotate(0.9deg);
+  }
+
+  68% {
+    transform: translateY(0.5px) rotate(0.2deg);
+  }
+}
+
+@keyframes gt-mascot-pose-sleep-muzzle {
+  0%,
+  44%,
+  100% {
+    transform: translateX(0) scale(1);
+  }
+
+  53% {
+    transform: translateX(-1px) scale(1.05, 0.96);
+  }
+
+  61% {
+    transform: translateX(0.4px) scale(0.98, 1.02);
+  }
+}
+
+@keyframes gt-mascot-pose-sleep-tail {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+
   50% {
-    transform: translateY(0.9px);
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes gt-mascot-pose-snore-mark {
+  0%,
+  8% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.55);
+  }
+
+  18% {
+    opacity: 0.95;
+  }
+
+  72% {
+    opacity: 0.78;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-34px, -47px) scale(1.28);
   }
 }
 
@@ -204,6 +299,15 @@
 @media (prefers-reduced-motion: reduce) {
   .gt-mascot-pose * {
     animation: none !important;
+  }
+
+  .gt-pose-snore-mark {
+    opacity: 0;
+  }
+
+  .gt-pose-snore-mark:first-child {
+    opacity: 0.8;
+    transform: translate(-20px, -28px) scale(0.92);
   }
 
   .gt-mascot-panting-mouth,

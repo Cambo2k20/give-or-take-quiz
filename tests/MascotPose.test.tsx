@@ -22,7 +22,7 @@ describe("MascotPose", () => {
       expect(artwork).toHaveClass("gt-mascot-pose", `gt-mascot-pose-${pose}`);
       expect(artwork).toHaveAttribute(
         "viewBox",
-        pose === "sleeping" ? "0 0 300 140" : "0 0 150 150",
+        pose === "sleeping" ? "34 30 250 120" : "0 0 150 150",
       );
       expect(artwork).toHaveAccessibleName();
     });
@@ -56,5 +56,15 @@ describe("MascotPose", () => {
     const { container } = render(<MascotPose pose="sitting" animated />);
 
     expect(container.querySelector(".gt-pose-breathe")).not.toBeNull();
+  });
+
+  it("animates the supplied sleeping pose as separate body, head and tail layers", () => {
+    const { container } = render(<MascotPose pose="sleeping" animated />);
+
+    expect(container.querySelector(".gt-pose-sleep")).not.toBeNull();
+    expect(container.querySelector(".gt-pose-sleep-head")).not.toBeNull();
+    expect(container.querySelector(".gt-pose-sleep-muzzle")).not.toBeNull();
+    expect(container.querySelector(".gt-pose-sleep-tail")).not.toBeNull();
+    expect(container.querySelectorAll(".gt-pose-snore-mark")).toHaveLength(3);
   });
 });

@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   MASCOT_MOTION,
+  MASCOT_REACTION_FACE,
+  MASCOT_REACTION_MS,
   isPrecisionMovement,
   rapidDragReach,
   reactionForPoints,
+  reactionForTier,
   resolveGripSide,
   resolveRapidDrag,
   smoothThumbVelocity,
@@ -112,12 +115,25 @@ describe("mascot motion state", () => {
 });
 
 describe("mascot score reactions", () => {
+  it("maps each result headline to its intended dog reaction", () => {
+    expect(MASCOT_REACTION_FACE.closeAnswer).toBe("howling");
+    expect(MASCOT_REACTION_FACE.averageAnswer).toBe("barking");
+    expect(MASCOT_REACTION_FACE.wideAnswer).toBe("growling");
+    expect(MASCOT_REACTION_FACE.perfectAnswer).toBe("delighted");
+    expect(MASCOT_REACTION_MS.closeAnswer).toBeGreaterThanOrEqual(1850);
+    expect(MASCOT_REACTION_MS.averageAnswer).toBeGreaterThanOrEqual(1958);
+    expect(MASCOT_REACTION_MS.perfectAnswer).toBeGreaterThanOrEqual(1760);
+    expect(reactionForTier("wide")).toBe("wideAnswer");
+  });
+
   it("matches the real accuracy-tier boundaries", () => {
     expect(reactionForPoints(980)).toBe("perfectAnswer");
     expect(reactionForPoints(979)).toBe("closeAnswer");
     expect(reactionForPoints(850)).toBe("closeAnswer");
     expect(reactionForPoints(849)).toBe("averageAnswer");
     expect(reactionForPoints(600)).toBe("averageAnswer");
-    expect(reactionForPoints(599)).toBe("farAnswer");
+    expect(reactionForPoints(599)).toBe("wideAnswer");
+    expect(reactionForPoints(300)).toBe("wideAnswer");
+    expect(reactionForPoints(299)).toBe("farAnswer");
   });
 });
