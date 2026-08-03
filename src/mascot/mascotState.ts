@@ -26,6 +26,7 @@ export type MascotPose =
 
 /** The face. Poses pick one; reactions override it for their duration. */
 export type MascotExpression =
+  | "panting"
   | "neutral"
   | "anticipating"
   | "focused"

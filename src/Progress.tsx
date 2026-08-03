@@ -38,12 +38,11 @@ import stormRocketAvatarUrl from "./assets/avatars/storm-rocket.jpg";
 import mjolnirAvatarUrl from "./assets/avatars/thunder-hammer.jpg";
 import valkyrieHelmAvatarUrl from "./assets/avatars/valkyrie-helm.jpg";
 import volcanoAvatarUrl from "./assets/avatars/volcano.png";
+import { MascotPose } from "./mascot/MascotPose";
 import { formatPoints } from "./questionText";
 import { RankBadgeArtwork } from "./RankBadgeArtwork";
 import type { Theme } from "./theme";
 import { ThemeArtwork } from "./themes/ThemeArtwork";
-
-const MASCOT_ICON_URL = `${import.meta.env.BASE_URL}give-or-take-mascot-icon.svg`;
 
 const BUILT_IN_AVATAR_OPTIONS = [
   {
@@ -290,7 +289,12 @@ export function MascotGamePreference({
     >
       <div className="profile-mascot-copy">
         {companion && (
-          <img src={MASCOT_ICON_URL} alt="" aria-hidden="true" />
+          <MascotPose
+            pose="sitting"
+            decorative
+            animated
+            className="profile-mascot-companion-art"
+          />
         )}
         <div>
           {companion ? (
@@ -491,7 +495,12 @@ export function ProfileDashboard({
             type="button"
             onClick={visitMascotSection}
           >
-            <img src={MASCOT_ICON_URL} alt="" aria-hidden="true" />
+            <MascotPose
+              pose="peeking"
+              decorative
+              viewBox="14 40 96 88"
+              className="profile-mascot-shortcut-art"
+            />
             Visit mascot <span aria-hidden="true">↓</span>
           </button>
         </div>
