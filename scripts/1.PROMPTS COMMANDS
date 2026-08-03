@@ -1,0 +1,228 @@
+# Prompt library
+
+Reusable prompts for Give or Take. Paste them as-is, or fill the `<>`
+placeholders first. Each one is written to be self-contained — an assistant
+with no other context should be able to act on it.
+
+**Keep this file honest.** If a rule in `lib/questionRules.ts`, `lib/types.ts`
+or `AGENTS.md.txt` changes, the prompt that repeats that rule is now wrong.
+Fix it here at the same time.
+
+## Contents
+
+- [1. Draft new questions](#1-draft-new-questions)
+- [2. Fact-check a question pack](#2-fact-check-a-question-pack)
+- [3. Balance a daily set](#3-balance-a-daily-set)
+- [4. Codex / agent task brief](#4-codex--agent-task-brief)
+- [5. Category icon generation](#5-category-icon-generation)
+- [6. Background theme brief](#6-background-theme-brief)
+- [7. Add your own](#7-add-your-own)
+
+---
+
+## Reference block
+
+Several prompts below say "paste the reference block". This is it — the shared
+schema facts, kept in one place so they only need correcting once.
+
+```
+Every question is this shape:
+
+  id, category, measure, subtype, prompt, answer, min, max, scale, unit,
+  referenceYear?, source { title, url }, explanation
+
+Categories (all live): population, history, geography, science, animals,
+space, technology, movies, dinosaurs, games
+
+Subtype → measure → allowed units:
+  country, city      → population → people
+  event              → history    → year
+  length             → size       → metre, kilometre
+  area               → size       → square-kilometre
+  mass               → size       → kilogram, tonne
+  count              → quantity   → count
+  percentage         → quantity   → percent
+  money              → quantity   → usd
+  duration           → physics    → second, minute, hour, day, duration-year
+  speed              → physics    → kph
+  temperature        → physics    → celsius
+
+Scale is "linear" or "log".
+
+Hard rules:
+- `year` is a calendar point and renders CE/BCE. A span of years is
+  `duration-year` — so "5,730 years" never renders as "5,730 CE".
+- Temperature must be linear. Log cannot represent negatives.
+- Money carries `referenceYear` and is never re-priced to today.
+- Use log when min→max spans two or more orders of magnitude.
+- `answer` must sit inside `min`..`max`, and not at either edge.
+- Every question needs a real, checkable `source` with a working URL.
+```
+
+---
+
+## 1. Draft new questions
+
+```
+I'm writing questions for Give or Take, a guess-the-number quiz. The player
+sees a prompt and slides to estimate a value; scoring is by proximity.
+
+<paste the reference block>
+
+Write <N> questions in the <category> category.
+
+Constraints:
+- Vary the subtype across the batch — don't give me twelve `count` questions.
+- The answer should be genuinely estimable by a reasonably informed adult,
+  not a trivia recall test and not a coin flip.
+- min/max should be a plausible playing field, not a giveaway. If the answer
+  is 400, don't set the range 380–420.
+- The prompt must be one clear sentence and must state the unit implicitly or
+  explicitly, so the player knows what they're estimating.
+- `explanation` is one or two sentences of the interesting bit — why the
+  number is what it is, or context that makes it stick. Not a restatement.
+- Cite a source I can actually open and verify. No "various sources".
+
+Output valid JSON only — an array of question objects. No prose, no markdown
+fences.
+```
+
+## 2. Fact-check a question pack
+
+```
+Audit the question pack below for a guess-the-number quiz. Be adversarial —
+I'd rather you flag a false positive than let a wrong number ship.
+
+<paste the reference block>
+
+For each question, check:
+1. Is `answer` actually correct? Verify against the cited source. If the
+   source doesn't support the number, say so explicitly.
+2. Does the source URL resolve, and is it the primary/authoritative one?
+3. Is the number time-sensitive? If it drifts year to year and has no
+   `referenceYear`, flag it.
+4. Is `answer` inside `min`..`max` and away from the edges?
+5. Is `scale` right for the range span?
+6. Does subtype/measure/unit match the table above?
+7. Is the prompt ambiguous — could a fair reader estimate a different
+   quantity than the one being scored?
+
+Output a table: id | verdict (pass / fix / kill) | what's wrong | suggested
+fix. Then list the ids you'd ship as-is.
+
+<paste pack JSON>
+```
+
+## 3. Balance a daily set
+
+```
+Give or Take deals five questions per daily set. I want the set to feel varied
+and fair rather than lopsided.
+
+Use the real exported functions from `lib/game.ts` — `valueToPosition` and
+`scoreGuess` — to compute this. Do not reimplement the scoring maths; import
+it and call it.
+
+For the candidate pool below:
+1. Compute, for each question, whether the answer sits below or above the
+   centre of its slider range.
+2. Deal questions into sets of five aiming for a ~2 below / 3 above split
+   (or the reverse), distributed by remainder across all sets rather than
+   front-loading.
+3. Then run a swap pass minimising repeated categories within any one set —
+   ideally five distinct categories per set.
+4. Report the idle score per set (what a player scores leaving every slider
+   untouched). Flag any set that lands outside roughly 900–2000 of the
+   available <questions × 1000>.
+
+Show me the plan before writing any files.
+```
+
+## 4. Codex / agent task brief
+
+```
+Repo: Cambo2k20/give-or-take-quiz — React 19 + TypeScript + Vite, Supabase
+backend, deployed to GitHub Pages at giveortakequiz.com.
+
+Ground yourself before you start: run `git status` and `git log --oneline -3`
+and work from what they say, not from anything a doc or transcript claims.
+Docs in this repo go stale.
+
+Task: <describe the task>
+
+Project rules you must not break:
+- Postgres is the source of truth for the category bank.
+  `lib/questions.generated.ts` is a committed snapshot — never hand-edit it,
+  regenerate with `npm run generate:questions`.
+- `data/daily-sets.json` is the source of truth for the daily — that one goes
+  the other direction.
+- Never reintroduce a hardcoded 10,000 score ceiling. Derive it as
+  `questions.length * 1000`.
+- `daily` is not a client-side GameMode. It stays `dailyDate: string | null`.
+- Don't touch BASE_PATH handling without checking the Pages path.
+- This repo is public. Don't commit unpublished daily content as a "backup".
+
+Done when `npm run lint`, `npm test` and `npm run build` all pass clean.
+
+Show me the plan and the diff before you commit anything.
+```
+
+## 5. Category icon generation
+
+```
+Create a single icon for the <category> category of a mobile quiz app.
+
+Style:
+- Glowing cosmic / sci-fi. Luminous edges, deep space-dark background.
+- The concept must live in the SHAPE — a silhouette that reads correctly in
+  one colour at 48px. Lighting and glow are finish, never the idea. If the
+  subject is only recognisable because of the glow, it has failed.
+- Centred, symmetrical-ish, generous margin, no text, no lettering.
+- Square, flat-on, no perspective tricks, no drop shadow onto a surface.
+- Accent colour: <hex>. Everything else neutral so the accent carries the
+  category identity.
+
+Subject: <what the icon depicts>
+
+It has to sit in a set of 28 siblings — match weight, margin and glow
+intensity to the existing ones rather than being individually striking.
+```
+
+## 6. Background theme brief
+
+```
+Build an animated background theme for Give or Take called "<name>", evoking
+<concept>. Two files: a registry entry and an artwork component, following the
+pattern in `src/themes/` and the guide in `docs/ADDING_THEMES.md`.
+
+Performance budget — this is a hard constraint, not a preference:
+- Animate ONLY `transform` and `opacity`. Never `filter`, never
+  `background-position`, never geometry.
+- Max 2–3 animating layers. Zero layers animating a filter.
+- No `backdrop-filter` over an animated background.
+- `will-change` on animated parents only, never on children.
+- Below 600px: cut blur radius and drop a layer.
+- Must hold 60fps at 390×844 on a mid-range Android.
+
+Design constraint: the concept must be legible from the shapes alone. A theme
+that only reads as its concept because of colour and glow will fail QA — this
+has happened before (see `design-qa.md`, Cinema Glow).
+
+Contrast: question text sits on top of this. Nothing in the background may
+compete with it.
+```
+
+## 7. Add your own
+
+Copy this block:
+
+```markdown
+## <n>. <Name>
+
+Use when: <one line — the trigger, so future-you can find it>
+Last checked: <date>
+
+​```
+<prompt text>
+​```
+```
