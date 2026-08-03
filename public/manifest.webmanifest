@@ -9,7 +9,7 @@
   "theme_color": "#fdf7ee",
   "icons": [
     {
-      "src": "./give-or-take-mascot-icon.svg",
+      "src": "./give-or-take-logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"

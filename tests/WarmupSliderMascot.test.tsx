@@ -1,0 +1,165 @@
+import { fireEvent, render } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+
+import { WarmupSliderMascot } from "@/src/mascot/WarmupSliderMascot";
+import type { MascotReaction } from "@/src/mascot/mascotState";
+
+function installMotionPreference(initialMatches: boolean) {
+  let matches = initialMatches;
+  const listeners = new Set<(event: MediaQueryListEvent) => void>();
+  const media = {
+    get matches() {
+      return matches;
+    },
+    media: "(prefers-reduced-motion: reduce)",
+    onchange: null,
+    addEventListener: vi.fn(
+      (_name: string, listener: (event: MediaQueryListEvent) => void) => {
+        listeners.add(listener);
+      },
+    ),
+    removeEventListener: vi.fn(
+      (_name: string, listener: (event: MediaQueryListEvent) => void) => {
+        listeners.delete(listener);
+      },
+    ),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  } as unknown as MediaQueryList;
+
+  vi.stubGlobal("matchMedia", vi.fn(() => media));
+  return {
+    setMatches(next: boolean) {
+      matches = next;
+      const event = { matches: next, media: media.media } as MediaQueryListEvent;
+      listeners.forEach((listener) => listener(event));
+    },
+  };
+}
+
+function renderMascot({
+  reaction = null,
+  reactionNonce = 0,
+  initialPosition = 0.5,
+}: {
+  reaction?: MascotReaction | null;
+  reactionNonce?: number;
+  initialPosition?: number;
+} = {}) {
+  return render(
+    <div className="slider-wrap">
+      <WarmupSliderMascot
+        reaction={reaction}
+        reactionNonce={reactionNonce}
+      />
+      <input
+        aria-label="Your estimate"
+        type="range"
+        min="0"
+        max="1"
+        step="0.0001"
+        defaultValue={initialPosition}
+      />
+    </div>,
+  );
+}
+
+function readProjectedGripX() {
+  const art = document.querySelector<HTMLElement>(
+    ".gt-mascot-front .gt-mascot-art",
+  );
+  const grip = document.querySelector<SVGGElement>(
+    '[data-mascot-part="grip-fingers"]',
+  );
+  if (!art || !grip) throw new Error("Mascot grip geometry is missing");
+
+  const artMatch = art.style.transform.match(
+    /translate3d\(([-\d.]+)px,\s*[-\d.]+px,\s*0\)\s*scale\(([-\d.]+)\)/,
+  );
+  const gripMatch = grip
+    .getAttribute("transform")
+    ?.match(/translate\(([-\d.]+)\s+[-\d.]+\)/);
+  if (!artMatch || !gripMatch) {
+    throw new Error("Mascot grip transforms are malformed");
+  }
+
+  return Number(artMatch[1]) + Number(gripMatch[1]) * Number(artMatch[2]);
+}
+
+describe("WarmupSliderMascot", () => {
+  it("keeps the visible grip welded to both slider endpoints", () => {
+    installMotionPreference(true);
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(
+      function clientWidth(this: HTMLElement) {
+        return this.classList.contains("slider-wrap") ? 300 : 0;
+      },
+    );
+    renderMascot({ initialPosition: 0 });
+
+    const slider = document.querySelector<HTMLInputElement>(
+      'input[type="range"]',
+    );
+    expect(slider).not.toBeNull();
+    expect(readProjectedGripX()).toBeCloseTo(15, 1);
+
+    fireEvent.input(slider as HTMLInputElement, { target: { value: "1" } });
+    expect(readProjectedGripX()).toBeCloseTo(285, 1);
+  });
+
+  it("clears an interrupted answer reaction when the prop returns to null", () => {
+    installMotionPreference(true);
+    const view = renderMascot({ reaction: "farAnswer", reactionNonce: 1 });
+    const layer = document.querySelector<HTMLElement>(".gt-mascot-layer");
+    expect(layer).toHaveAttribute("data-reaction", "farAnswer");
+
+    view.rerender(
+      <div className="slider-wrap">
+        <WarmupSliderMascot reaction={null} reactionNonce={1} />
+        <input
+          aria-label="Your estimate"
+          type="range"
+          min="0"
+          max="1"
+          defaultValue="0.5"
+        />
+      </div>,
+    );
+    expect(layer).toHaveAttribute("data-reaction", "");
+  });
+
+  it("tracks reduced-motion input without polling and follows runtime changes", () => {
+    const preference = installMotionPreference(false);
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(
+      function clientWidth(this: HTMLElement) {
+        return this.classList.contains("slider-wrap") ? 300 : 0;
+      },
+    );
+    const requestFrame = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockReturnValue(1);
+    const cancelFrame = vi
+      .spyOn(window, "cancelAnimationFrame")
+      .mockImplementation(() => {});
+    const interval = vi.spyOn(window, "setInterval");
+    renderMascot({ initialPosition: 0.25 });
+
+    expect(requestFrame).toHaveBeenCalled();
+    preference.setMatches(true);
+    expect(cancelFrame).toHaveBeenCalledWith(1);
+
+    const slider = document.querySelector<HTMLInputElement>(
+      'input[type="range"]',
+    );
+    const art = document.querySelector<HTMLElement>(
+      ".gt-mascot-front .gt-mascot-art",
+    );
+    const before = art?.style.transform;
+    fireEvent.input(slider as HTMLInputElement, { target: { value: "0.75" } });
+    expect(art?.style.transform).not.toBe(before);
+    expect(interval).not.toHaveBeenCalled();
+
+    preference.setMatches(false);
+    expect(requestFrame.mock.calls.length).toBeGreaterThan(1);
+  });
+});

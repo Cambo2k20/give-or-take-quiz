@@ -8,6 +8,8 @@ import {
   startPosition,
 } from "../lib/game";
 import { EstimatePanel } from "./EstimatePanel";
+import { WarmupSliderMascot } from "./mascot/WarmupSliderMascot";
+import { reactionForTier } from "./mascot/mascotState";
 import {
   formatPoints,
   subtypeLabel,
@@ -25,6 +27,8 @@ export function HeroDemo({ onPlay }: { onPlay: () => void }) {
   const [position, setPosition] = useState(() => startPosition(question));
   const [locked, setLocked] = useState(false);
   const [revealing, setRevealing] = useState(false);
+  // Bumped on every check so the same tier replays its reaction.
+  const [reactionNonce, setReactionNonce] = useState(0);
 
   const guess = positionToValue(question, position);
   const points = locked ? scoreGuess(question, guess) : 0;
@@ -48,6 +52,7 @@ export function HeroDemo({ onPlay }: { onPlay: () => void }) {
     if (locked) return;
     setLocked(true);
     setRevealing(true);
+    setReactionNonce((nonce) => nonce + 1);
   }
 
   function tryAnother() {
@@ -75,6 +80,12 @@ export function HeroDemo({ onPlay }: { onPlay: () => void }) {
         revealing={revealing}
         tierId={tier?.id}
         sliderId="hero-demo-slider"
+        sliderOverlay={
+          <WarmupSliderMascot
+            reaction={tier ? reactionForTier(tier.id) : null}
+            reactionNonce={reactionNonce}
+          />
+        }
       />
 
       {!locked ? (

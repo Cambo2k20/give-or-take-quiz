@@ -1,4 +1,4 @@
-import type { CSSProperties, KeyboardEvent } from "react";
+import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
 import {
   formatQuestionValue,
   positionToValue,
@@ -49,6 +49,11 @@ type EstimatePanelProps = {
    * supposed to create the tension. Omit for every other mode.
    */
   windowHalfWidth?: number;
+  /**
+   * Rendered inside `.slider-wrap`, behind the rail. Used by the home warm-up
+   * to stand the mascot behind the track; panels without one are unchanged.
+   */
+  sliderOverlay?: ReactNode;
 };
 
 /**
@@ -64,6 +69,7 @@ export function EstimatePanel({
   tierId,
   sliderId,
   windowHalfWidth,
+  sliderOverlay,
 }: EstimatePanelProps) {
   const guess = positionToValue(question, position);
   const answerPosition = valueToPosition(question, question.answer);
@@ -89,7 +95,7 @@ export function EstimatePanel({
 
   return (
     <div
-      className={`estimate-panel${revealing ? " is-revealing" : ""}${tierId ? ` tier-${tierId}` : ""}`}
+      className={`estimate-panel${sliderOverlay ? " has-mascot" : ""}${revealing ? " is-revealing" : ""}${tierId ? ` tier-${tierId}` : ""}`}
       style={
         {
           "--guess-position": `${position * 100}%`,
@@ -110,6 +116,7 @@ export function EstimatePanel({
       </span>
 
       <div className="slider-wrap">
+        {sliderOverlay}
         <span className="slider-rail" aria-hidden="true" />
         <span className="slider-fill" aria-hidden="true" />
         {windowHalfWidth !== undefined && (

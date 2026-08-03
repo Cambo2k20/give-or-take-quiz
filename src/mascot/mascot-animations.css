@@ -1,0 +1,106 @@
+/*
+ * Mascot skin + the two layout hooks it needs from the estimate panel.
+ *
+ * Nothing here touches slider behaviour: the rules only add headroom above the
+ * rail and make sure the rail is painted over the mascot's body, so it reads as
+ * standing behind the track with a hand on the knob.
+ *
+ * The mascot is two sibling layers, not one: its body sits behind the track and
+ * its fingers sit in front of it. A single layer cannot do both, because
+ * `z-index: 0` here opens a stacking context its children could never climb out
+ * of — so the fingers are a sibling of the body, above the rail and the thumb.
+ */
+
+.gt-mascot-layer,
+.gt-mascot-front {
+  /*
+   * White body with navy ink, matching the app icon. The light theme's surface
+   * is near-white, so the edge has to carry the silhouette there — the icon
+   * gets that separation for free from its navy plate.
+   */
+  --gt-mascot-body: #fbfdff;
+  --gt-mascot-body-shade: #d9e2f1;
+  --gt-mascot-ink: #0d2444;
+  --gt-mascot-edge: rgba(13, 36, 68, 0.42);
+  --gt-mascot-accent: #ff8a13;
+  --gt-mascot-accent-deep: #ef6a00;
+  --gt-mascot-blush: #ff7468;
+  --gt-mascot-sweat: #72c9f4;
+  --gt-mascot-shadow: rgba(6, 22, 48, 0.24);
+
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.gt-mascot-layer {
+  z-index: 0;
+}
+
+/* Above the rail and the thumb, which the panel puts at z-index 1. */
+.gt-mascot-front {
+  z-index: 2;
+}
+
+:root[data-theme="dark"] .gt-mascot-layer,
+:root[data-theme="dark"] .gt-mascot-front {
+  --gt-mascot-body: #f7fafe;
+  --gt-mascot-body-shade: #b6c4dc;
+  --gt-mascot-edge: rgba(0, 0, 0, 0.28);
+  --gt-mascot-shadow: rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-color-scheme: dark) {
+  /* Same scoping as the app's tokens: an explicit choice always wins. */
+  :root:not([data-theme]) .gt-mascot-layer,
+  :root:not([data-theme]) .gt-mascot-front {
+    --gt-mascot-body: #f7fafe;
+    --gt-mascot-body-shade: #b6c4dc;
+    --gt-mascot-edge: rgba(0, 0, 0, 0.28);
+    --gt-mascot-shadow: rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* Positioned every frame by the component; parked off-canvas until measured. */
+.gt-mascot-art {
+  position: absolute;
+  left: 0;
+  top: 0;
+  /* Placement maths assumes the top-left corner, not the box centre. */
+  transform-origin: 0 0;
+  transform: translate3d(-9999px, 0, 0);
+  will-change: transform;
+}
+
+.gt-mascot-art > svg {
+  display: block;
+  overflow: visible;
+}
+
+/* Room for the mascot to peek above the track. */
+.estimate-panel.has-mascot .slider-wrap {
+  margin-top: 64px;
+}
+
+/* The track and its markers sit in front of the body, the thumb in front of the hand. */
+.estimate-panel.has-mascot .slider-rail,
+.estimate-panel.has-mascot .slider-fill,
+.estimate-panel.has-mascot .miss-band,
+.estimate-panel.has-mascot .survival-window,
+.estimate-panel.has-mascot .answer-dot,
+.estimate-panel.has-mascot .estimate-slider {
+  z-index: 1;
+}
+
+@media (max-width: 420px) {
+  .estimate-panel.has-mascot .slider-wrap {
+    margin-top: 52px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gt-mascot-art {
+    will-change: auto;
+  }
+}
