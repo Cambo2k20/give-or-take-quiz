@@ -180,6 +180,56 @@ describe("WarmupSliderMascot", () => {
     expect(rightLeg?.getAttribute("transform")).not.toBe(firstFrame.rightLeg);
   });
 
+  it.each([
+    {
+      expression: "howling",
+      mouthPart: "howling-mouth",
+      reaction: "closeAnswer" as const,
+      sampleAt: 1400,
+    },
+    {
+      expression: "barking",
+      mouthPart: "barking-mouth",
+      reaction: "averageAnswer" as const,
+      sampleAt: 1220,
+    },
+    {
+      expression: "growling",
+      mouthPart: "growling-mouth",
+      reaction: "wideAnswer" as const,
+      sampleAt: 1260,
+    },
+  ])(
+    "uses the $expression vocal pose for $reaction",
+    ({ expression, mouthPart, reaction, sampleAt }) => {
+      installMotionPreference(false);
+      vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(
+        function clientWidth(this: HTMLElement) {
+          return this.classList.contains("slider-wrap") ? 300 : 0;
+        },
+      );
+      vi.spyOn(performance, "now").mockReturnValue(1000);
+      let scheduledFrame: FrameRequestCallback | undefined;
+      vi.spyOn(window, "requestAnimationFrame").mockImplementation(
+        (callback) => {
+          scheduledFrame = callback;
+          return 1;
+        },
+      );
+      renderMascot({ reaction, reactionNonce: 1 });
+
+      scheduledFrame?.(sampleAt);
+
+      const layer = document.querySelector(".gt-mascot-layer");
+      const mouth = document.querySelector(
+        `[data-mascot-part="${mouthPart}"]`,
+      );
+      expect(layer).toHaveAttribute("data-expression", expression);
+      expect(mouth).toHaveStyle({ opacity: "1" });
+      expect(mouth?.getAttribute("transform")).toContain("scale(");
+    },
+  );
+
   it("clears an interrupted answer reaction when the prop returns to null", () => {
     installMotionPreference(true);
     const view = renderMascot({ reaction: "farAnswer", reactionNonce: 1 });

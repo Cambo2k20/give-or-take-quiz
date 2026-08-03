@@ -70,6 +70,7 @@ import { ThemeArtwork } from "./themes/ThemeArtwork";
 import { DailyArchive, readableDate } from "./Daily";
 import { HomeHeader } from "./HomeHeader";
 import { BrandMark } from "./BrandMark";
+import { BackgroundMusicPlayer } from "./BackgroundMusicPlayer";
 import {
   AchievementPanel,
   MascotGamePreference,
@@ -1414,6 +1415,7 @@ export default function Game() {
         mode={theme}
         variant="backdrop"
       />
+      <BackgroundMusicPlayer />
       {todaysDaily ? (
         <HomeHeader
           date={todaysDaily.date}

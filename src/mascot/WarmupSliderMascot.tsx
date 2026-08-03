@@ -15,6 +15,7 @@ import {
   type MascotReaction,
   type MascotSnapshot,
 } from "./mascotState";
+import { playMascotSound } from "./mascotSounds";
 import "./mascot-animations.css";
 
 /**
@@ -196,6 +197,9 @@ function WarmupSliderMascotComponent({
   const sweatRefs = useRef<Array<SVGGElement | null>>([]);
   const mouthRefs = useRef<Record<MascotExpression, SVGGElement | null>>({
     panting: null,
+    barking: null,
+    growling: null,
+    howling: null,
     neutral: null,
     anticipating: null,
     focused: null,
@@ -278,6 +282,7 @@ function WarmupSliderMascotComponent({
     if (layerRef.current) {
       layerRef.current.dataset.reaction = reaction ?? "";
     }
+    if (reaction) playMascotSound(reaction);
   }, [reaction, reactionNonce]);
 
   useEffect(() => {
@@ -827,7 +832,12 @@ function WarmupSliderMascotComponent({
         Math.sin(idleSwayPhase - 0.48) *
           MASCOT_LIMITS.idleHeadFollow *
           sim.idleBlend;
+      let headLift = 0;
+      let headScaleY = 1;
       let eyeOpen = 1 - sim.focus * 0.24;
+      let barkPulse = 0;
+      let growlStrength = 0;
+      let howlStrength = 0;
 
       /* ── Expression ──────────────────────────────────────────────────────── */
       let expression: MascotExpression =
@@ -849,17 +859,43 @@ function WarmupSliderMascotComponent({
         const out = 1 - t;
         expression = MASCOT_REACTION_FACE[sim.reaction];
         if (sim.reaction === "closeAnswer") {
-          head += Math.sin(t * Math.PI * 4) * 8 * out;
-          lift -= Math.sin(t * Math.PI * 2) * 3;
+          const attack = Math.sin(
+            (Math.PI / 2) * clamp(t / 0.18, 0, 1),
+          );
+          const release = t > 0.82 ? clamp((1 - t) / 0.18, 0, 1) : 1;
+          howlStrength = attack * release;
+          head -= 10.5 * howlStrength;
+          headLift -= 4.8 * howlStrength;
+          headScaleY += 0.045 * howlStrength;
+          lift -= 2.8 * howlStrength;
+          squash -= 0.032 * howlStrength;
+          eyeOpen = 1 - 0.82 * howlStrength;
         } else if (sim.reaction === "averageAnswer") {
-          lift -= Math.sin(t * Math.PI) * 4;
-          head += Math.sin(t * Math.PI) * 3;
+          barkPulse = Math.max(0, Math.sin(t * Math.PI * 4)) * out;
+          head += Math.sin(t * Math.PI * 4) * 3.2 * out;
+          headLift += barkPulse * 1.8;
+          lift -= barkPulse * 3.4;
+          squash += barkPulse * 0.026;
+          eyeOpen = 1.08 - barkPulse * 0.18;
+        } else if (sim.reaction === "wideAnswer") {
+          const attack = Math.sin(
+            (Math.PI / 2) * clamp(t / 0.16, 0, 1),
+          );
+          const release = t > 0.76 ? clamp((1 - t) / 0.24, 0, 1) : 1;
+          growlStrength = attack * release;
+          lean += 3.2 * growlStrength;
+          head +=
+            4.4 * growlStrength +
+            Math.sin(t * Math.PI * 18) * 0.7 * growlStrength;
+          headLift += 2.2 * growlStrength;
+          squash += 0.018 * growlStrength;
+          eyeOpen = 1 - 0.48 * growlStrength;
         } else if (sim.reaction === "farAnswer") {
           lean -= 7 * Math.sin(Math.PI * Math.min(t * 1.6, 1));
           head += Math.sin(t * Math.PI * 7) * 2.4 * out;
           eyeOpen = 1.18 - t * 0.18;
         } else {
-          /* perfectAnswer: anticipation, jump, landing squash. */
+          /* Bullseye keeps the established jump-and-spark celebration. */
           if (t < 0.16) {
             squash = -0.1 * (t / 0.16);
             lift += 3 * (t / 0.16);
@@ -968,16 +1004,25 @@ function WarmupSliderMascotComponent({
       const chestScaleY = 1 + breath / 250;
       chestRef.current?.setAttribute(
         "transform",
-        `translate(${ART.pivotX} 108) scale(1 ${chestScaleY.toFixed(4)}) translate(${-ART.pivotX} -108)`,
+        `translate(${ART.pivotX} 108) scale(1 ${(chestScaleY + howlStrength * 0.025).toFixed(4)}) translate(${-ART.pivotX} -108)`,
       );
       const legSwing =
         Math.sin(idleSwayPhase + 0.55) *
         MASCOT_LIMITS.idleLegSwing *
         sim.idleBlend;
-      const tailWag =
+      let tailWag =
         (Math.sin(idleTailPhase - 0.7) * MASCOT_LIMITS.idleTailWag +
           idleSway * 0.65) *
         sim.idleBlend;
+      if (sim.reaction === "averageAnswer") {
+        tailWag += Math.sin(reactionT * Math.PI * 8) * 13 * (1 - reactionT);
+      } else if (sim.reaction === "closeAnswer") {
+        tailWag += Math.sin(reactionT * Math.PI * 3) * 7 * howlStrength;
+      } else if (sim.reaction === "wideAnswer") {
+        tailWag +=
+          18 * growlStrength +
+          Math.sin(reactionT * Math.PI * 12) * 2.4 * growlStrength;
+      }
       tailRef.current?.setAttribute(
         "transform",
         `rotate(${tailWag.toFixed(2)} 88 110)`,
@@ -992,7 +1037,19 @@ function WarmupSliderMascotComponent({
       );
       headRef.current?.setAttribute(
         "transform",
-        `translate(${ART.neckX} ${ART.neckY}) rotate(${head.toFixed(2)}) translate(${-ART.neckX} ${-ART.neckY})`,
+        `translate(0 ${headLift.toFixed(2)}) translate(${ART.neckX} ${ART.neckY}) rotate(${head.toFixed(2)}) scale(1 ${headScaleY.toFixed(4)}) translate(${-ART.neckX} ${-ART.neckY})`,
+      );
+      mouthRefs.current.barking?.setAttribute(
+        "transform",
+        `translate(62 68) scale(1 ${(0.52 + barkPulse * 0.8).toFixed(3)}) translate(-62 -68)`,
+      );
+      mouthRefs.current.growling?.setAttribute(
+        "transform",
+        `translate(${(Math.sin(reactionT * Math.PI * 20) * 0.65 * growlStrength).toFixed(2)} 0) translate(62 68) scale(${(1 + growlStrength * 0.08).toFixed(3)} ${(0.72 + growlStrength * 0.28).toFixed(3)}) translate(-62 -68)`,
+      );
+      mouthRefs.current.howling?.setAttribute(
+        "transform",
+        `translate(62 67) scale(${(0.92 + howlStrength * 0.08).toFixed(3)} ${(0.78 + howlStrength * 0.38 + Math.sin(reactionT * Math.PI * 8) * 0.04 * howlStrength).toFixed(3)}) translate(-62 -67)`,
       );
 
       for (let index = 0; index < SWEAT_COUNT; index += 1) {
@@ -1350,6 +1407,63 @@ function WarmupSliderMascotComponent({
                     className="gt-mascot-panting-tongue"
                     d="M58.5 70.5C58.8 78.5 65.2 78.5 65.5 70.5Z"
                     fill="var(--gt-mascot-tongue)"
+                  />
+                </g>
+                <g
+                  ref={(node) => {
+                    mouthRefs.current.barking = node;
+                  }}
+                  style={{ opacity: 0 }}
+                  data-mascot-part="barking-mouth"
+                >
+                  <path
+                    d="M55.5 65.5C55.5 75.6 68.5 75.6 68.5 65.5C65.2 68.1 58.8 68.1 55.5 65.5Z"
+                    fill={ink}
+                    stroke={ink}
+                    strokeWidth="1.8"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M59.1 71.2C59.4 75.4 64.6 75.4 64.9 71.2Z"
+                    fill="var(--gt-mascot-tongue)"
+                  />
+                </g>
+                <g
+                  ref={(node) => {
+                    mouthRefs.current.howling = node;
+                  }}
+                  style={{ opacity: 0 }}
+                  data-mascot-part="howling-mouth"
+                >
+                  <ellipse cx="62" cy="67.8" rx="4.6" ry="7.4" fill={ink} />
+                  <ellipse
+                    cx="62"
+                    cy="71.3"
+                    rx="2.3"
+                    ry="1.8"
+                    fill="var(--gt-mascot-tongue)"
+                  />
+                </g>
+                <g
+                  ref={(node) => {
+                    mouthRefs.current.growling = node;
+                  }}
+                  style={{ opacity: 0 }}
+                  data-mascot-part="growling-mouth"
+                >
+                  <path
+                    d="M53.5 68C57 64.8 67 64.8 70.5 68C68.7 75.8 55.3 75.8 53.5 68Z"
+                    fill={ink}
+                    stroke={ink}
+                    strokeWidth="1.8"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M56.5 67.2L59.2 71L61.5 67.1L64 71L67.2 67.2"
+                    fill="#ffffff"
+                    stroke="#ffffff"
+                    strokeWidth="1.2"
+                    strokeLinejoin="round"
                   />
                 </g>
                 <g

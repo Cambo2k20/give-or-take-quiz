@@ -235,124 +235,142 @@ function SleepingPose({ body, animated }: ArtworkProps) {
   return (
     <>
       <ellipse
-        cx="168"
-        cy="129"
-        rx="104"
-        ry="5.5"
+        cx="186"
+        cy="140"
+        rx="94"
+        ry="6"
         fill="var(--gt-mascot-pose-shadow)"
       />
-      <g className={animated ? "gt-pose-sleep" : undefined}>
+      <g className={animated ? "gt-pose-sleep-tail" : undefined}>
         <path
-          d="M146 120C140 106 145 95 158 89C177 80 206 78 227 86C247 94 255 108 250 118C247 124 239 126 227 126L157 126C150 126 148 125 146 120Z"
+          d="M236 116C254 116 264 108 262 96"
+          fill="none"
+          stroke="var(--gt-mascot-pose-ink)"
+          strokeWidth="11.4"
+          strokeLinecap="round"
+        />
+        <path
+          d="M236 116C254 116 264 108 262 96"
+          fill="none"
+          stroke={body}
+          strokeWidth="8.2"
+          strokeLinecap="round"
+        />
+      </g>
+      <g className={animated ? "gt-pose-sleep" : undefined}>
+        <ellipse
+          cx="196"
+          cy="110"
+          rx="52"
+          ry="27"
           fill={body}
           stroke="var(--gt-mascot-pose-ink)"
           strokeWidth="1.6"
-          strokeLinejoin="round"
         />
         <path
-          d="M214 90C226 97 228 111 221 122"
-          fill="none"
+          d="M196 106C222 107 238 112 238 119C238 127 220 134 196 135C172 134 154 127 154 119C154 112 170 107 196 106Z"
+          fill="#ffffff"
           stroke="var(--gt-mascot-pose-ink)"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-          opacity="0.8"
+          strokeWidth="1"
+          strokeOpacity="0.16"
         />
       </g>
-      <Paw
-        transform="translate(202 120) rotate(4)"
-        body={body}
-        rx={9.6}
-        ry={6.6}
-        toesTransform="rotate(-92) scale(0.86)"
-      />
       <path
-        d="M150 108C128 108 104 109 86 110"
+        d="M240 118C234 128 220 133 202 133C192 133 184 132 179 131"
         fill="none"
         stroke="var(--gt-mascot-pose-ink)"
-        strokeWidth="11.8"
+        strokeWidth="15"
         strokeLinecap="round"
       />
       <path
-        d="M150 108C128 108 104 109 86 110"
+        d="M240 118C234 128 220 133 202 133C192 133 184 132 179 131"
         fill="none"
         stroke={body}
-        strokeWidth="8.4"
+        strokeWidth="11.6"
         strokeLinecap="round"
       />
-      <ellipse
-        cx="79"
-        cy="110"
-        rx="9.2"
-        ry="6.6"
-        transform="rotate(-4 79 110)"
-        fill={body}
-        stroke="var(--gt-mascot-pose-ink)"
-        strokeWidth="1.6"
+      <Paw
+        transform="translate(174 131) rotate(-4)"
+        body={body}
+        rx={11}
+        ry={8.6}
+        toesTransform="rotate(-96)"
+      />
+      <Limb d="M158 108C138 107 118 107 104 108" body={body} />
+      <Paw
+        transform="translate(97 108) rotate(-4)"
+        body={body}
+        toesTransform="rotate(-93)"
       />
       <g className={animated ? "gt-pose-sleep-head" : undefined}>
-        <g transform="rotate(-6 112 92)">
+        <g transform="translate(148 92) rotate(-7)">
           <Ear
-            transform="translate(133 83) rotate(64) scale(0.94)"
+            transform="translate(20 -24) scale(-1 1) rotate(30)"
             body={body}
           />
+          <Ear transform="translate(-24 -8) rotate(66)" body={body} />
           <ellipse
-            cx="112"
-            cy="94"
-            rx="34"
-            ry="27"
+            rx="34.5"
+            ry="32"
             fill={body}
             stroke="var(--gt-mascot-pose-ink)"
             strokeWidth="1.6"
           />
           <path
-            d="M90 90Q97 96 104 89"
+            d="M-22 -1Q-15 6 -8 -2"
             fill="none"
             stroke="var(--gt-mascot-pose-ink)"
             strokeWidth="2.6"
             strokeLinecap="round"
           />
           <path
-            d="M116 88Q123 94 130 87"
+            d="M8 -2Q15 6 22 -1"
             fill="none"
             stroke="var(--gt-mascot-pose-ink)"
             strokeWidth="2.6"
             strokeLinecap="round"
           />
-          <ellipse
-            cx="87"
-            cy="102"
-            rx="6.4"
-            ry="4.8"
-            transform="rotate(-12 87 102)"
-            fill="var(--gt-mascot-pose-ink)"
-          />
-          <ellipse
-            cx="86.6"
-            cy="99.6"
-            rx="3.2"
-            ry="1.2"
-            transform="rotate(-12 86.6 99.6)"
-            fill="#ffffff"
-            opacity="0.26"
-          />
-          <path
-            d="M88 106.4C89 110.4 94.4 110.8 97 107.6"
-            fill="none"
-            stroke="var(--gt-mascot-pose-ink)"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-          />
-          <Ear
-            transform="translate(108 67) rotate(-34) scale(0.88)"
-            body={body}
-          />
+          <g className={animated ? "gt-pose-sleep-muzzle" : undefined}>
+            <ellipse
+              cy="13"
+              rx="6.6"
+              ry="5"
+              fill="var(--gt-mascot-pose-ink)"
+            />
+            <ellipse
+              cy="10.6"
+              rx="3.4"
+              ry="1.3"
+              fill="#ffffff"
+              opacity="0.26"
+            />
+            <path
+              d="M0 18C0 22.6 -5 23.6 -7.6 20.6"
+              fill="none"
+              stroke="var(--gt-mascot-pose-ink)"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+            />
+          </g>
         </g>
       </g>
-      <Limb d="M148 118C132 123 114 124 100 123" body={body} />
+      {animated && (
+        <g className="gt-pose-snores" aria-hidden="true">
+          <text x="132" y="91" className="gt-pose-snore-mark">
+            Z
+          </text>
+          <text x="132" y="91" className="gt-pose-snore-mark">
+            Z
+          </text>
+          <text x="132" y="91" className="gt-pose-snore-mark">
+            Z
+          </text>
+        </g>
+      )}
+      <Limb d="M156 120C138 124 120 125 106 124" body={body} />
       <Paw
-        transform="translate(89 122) rotate(-3)"
+        transform="translate(98 124) rotate(-3)"
         body={body}
-        ry={7.6}
         toesTransform="rotate(-93)"
       />
     </>
@@ -651,7 +669,7 @@ export function MascotPose({
   const gradientId = `gt-mascot-pose-${useId().replaceAll(":", "")}`;
   const body = `url(#${gradientId})`;
   const viewBox =
-    requestedViewBox ?? (pose === "sleeping" ? "0 0 300 140" : "0 0 150 150");
+    requestedViewBox ?? (pose === "sleeping" ? "34 30 250 120" : "0 0 150 150");
   const artwork = ARTWORK[pose]({ body, animated });
   const mascotStyle = {
     ...style,
