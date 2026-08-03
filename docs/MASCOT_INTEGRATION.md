@@ -1,15 +1,17 @@
 # Mascot animation system
 
-Component 1 of the system: **`WarmupSliderMascot`**, attached to the real
-warm-up slider in `HeroDemo` → `EstimatePanel`. It is implemented and mounted
-in this worktree; sections 1 and 2 record how it hangs off the panel, for when
-a second mascot needs the same slot.
+The system has two artwork surfaces: **`WarmupSliderMascot`**, attached to real
+game sliders, and **`MascotPose`**, a reusable set of six poses for profiles,
+cards, onboarding and result states.
 
 Files:
 
 - `src/mascot/WarmupSliderMascot.tsx`
+- `src/mascot/MascotPose.tsx` — reusable sleeping, sitting, waving, peeking,
+  thinking and celebrating artwork
 - `src/mascot/mascotState.ts` — the typed animation state API
-- `src/mascot/mascot-animations.css` — theme variables + two layout hooks
+- `src/mascot/mascot-animations.css` — shared artwork variables, pose
+  animations and slider layout hooks
 
 No dependency added: Framer Motion is not in `package.json`, so the mascot runs
 on CSS transforms driven by one `requestAnimationFrame` loop.
@@ -97,26 +99,26 @@ clears the reaction.
 
 ## 4. Behaviour
 
-- **Idle** — chest-only breathing, blink every 3–7s, small eye movements toward
-  the knob and a rare 1–2.2 degree head tilt. The whole character does not
-  continuously float.
-- **Ready** (hover or keyboard focus) — small anticipatory lean, raised brows,
-  gaze locked on the knob and a restrained anticipatory mouth.
+- **Idle** — gentle open-mouth panting, chest-only breathing, blink every 3–7s,
+  small eye movements toward the knob and a rare 1–2.2 degree head tilt. The
+  whole character does not continuously float.
+- **Ready** (hover or keyboard focus) — small anticipatory lean, gaze locked on
+  the knob and a restrained anticipatory mouth.
 - **Dragging** — hand welded to the thumb, body follows on a spring, leans into
   the direction, head follows a beat later, squash/stretch on fast moves. Every
   deformation is clamped in `MASCOT_LIMITS`; the arm absorbs body lag up to
   30 units and the body is dragged along past that, so the grip never breaks.
 - **Rapid drag** — measured from smoothed thumb velocity with enter/exit
   hysteresis. The planted hand pulls a heavier body behind it, the head briefly
-  counter-rotates before following, brows and eyes widen, coral cheek colour
-  appears and one or two sweat drops trail against the direction of travel.
+  counter-rotates before following, the eyes widen and one or two sweat drops
+  trail against the direction of travel.
 - **Precision** — slow pointer velocity narrows the eyes, flattens the mouth and
   tightens the lean. It uses thumb velocity rather than body spring velocity,
   so a fast flick cannot become "precision" merely because the torso is
   settling. A single small nervous sweat detail appears only after sustained
   careful movement.
 - **Release** — soft spring back to neutral with a ~700ms satisfied smile;
-  blush and sweat fade within 420ms.
+  sweat fades within 420ms.
 - **Reactions** — nod (close), gentle bob (average), recoil + wide eyes (far),
   jump with gold sparks (perfect).
 
@@ -135,15 +137,18 @@ clears the reaction.
 - Colours come from CSS variables on `.gt-mascot-layer` —
   `--gt-mascot-body`, `--gt-mascot-body-shade`, `--gt-mascot-ink`,
   `--gt-mascot-edge`, `--gt-mascot-accent`, `--gt-mascot-accent-deep`,
-  `--gt-mascot-shadow`. The base palette is the light one — the edge there is
-  what keeps a white mascot legible on a near-white surface, since the app icon
-  gets that separation from its navy plate instead. Dark overrides follow the
-  app's own scoping (`[data-theme="dark"]`, plus system dark when no theme is
-  set); per-theme palettes can override any variable under
-  `:root[data-bg-theme="…"]`.
+  `--gt-mascot-shadow`. The character keeps the pose sheet's white-to-`#e7edf6`
+  body and solid `#16233f` outline in both colour modes.
 
-## 6. Next in the system
+## 6. Reusable pose library
 
-`DailyCardMascot` — a small, non-interactive peek near the Daily card:
-idle breathing and blinking only, no slider coupling, no reactions. It reuses
-`mascotState.ts` and the same artwork proportions, at a smaller scale.
+`MascotPose` accepts `pose`, `decorative`, `label`, `animated`, `accent` and the
+normal SVG props. The six values exported by `MASCOT_POSES` are `sleeping`,
+`sitting`, `waving`, `peeking`, `thinking` and `celebrating`. Every pose shares
+the same broad build, folded floppy ears, tall oval eyes with one glint, navy
+nose, 1.6-unit `#16233f` outline and three toe lines per paw.
+
+Use `decorative` when nearby copy already names the purpose. Otherwise the
+component supplies a pose-specific accessible label, which can be replaced with
+`label`. `animated` enables only the restrained motion authored in the source
+sheet and is disabled by `prefers-reduced-motion`.

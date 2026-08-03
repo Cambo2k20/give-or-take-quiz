@@ -88,6 +88,39 @@ function readProjectedGripX() {
 }
 
 describe("WarmupSliderMascot", () => {
+  it("uses the broad floppy-eared dog anatomy from the pose sheet", () => {
+    installMotionPreference(true);
+    renderMascot();
+    const layer = document.querySelector<HTMLElement>(".gt-mascot-layer");
+
+    expect(
+      document.querySelectorAll('[data-mascot-part="floppy-ear"]'),
+    ).toHaveLength(2);
+    expect(
+      document.querySelector('[data-mascot-part="nose"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-mascot-part="belly-patch"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-mascot-part="tail"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-mascot-part="left-leg"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-mascot-part="right-leg"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[data-mascot-part="grip-fingers"]'),
+    ).not.toBeNull();
+    expect(layer).toHaveAttribute("data-pose", "idle");
+    expect(layer).toHaveAttribute("data-expression", "panting");
+    expect(
+      document.querySelector('[data-mascot-part="panting-mouth"]'),
+    ).toHaveStyle({ opacity: "1" });
+  });
+
   it("keeps the visible grip welded to both slider endpoints", () => {
     installMotionPreference(true);
     vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(

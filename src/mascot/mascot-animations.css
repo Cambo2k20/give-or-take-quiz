@@ -11,6 +11,80 @@
  * of — so the fingers are a sibling of the body, above the rail and the thumb.
  */
 
+.gt-mascot-pose {
+  --gt-mascot-pose-body: #ffffff;
+  --gt-mascot-pose-body-shade: #e7edf6;
+  --gt-mascot-pose-ink: #16233f;
+  --gt-mascot-pose-edge: #e5ebf5;
+  --gt-mascot-pose-shadow: rgba(22, 35, 63, 0.1);
+  --gt-mascot-pose-accent: #ff8a13;
+
+  display: block;
+  overflow: visible;
+}
+
+.gt-pose-breathe {
+  animation: gt-mascot-pose-breathe 4.4s ease-in-out infinite;
+  transform-origin: 62px 136px;
+}
+
+.gt-pose-sleep {
+  animation: gt-mascot-pose-sleep 5s ease-in-out infinite;
+  transform-origin: 200px 126px;
+}
+
+.gt-pose-sleep-head {
+  animation: gt-mascot-pose-sleep-head 5s ease-in-out infinite;
+}
+
+.gt-pose-float {
+  animation: gt-mascot-pose-float 2.4s ease-in-out infinite;
+}
+
+@keyframes gt-mascot-pose-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.012, 0.99);
+  }
+}
+
+@keyframes gt-mascot-pose-sleep {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.01, 1.024);
+  }
+}
+
+@keyframes gt-mascot-pose-sleep-head {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(0.9px);
+  }
+}
+
+@keyframes gt-mascot-pose-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
 .gt-mascot-layer,
 .gt-mascot-front {
   /*
@@ -18,13 +92,13 @@
    * is near-white, so the edge has to carry the silhouette there — the icon
    * gets that separation for free from its navy plate.
    */
-  --gt-mascot-body: #fbfdff;
-  --gt-mascot-body-shade: #d9e2f1;
-  --gt-mascot-ink: #0d2444;
-  --gt-mascot-edge: rgba(13, 36, 68, 0.42);
+  --gt-mascot-body: #ffffff;
+  --gt-mascot-body-shade: #e7edf6;
+  --gt-mascot-ink: #16233f;
+  --gt-mascot-edge: #16233f;
   --gt-mascot-accent: #ff8a13;
   --gt-mascot-accent-deep: #ef6a00;
-  --gt-mascot-blush: #ff7468;
+  --gt-mascot-tongue: #f28b8f;
   --gt-mascot-sweat: #72c9f4;
   --gt-mascot-shadow: rgba(6, 22, 48, 0.24);
 
@@ -45,9 +119,6 @@
 
 :root[data-theme="dark"] .gt-mascot-layer,
 :root[data-theme="dark"] .gt-mascot-front {
-  --gt-mascot-body: #f7fafe;
-  --gt-mascot-body-shade: #b6c4dc;
-  --gt-mascot-edge: rgba(0, 0, 0, 0.28);
   --gt-mascot-shadow: rgba(0, 0, 0, 0.45);
 }
 
@@ -55,9 +126,6 @@
   /* Same scoping as the app's tokens: an explicit choice always wins. */
   :root:not([data-theme]) .gt-mascot-layer,
   :root:not([data-theme]) .gt-mascot-front {
-    --gt-mascot-body: #f7fafe;
-    --gt-mascot-body-shade: #b6c4dc;
-    --gt-mascot-edge: rgba(0, 0, 0, 0.28);
     --gt-mascot-shadow: rgba(0, 0, 0, 0.45);
   }
 }
@@ -78,8 +146,41 @@
   overflow: visible;
 }
 
+.gt-mascot-panting-mouth {
+  transform-box: fill-box;
+  transform-origin: center top;
+  animation: gt-mascot-pant 620ms ease-in-out infinite;
+}
+
+.gt-mascot-panting-tongue {
+  animation: gt-mascot-tongue-bob 620ms ease-in-out infinite;
+}
+
+@keyframes gt-mascot-pant {
+  0%,
+  100% {
+    transform: scaleY(0.92);
+  }
+
+  50% {
+    transform: scaleY(1.05);
+  }
+}
+
+@keyframes gt-mascot-tongue-bob {
+  0%,
+  100% {
+    transform: translateY(-0.25px);
+  }
+
+  50% {
+    transform: translateY(0.75px);
+  }
+}
+
 /* Room for the mascot to peek above the track. */
 .estimate-panel.has-mascot .slider-wrap {
+  height: 108px;
   margin-top: 64px;
 }
 
@@ -95,11 +196,21 @@
 
 @media (max-width: 420px) {
   .estimate-panel.has-mascot .slider-wrap {
+    height: 80px;
     margin-top: 52px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .gt-mascot-pose * {
+    animation: none !important;
+  }
+
+  .gt-mascot-panting-mouth,
+  .gt-mascot-panting-tongue {
+    animation: none;
+  }
+
   .gt-mascot-art {
     will-change: auto;
   }

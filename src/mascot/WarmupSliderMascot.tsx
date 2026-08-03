@@ -35,7 +35,7 @@ import "./mascot-animations.css";
 /** Artwork geometry, in SVG units. */
 const ART = {
   width: 150,
-  height: 122,
+  height: 168,
   /** Rest position of the gripping hand; the body is placed so this meets the knob. */
   handX: 128,
   handY: 74,
@@ -54,20 +54,20 @@ const ART = {
    * carries its paws, and the only place with clear air between the head and
    * the bar for an arm to be seen travelling through.
    */
-  shoulderLeftX: 40,
-  shoulderLeftY: 71,
-  shoulderRightX: 84,
-  shoulderRightY: 71,
+  shoulderLeftX: 50,
+  shoulderLeftY: 78,
+  shoulderRightX: 74,
+  shoulderRightY: 78,
   /** Where the free hand rests on the bar. */
   restX: 12,
   restY: 79,
   /** Reach of either arm, shoulder to wrist. */
-  armLength: 46,
+  armLength: 54,
   /** How far the body may hang past the left end of the rail, so it keeps up. */
   overhang: 16,
   eyeLeftX: 48,
-  eyeRightX: 78,
-  eyeY: 46,
+  eyeRightX: 76,
+  eyeY: 45,
 } as const;
 
 /**
@@ -180,9 +180,6 @@ function WarmupSliderMascotComponent({
   const headRef = useRef<SVGGElement | null>(null);
   const eyeLeftRef = useRef<SVGGElement | null>(null);
   const eyeRightRef = useRef<SVGGElement | null>(null);
-  const browLeftRef = useRef<SVGGElement | null>(null);
-  const browRightRef = useRef<SVGGElement | null>(null);
-  const blushRef = useRef<SVGGElement | null>(null);
   const leftArmRef = useRef<SVGPathElement | null>(null);
   const leftArmEdgeRef = useRef<SVGPathElement | null>(null);
   const leftPawRef = useRef<SVGGElement | null>(null);
@@ -194,6 +191,7 @@ function WarmupSliderMascotComponent({
   const sparkRefs = useRef<Array<SVGGElement | null>>([]);
   const sweatRefs = useRef<Array<SVGGElement | null>>([]);
   const mouthRefs = useRef<Record<MascotExpression, SVGGElement | null>>({
+    panting: null,
     neutral: null,
     anticipating: null,
     focused: null,
@@ -262,7 +260,7 @@ function WarmupSliderMascotComponent({
     reaction: null,
     reactionStart: 0,
     pose: "idle",
-    expression: "neutral",
+    expression: "panting",
     last: 0,
   });
 
@@ -595,15 +593,12 @@ function WarmupSliderMascotComponent({
       rootRef.current?.setAttribute("transform", "");
       chestRef.current?.setAttribute("transform", "");
       headRef.current?.setAttribute("transform", "");
-      browLeftRef.current?.setAttribute("transform", "");
-      browRightRef.current?.setAttribute("transform", "");
-      if (blushRef.current) blushRef.current.style.opacity = "0";
       sweatRefs.current.forEach((node) => {
         if (node) node.style.opacity = "0";
       });
       placeLimbs(0, 0, 0, 0, 1);
       sim.pose = sim.hovered ? "ready" : "idle";
-      sim.expression = sim.hovered ? "anticipating" : "neutral";
+      sim.expression = sim.hovered ? "anticipating" : "panting";
       setMouth(sim.expression);
       layer.dataset.pose = sim.pose;
       layer.dataset.expression = sim.expression;
@@ -818,7 +813,9 @@ function WarmupSliderMascotComponent({
               ? "pleased"
               : sim.pose === "ready"
                 ? "anticipating"
-                : "neutral";
+                : sim.pose === "idle"
+                  ? "panting"
+                  : "neutral";
 
       /* ── Reactions ───────────────────────────────────────────────────────── */
       if (sim.reaction) {
@@ -952,38 +949,6 @@ function WarmupSliderMascotComponent({
         `translate(${ART.neckX} ${ART.neckY}) rotate(${head.toFixed(2)}) translate(${-ART.neckX} ${-ART.neckY})`,
       );
 
-      const startled =
-        expression === "surprised" || expression === "delighted";
-      const browY =
-        sim.pose === "precision"
-          ? 2
-          : startled
-            ? -4
-            : sim.pose === "ready"
-              ? -1.4
-              : 0;
-      const browAngle =
-        sim.pose === "precision" ? 9 : startled ? -7 : 0;
-      browLeftRef.current?.setAttribute(
-        "transform",
-        `translate(0 ${browY.toFixed(1)}) rotate(${browAngle} 48 33)`,
-      );
-      browRightRef.current?.setAttribute(
-        "transform",
-        `translate(0 ${browY.toFixed(1)}) rotate(${-browAngle} 78 33)`,
-      );
-      if (blushRef.current) {
-        const blushOpacity =
-          sim.pose === "rapidDrag"
-            ? 0.68 * sim.rapidBlend
-            : expression === "surprised"
-              ? 0.18
-              : precisionNervous
-                ? 0.1
-                : 0;
-        blushRef.current.style.opacity = blushOpacity.toFixed(3);
-      }
-
       for (let index = 0; index < SWEAT_COUNT; index += 1) {
         const node = sweatRefs.current[index];
         if (!node) continue;
@@ -1107,7 +1072,7 @@ function WarmupSliderMascotComponent({
 
   const body = "var(--gt-mascot-body)";
   const ink = "var(--gt-mascot-ink)";
-  const edge = "var(--gt-mascot-edge)";
+  const edge = ink;
   const veil = hidden
     ? ({ opacity: 0, visibility: "hidden" } as const)
     : undefined;
@@ -1138,105 +1103,227 @@ function WarmupSliderMascotComponent({
             <g ref={rootRef}>
               {/* Chest, crossed by the rail so the mascot reads as standing behind it. */}
               <g ref={chestRef}>
+                <g data-mascot-part="tail">
+                  <path
+                    d="M88 110C99 109 106 103 108 94"
+                    fill="none"
+                    stroke={edge}
+                    strokeWidth="11.4"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M88 110C99 109 106 103 108 94"
+                    fill="none"
+                    stroke="url(#gtMascotBody)"
+                    strokeWidth="8.2"
+                    strokeLinecap="round"
+                  />
+                </g>
+                <g data-mascot-part="left-leg">
+                  <path
+                    d="M52 116C48 130 47 144 48 154"
+                    fill="none"
+                    stroke={edge}
+                    strokeWidth="12.6"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M52 116C48 130 47 144 48 154"
+                    fill="none"
+                    stroke="url(#gtMascotBody)"
+                    strokeWidth="9.2"
+                    strokeLinecap="round"
+                  />
+                  <g transform="translate(47 158) rotate(-8)">
+                    <ellipse
+                      rx="10.5"
+                      ry="8.2"
+                      fill="url(#gtMascotBody)"
+                      stroke={edge}
+                      strokeWidth="1.6"
+                    />
+                    <g
+                      fill="none"
+                      stroke={edge}
+                      strokeWidth="1.1"
+                      strokeLinecap="round"
+                    >
+                      <path d="M-4 -0.4C-4.6 1.8 -4.8 3.4 -4.6 5" />
+                      <path d="M0.2 -1.2C0.2 1.4 0.2 3.4 0.4 5.4" />
+                      <path d="M4.4 -0.4C4.8 1.8 5 3.4 4.8 4.8" />
+                    </g>
+                  </g>
+                </g>
+                <g data-mascot-part="right-leg">
+                  <path
+                    d="M72 116C76 130 77 144 76 154"
+                    fill="none"
+                    stroke={edge}
+                    strokeWidth="12.6"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M72 116C76 130 77 144 76 154"
+                    fill="none"
+                    stroke="url(#gtMascotBody)"
+                    strokeWidth="9.2"
+                    strokeLinecap="round"
+                  />
+                  <g transform="translate(77 158) rotate(8)">
+                    <ellipse
+                      rx="10.5"
+                      ry="8.2"
+                      fill="url(#gtMascotBody)"
+                      stroke={edge}
+                      strokeWidth="1.6"
+                    />
+                    <g
+                      fill="none"
+                      stroke={edge}
+                      strokeWidth="1.1"
+                      strokeLinecap="round"
+                    >
+                      <path d="M-4 -0.4C-4.6 1.8 -4.8 3.4 -4.6 5" />
+                      <path d="M0.2 -1.2C0.2 1.4 0.2 3.4 0.4 5.4" />
+                      <path d="M4.4 -0.4C4.8 1.8 5 3.4 4.8 4.8" />
+                    </g>
+                  </g>
+                </g>
                 <ellipse
                   cx={ART.neckX}
-                  cy="98"
-                  rx="35"
-                  ry="24"
+                  cy="106"
+                  rx="30"
+                  ry="30"
                   fill="url(#gtMascotBody)"
                   stroke={edge}
-                  strokeWidth="1.1"
+                  strokeWidth="1.6"
+                />
+                <path
+                  d="M62 90C73 94 77.6 104 77.6 112.4C77.6 122.4 71 130.4 62 132.4C53 130.4 46.4 122.4 46.4 112.4C46.4 104 51 94 62 90Z"
+                  fill="#ffffff"
+                  stroke={edge}
+                  strokeWidth="1"
+                  strokeOpacity="0.16"
+                  data-mascot-part="belly-patch"
                 />
               </g>
 
               <g ref={headRef}>
-                {/* Tufts. */}
-                <ellipse
-                  cx="52"
-                  cy="15"
-                  rx="7"
-                  ry="13"
-                  transform="rotate(-26 52 15)"
-                  fill="url(#gtMascotBody)"
-                  stroke={edge}
-                  strokeWidth="1.1"
-                />
-                <ellipse
-                  cx="71"
-                  cy="13"
-                  rx="6.4"
-                  ry="14"
-                  transform="rotate(19 71 13)"
-                  fill="url(#gtMascotBody)"
-                  stroke={edge}
-                  strokeWidth="1.1"
-                />
+                <g
+                  transform="translate(42 22) rotate(22)"
+                  data-mascot-part="floppy-ear"
+                >
+                  <path
+                    d="M3 -15C-8 -15 -15 -5 -16 8C-17 20 -13 28 -7 28C-1 28 2 20 3 12C4 3 4 -6 3 -15Z"
+                    fill="url(#gtMascotBody)"
+                    stroke={edge}
+                    strokeWidth="1.6"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M1 -9C-7 -3 -10 10 -7 23"
+                    fill="none"
+                    stroke={edge}
+                    strokeWidth="1.1"
+                    strokeLinecap="round"
+                    opacity="0.8"
+                  />
+                </g>
+                <g
+                  transform="translate(82 22) scale(-1 1) rotate(22)"
+                  data-mascot-part="floppy-ear"
+                >
+                  <path
+                    d="M3 -15C-8 -15 -15 -5 -16 8C-17 20 -13 28 -7 28C-1 28 2 20 3 12C4 3 4 -6 3 -15Z"
+                    fill="url(#gtMascotBody)"
+                    stroke={edge}
+                    strokeWidth="1.6"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M1 -9C-7 -3 -10 10 -7 23"
+                    fill="none"
+                    stroke={edge}
+                    strokeWidth="1.1"
+                    strokeLinecap="round"
+                    opacity="0.8"
+                  />
+                </g>
                 <ellipse
                   cx={ART.neckX}
                   cy="47"
-                  rx="35"
-                  ry="33"
+                  rx="34.5"
+                  ry="32"
                   fill="url(#gtMascotBody)"
                   stroke={edge}
-                  strokeWidth="1.1"
+                  strokeWidth="1.6"
                 />
 
-                <g ref={blushRef} style={{ opacity: 0 }}>
-                  <ellipse
-                    cx="42"
-                    cy="58"
-                    rx="8"
-                    ry="4.5"
-                    fill="var(--gt-mascot-blush)"
-                  />
-                  <ellipse
-                    cx="82"
-                    cy="58"
-                    rx="8"
-                    ry="4.5"
-                    fill="var(--gt-mascot-blush)"
-                  />
-                </g>
-
                 <g ref={eyeLeftRef}>
-                  <ellipse rx="6.6" ry="9" fill={ink} />
-                  <circle cx="2.4" cy="-3.6" r="2" fill={body} opacity="0.92" />
+                  <ellipse rx="5.8" ry="8.2" fill={ink} />
+                  <circle cx="1.6" cy="-3.4" r="1.8" fill="#ffffff" />
                 </g>
                 <g ref={eyeRightRef}>
-                  <ellipse rx="6.6" ry="9" fill={ink} />
-                  <circle cx="2.4" cy="-3.6" r="2" fill={body} opacity="0.92" />
+                  <ellipse rx="5.8" ry="8.2" fill={ink} />
+                  <circle cx="1.6" cy="-3.4" r="1.8" fill="#ffffff" />
                 </g>
 
-                <g ref={browLeftRef}>
-                  <path
-                    d="M41 33Q48 28.5 55 32"
-                    fill="none"
-                    stroke={ink}
-                    strokeWidth="3.4"
-                    strokeLinecap="round"
-                  />
-                </g>
-                <g ref={browRightRef}>
-                  <path
-                    d="M70 32Q78 28.5 85 33"
-                    fill="none"
-                    stroke={ink}
-                    strokeWidth="3.4"
-                    strokeLinecap="round"
-                  />
-                </g>
+                <ellipse
+                  cx="62"
+                  cy="60"
+                  rx="6.6"
+                  ry="5"
+                  fill={ink}
+                  data-mascot-part="nose"
+                />
+                <ellipse
+                  cx="62"
+                  cy="57.6"
+                  rx="3.4"
+                  ry="1.3"
+                  fill="#ffffff"
+                  opacity="0.26"
+                />
 
                 {/* One mouth visible at a time; swapped by opacity. */}
                 <g
                   ref={(node) => {
-                    mouthRefs.current.neutral = node;
+                    mouthRefs.current.panting = node;
                   }}
+                  className="gt-mascot-panting-mouth"
+                  data-mascot-part="panting-mouth"
                 >
                   <path
-                    d="M53 62c4.4 7.2 13.6 7.2 18 0"
+                    d="M55.5 66C56.5 77 67.5 77 68.5 66Z"
+                    fill={ink}
+                    stroke={ink}
+                    strokeWidth="1.8"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    className="gt-mascot-panting-tongue"
+                    d="M58.5 70.5C58.8 78.5 65.2 78.5 65.5 70.5Z"
+                    fill="var(--gt-mascot-tongue)"
+                  />
+                </g>
+                <g
+                  ref={(node) => {
+                    mouthRefs.current.neutral = node;
+                  }}
+                  style={{ opacity: 0 }}
+                >
+                  <path
+                    d="M62 64.8C62 70 56.6 71 54 67.4"
                     fill="none"
                     stroke={ink}
-                    strokeWidth="5"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M62 64.8C62 70 67.4 71 70 67.4"
+                    fill="none"
+                    stroke={ink}
+                    strokeWidth="2.2"
                     strokeLinecap="round"
                   />
                 </g>
@@ -1247,10 +1334,17 @@ function WarmupSliderMascotComponent({
                   style={{ opacity: 0 }}
                 >
                   <path
-                    d="M55 63Q62 59 69 63"
+                    d="M62 64.8C62 69.2 57.2 69.8 54.8 67"
                     fill="none"
                     stroke={ink}
-                    strokeWidth="4.6"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M62 64.8C62 69.2 66.8 69.8 69.2 67"
+                    fill="none"
+                    stroke={ink}
+                    strokeWidth="2.2"
                     strokeLinecap="round"
                   />
                 </g>
@@ -1261,10 +1355,10 @@ function WarmupSliderMascotComponent({
                   style={{ opacity: 0 }}
                 >
                   <path
-                    d="M55 64h13"
+                    d="M56 68H68"
                     fill="none"
                     stroke={ink}
-                    strokeWidth="5"
+                    strokeWidth="2.2"
                     strokeLinecap="round"
                   />
                 </g>
@@ -1275,10 +1369,17 @@ function WarmupSliderMascotComponent({
                   style={{ opacity: 0 }}
                 >
                   <path
-                    d="M51 61c5.2 9.4 16.4 9.4 21.6 0"
+                    d="M62 64.4C62 71 55.6 72.2 52.6 67.8"
                     fill="none"
                     stroke={ink}
-                    strokeWidth="5"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M62 64.4C62 71 68.4 72.2 71.4 67.8"
+                    fill="none"
+                    stroke={ink}
+                    strokeWidth="2.2"
                     strokeLinecap="round"
                   />
                 </g>
@@ -1288,7 +1389,7 @@ function WarmupSliderMascotComponent({
                   }}
                   style={{ opacity: 0 }}
                 >
-                  <ellipse cx="62" cy="65" rx="6" ry="7.4" fill={ink} />
+                  <ellipse cx="62" cy="69" rx="4.8" ry="6" fill={ink} />
                 </g>
                 <g
                   ref={(node) => {
@@ -1297,10 +1398,10 @@ function WarmupSliderMascotComponent({
                   style={{ opacity: 0 }}
                 >
                   <path
-                    d="M49 59c3 13 23 13 26 0Z"
+                    d="M55 67.6C55.6 76 68.4 76 69 67.6Z"
                     fill={ink}
                     stroke={ink}
-                    strokeWidth="3"
+                    strokeWidth="2.2"
                     strokeLinejoin="round"
                   />
                 </g>
@@ -1334,25 +1435,25 @@ function WarmupSliderMascotComponent({
                 ref={leftArmEdgeRef}
                 fill="none"
                 stroke={edge}
-                strokeWidth="15.6"
+                strokeWidth="12.6"
                 strokeLinecap="round"
               />
               <path
                 ref={leftArmRef}
                 fill="none"
                 stroke="url(#gtMascotBody)"
-                strokeWidth="13.4"
+                strokeWidth="9.2"
                 strokeLinecap="round"
               />
               {/* Palm resting flat on the bar. */}
               <g ref={leftPawRef}>
                 <ellipse
-                  rx="12"
-                  ry="9"
+                  rx="10.5"
+                  ry="8.2"
                   transform="rotate(-6)"
                   fill="url(#gtMascotBody)"
                   stroke={edge}
-                  strokeWidth="1.1"
+                  strokeWidth="1.6"
                 />
               </g>
             </g>
@@ -1362,25 +1463,25 @@ function WarmupSliderMascotComponent({
                 ref={rightArmEdgeRef}
                 fill="none"
                 stroke={edge}
-                strokeWidth="15.6"
+                strokeWidth="12.6"
                 strokeLinecap="round"
               />
               <path
                 ref={rightArmRef}
                 fill="none"
                 stroke="url(#gtMascotBody)"
-                strokeWidth="13.4"
+                strokeWidth="9.2"
                 strokeLinecap="round"
               />
               {/* Palm cupped over the top of the knob; its fingers are in front. */}
               <g ref={rightPawRef}>
                 <ellipse
-                  rx="11.5"
-                  ry="9"
+                  rx="10.5"
+                  ry="8.2"
                   transform="rotate(-22)"
                   fill="url(#gtMascotBody)"
                   stroke={edge}
-                  strokeWidth="1.1"
+                  strokeWidth="1.6"
                 />
               </g>
             </g>
@@ -1423,12 +1524,12 @@ function WarmupSliderMascotComponent({
           >
             {/* Three fingers draped over the near edge of the bar. */}
             <g ref={restFingersRef} data-mascot-part="rest-fingers">
-              <g stroke={edge} strokeWidth="6.6" strokeLinecap="round">
+              <g stroke={edge} strokeWidth="5.6" strokeLinecap="round">
                 <path d="M-7 2.5 -7.6 7.5" />
                 <path d="M0 3.4 0 8.6" />
                 <path d="M6.8 2.5 7.2 7.2" />
               </g>
-              <g stroke={body} strokeWidth="4.8" strokeLinecap="round">
+              <g stroke={body} strokeWidth="3.6" strokeLinecap="round">
                 <path d="M-7 2.5 -7.6 7.5" />
                 <path d="M0 3.4 0 8.6" />
                 <path d="M6.8 2.5 7.2 7.2" />
@@ -1441,13 +1542,13 @@ function WarmupSliderMascotComponent({
               sizes and turns the whole group to the real one.
             */}
             <g ref={gripFingersRef} data-mascot-part="grip-fingers">
-              <g fill="none" stroke={edge} strokeWidth="7" strokeLinecap="round">
+              <g fill="none" stroke={edge} strokeWidth="5.6" strokeLinecap="round">
                 <path d="M10 -10.5Q12.5 -7.5 11.5 -4.5" />
                 <path d="M-9 -11.5Q-12 -8.5 -12 -5.5" />
                 <path d="M-2.5 -13Q-5 -9 -4.5 -6" />
                 <path d="M4 -12.5Q3 -8.5 4 -5.5" />
               </g>
-              <g fill="none" stroke={body} strokeWidth="5.2" strokeLinecap="round">
+              <g fill="none" stroke={body} strokeWidth="3.6" strokeLinecap="round">
                 <path d="M10 -10.5Q12.5 -7.5 11.5 -4.5" />
                 <path d="M-9 -11.5Q-12 -8.5 -12 -5.5" />
                 <path d="M-2.5 -13Q-5 -9 -4.5 -6" />

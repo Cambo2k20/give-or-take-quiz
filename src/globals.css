@@ -3960,11 +3960,10 @@ h1[tabindex="-1"]:focus {
     var(--shadow-card);
 }
 
-.profile-mascot-preference.is-companion .profile-mascot-copy > img {
-  width: 64px;
-  height: 64px;
+.profile-mascot-preference.is-companion .profile-mascot-companion-art {
+  width: 92px;
+  height: 92px;
   flex: none;
-  border-radius: 18px;
 }
 
 .profile-mascot-preference.is-companion .eyebrow {
@@ -4386,10 +4385,9 @@ h1[tabindex="-1"]:focus {
   cursor: pointer;
 }
 
-.profile-hero-shortcut img {
+.profile-hero-shortcut .profile-mascot-shortcut-art {
   width: 22px;
   height: 22px;
-  border-radius: 7px;
 }
 
 .profile-hero-shortcut:hover {
