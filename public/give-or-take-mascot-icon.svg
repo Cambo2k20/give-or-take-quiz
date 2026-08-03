@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Give or Take mascot slider icon</title>
+  <desc id="desc">A friendly white trivia mascot adjusting an orange estimation slider on a dark navy rounded-square background.</desc>
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="72%">
+      <stop offset="0" stop-color="#0b2d5a"/>
+      <stop offset="0.58" stop-color="#061d3e"/>
+      <stop offset="1" stop-color="#020d22"/>
+    </radialGradient>
+    <linearGradient id="whiteBody" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.7" stop-color="#fbfdff"/>
+      <stop offset="1" stop-color="#dce6f5"/>
+    </linearGradient>
+    <linearGradient id="orange" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffad16"/>
+      <stop offset="0.56" stop-color="#ff8500"/>
+      <stop offset="1" stop-color="#f36b00"/>
+    </linearGradient>
+    <linearGradient id="orangeKnob" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffa71b"/>
+      <stop offset="1" stop-color="#ff7600"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#00081a" flood-opacity="0.42"/>
+    </filter>
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="2.2" stdDeviation="2.5" flood-color="#00122e" flood-opacity="0.32"/>
+    </filter>
+  </defs>
+
+  <rect width="256" height="256" rx="42" fill="url(#bg)"/>
+
+  <!-- Mascot head -->
+  <g filter="url(#shadow)">
+    <ellipse cx="91" cy="65" rx="11" ry="17" transform="rotate(-38 91 65)" fill="url(#whiteBody)"/>
+    <ellipse cx="116" cy="61" rx="10" ry="23" transform="rotate(52 116 61)" fill="url(#whiteBody)"/>
+    <path d="M127 72c31 0 53 19 58 50 5 30-10 51-36 57-17 4-50 4-66-4-22-10-31-32-25-57 7-29 31-46 69-46Z" fill="url(#whiteBody)"/>
+  </g>
+
+  <!-- Left arm -->
+  <ellipse cx="66" cy="150" rx="22" ry="14" transform="rotate(-5 66 150)" fill="url(#whiteBody)" filter="url(#softShadow)"/>
+
+  <!-- Slider -->
+  <g filter="url(#softShadow)">
+    <rect x="31" y="165" width="194" height="29" rx="14.5" fill="url(#orange)"/>
+    <path d="M46 176v8M62 176v8M78 176v8M94 176v8M110 176v8M126 176v8M142 176v8M158 176v8M174 176v8M190 176v8M206 176v8" fill="none" stroke="#d95e00" stroke-width="3" stroke-linecap="round" opacity="0.72"/>
+    <circle cx="166" cy="177" r="18" fill="#ffffff"/>
+    <circle cx="166" cy="177" r="12.5" fill="url(#orangeKnob)"/>
+  </g>
+
+  <!-- Right arm and hand -->
+  <path d="M169 151c3-13 12-20 23-18 12 2 20 12 19 22-1 11-10 17-20 17-4 0-7-1-10-3-2 10-8 15-14 14-7-1-10-8-7-15 2-5 5-10 9-17Z" fill="url(#whiteBody)" filter="url(#softShadow)"/>
+
+  <!-- Face -->
+  <ellipse cx="98" cy="129" rx="8.5" ry="12" fill="#03132f"/>
+  <ellipse cx="146" cy="124" rx="8.5" ry="12" fill="#03132f"/>
+  <path d="M111 144c4 8 18 9 25 0" fill="none" stroke="#03132f" stroke-width="6" stroke-linecap="round"/>
+</svg>
