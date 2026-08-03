@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Give or Take science lab mascot</title>
+  <desc id="desc">A friendly white mascot holding an orange flask and test tube with an atom symbol on a dark navy rounded-square background.</desc>
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="78%">
+      <stop offset="0" stop-color="#0b2e60"/>
+      <stop offset="0.6" stop-color="#061b3d"/>
+      <stop offset="1" stop-color="#020b1c"/>
+    </radialGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0.78" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.68" stop-color="#fbfdff"/>
+      <stop offset="1" stop-color="#d9e3f3"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.75"/>
+      <stop offset="0.45" stop-color="#eef5ff" stop-opacity="0.38"/>
+      <stop offset="1" stop-color="#b8cbe5" stop-opacity="0.22"/>
+    </linearGradient>
+    <linearGradient id="orange" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffb01a"/>
+      <stop offset="0.5" stop-color="#ff8b00"/>
+      <stop offset="1" stop-color="#f56b00"/>
+    </linearGradient>
+    <linearGradient id="orange2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffc04a"/>
+      <stop offset="1" stop-color="#ff7b00"/>
+    </linearGradient>
+    <filter id="shadow" x="-35%" y="-35%" width="170%" height="190%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000711" flood-opacity="0.5"/>
+    </filter>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="200%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.4" flood-color="#001128" flood-opacity="0.42"/>
+    </filter>
+    <clipPath id="flaskClip">
+      <path d="M40 119v20l-22 44c-4 8 1 17 11 17h51c10 0 15-9 11-17l-24-44v-20z"/>
+    </clipPath>
+    <clipPath id="tubeClip">
+      <rect x="176" y="109" width="34" height="92" rx="17"/>
+    </clipPath>
+  </defs>
+
+  <rect width="256" height="256" rx="42" fill="url(#bg)"/>
+
+  <!-- atom -->
+  <g transform="translate(186 37)" filter="url(#soft)">
+    <g fill="none" stroke="#f6f9ff" stroke-width="4.2" stroke-linecap="round">
+      <ellipse cx="25" cy="22" rx="24" ry="10" transform="rotate(25 25 22)"/>
+      <ellipse cx="25" cy="22" rx="24" ry="10" transform="rotate(-28 25 22)"/>
+      <ellipse cx="25" cy="22" rx="24" ry="10" transform="rotate(83 25 22)"/>
+    </g>
+    <circle cx="25" cy="22" r="7.8" fill="url(#orange2)"/>
+    <circle cx="3" cy="10" r="4" fill="url(#orange2)"/>
+    <circle cx="45" cy="34" r="4" fill="url(#orange2)"/>
+  </g>
+
+  <!-- mascot head/body -->
+  <g filter="url(#shadow)">
+    <ellipse cx="100" cy="63" rx="11" ry="18" transform="rotate(-37 100 63)" fill="url(#body)"/>
+    <ellipse cx="126" cy="59" rx="11" ry="25" transform="rotate(53 126 59)" fill="url(#body)"/>
+    <path d="M128 70c38 0 65 24 67 60 2 38-23 67-67 67-44 0-70-26-68-66 2-36 29-61 68-61Z" fill="url(#body)"/>
+  </g>
+
+  <!-- left flask behind hand -->
+  <g transform="rotate(-8 55 160)" filter="url(#soft)">
+    <path d="M40 113h27v27l24 45c4 8-1 17-11 17H29c-10 0-15-9-11-17l22-45z" fill="url(#glass)" stroke="#f6f9ff" stroke-width="4" stroke-linejoin="round"/>
+    <rect x="36" y="109" width="35" height="10" rx="5" fill="#f8fbff" stroke="#dce7f7" stroke-width="2"/>
+    <g clip-path="url(#flaskClip)">
+      <path d="M12 161c17-7 48-8 83 0v48H12Z" fill="url(#orange)"/>
+      <path d="M20 163c20-6 44-5 67 1" fill="none" stroke="#ffc452" stroke-width="3.4" stroke-linecap="round" opacity="0.9"/>
+      <circle cx="47" cy="164" r="4.1" fill="#ffbd42"/>
+      <circle cx="63" cy="178" r="5.2" fill="#ffb22a"/>
+      <circle cx="41" cy="182" r="3" fill="#ffca59"/>
+      <circle cx="72" cy="191" r="3.8" fill="#ffb22a"/>
+    </g>
+    <path d="M45 125h10" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.82"/>
+  </g>
+
+  <!-- right test tube behind hand -->
+  <g transform="rotate(9 192 155)" filter="url(#soft)">
+    <rect x="176" y="105" width="34" height="100" rx="17" fill="url(#glass)" stroke="#f6f9ff" stroke-width="4"/>
+    <rect x="172" y="101" width="42" height="10" rx="5" fill="#f8fbff" stroke="#dce7f7" stroke-width="2"/>
+    <g clip-path="url(#tubeClip)">
+      <path d="M174 142c11-4 24-4 38 0v66h-38Z" fill="url(#orange)"/>
+      <path d="M181 143c9-2 18-2 26 0" fill="none" stroke="#ffc452" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+      <circle cx="190" cy="175" r="3.6" fill="#ffbd42"/>
+      <circle cx="199" cy="188" r="4.5" fill="#ffad1a"/>
+    </g>
+    <path d="M185 152h10M185 164h10M185 176h10" stroke="#ffca59" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M184 119h12" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.78"/>
+  </g>
+
+  <!-- hands gripping glassware -->
+  <g filter="url(#soft)">
+    <ellipse cx="57" cy="164" rx="17" ry="22" transform="rotate(-7 57 164)" fill="url(#body)"/>
+    <ellipse cx="202" cy="160" rx="17" ry="22" transform="rotate(7 202 160)" fill="url(#body)"/>
+  </g>
+
+  <!-- face -->
+  <ellipse cx="99" cy="129" rx="8.8" ry="13" fill="#03132f"/>
+  <ellipse cx="148" cy="126" rx="8.8" ry="13" fill="#03132f"/>
+  <path d="M111 151c5 10 22 11 31 0" fill="none" stroke="#03132f" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- subtle highlights -->
+  <path d="M80 95c13-14 34-21 55-19" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.35"/>
+  <path d="M147 183c15-4 28-12 36-24" fill="none" stroke="#cbd8eb" stroke-width="4" stroke-linecap="round" opacity="0.35"/>
+</svg>
