@@ -1,6 +1,10 @@
 import { readFileSync } from "node:fs";
 import { CATEGORY_REGISTRY, RANK_FLOORS } from "../lib/categories";
-import { DAILY_QUESTIONS_PER_SET } from "../lib/daily";
+import {
+  DAILY_QUESTIONS_PER_SET,
+  DAILY_RUNWAY_FLOOR_DAYS,
+  dailyRunway,
+} from "../lib/daily";
 import { QUESTIONS_PER_GAME } from "../lib/game";
 import { questions } from "../lib/questions";
 import { shapeErrors, validateQuestion } from "../lib/questionRules";
@@ -205,5 +209,21 @@ if (errors.length > 0) {
   console.log(`Validated ${questions.length} questions: ${breakdown}.`);
   console.log(
     `Validated ${dailyTotal} daily set(s) holding ${dailyQuestionCount} daily-only questions.`,
+  );
+}
+
+// A short runway is a content-planning problem, not a data-correctness one, so
+// it warns rather than joining `errors`. Failing here would fail `npm run
+// build` and block every unrelated deploy at exactly the moment the schedule
+// most needs a fix shipping. `scripts/check-daily-runway.ts`, run from the
+// nightly workflow, is what actually chases it.
+const runway = dailyRunway();
+if (runway.days === 0) {
+  console.warn(
+    "Warning: no daily set is scheduled for today. Players have no puzzle.",
+  );
+} else if (runway.days < DAILY_RUNWAY_FLOOR_DAYS) {
+  console.warn(
+    `Warning: only ${runway.days} day(s) of dailies left, through ${runway.lastCoveredDate}. Schedule more before then.`,
   );
 }

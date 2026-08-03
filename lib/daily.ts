@@ -120,6 +120,40 @@ export function playableDailyDates(now: Date = new Date()): string[] {
     .reverse();
 }
 
+/**
+ * Three weeks. Long enough to author, review and ship a batch of sets without
+ * anybody having to do it in a hurry; short enough that the warning still means
+ * something on the day it fires.
+ */
+export const DAILY_RUNWAY_FLOOR_DAYS = 21;
+
+/**
+ * How many days from today onwards are covered by a scheduled set, and the last
+ * of them.
+ *
+ * Consecutive days, not a count of future sets: a hole in the schedule strands
+ * players on the blank day however many sets sit beyond it, so the runway ends
+ * at the first gap. `days` is 0 when today itself has no set, and
+ * `lastCoveredDate` is null with it.
+ */
+export function dailyRunway(
+  now: Date = new Date(),
+  dates: Iterable<string> = dailySets.map((set) => set.date),
+): { days: number; lastCoveredDate: string | null } {
+  const scheduled = new Set(dates);
+  let cursor = todayIso(now);
+  let lastCoveredDate: string | null = null;
+  let days = 0;
+
+  while (scheduled.has(cursor)) {
+    days += 1;
+    lastCoveredDate = cursor;
+    cursor = nextDay(cursor);
+  }
+
+  return { days, lastCoveredDate };
+}
+
 export function readDailyProgress(storage?: StorageLike | null): DailyProgress {
   const target =
     storage ?? (typeof window === "undefined" ? null : window.localStorage);

@@ -3,6 +3,7 @@ import {
   DAILY_PROGRESS_KEY,
   activeStreak,
   applyOfficialDailyResult,
+  dailyRunway,
   previousDay,
   readDailyProgress,
   reconcileOfficialDailyHistory,
@@ -39,6 +40,51 @@ describe("previousDay", () => {
     expect(previousDay("2026-08-01")).toBe("2026-07-31");
     expect(previousDay("2026-01-01")).toBe("2025-12-31");
     expect(previousDay("2028-03-01")).toBe("2028-02-29");
+  });
+});
+
+describe("dailyRunway", () => {
+  const week = ["2026-08-03", "2026-08-04", "2026-08-05", "2026-08-06"];
+
+  it("counts today and every consecutive day after it", () => {
+    expect(dailyRunway(at("2026-08-03"), week)).toEqual({
+      days: 4,
+      lastCoveredDate: "2026-08-06",
+    });
+  });
+
+  it("stops at the first gap rather than counting every future set", () => {
+    // Two sets sit beyond the hole on the 5th, but a player opening the app
+    // that day gets nothing, so the runway is two days and not four.
+    const holed = ["2026-08-03", "2026-08-04", "2026-08-06", "2026-08-07"];
+
+    expect(dailyRunway(at("2026-08-03"), holed)).toEqual({
+      days: 2,
+      lastCoveredDate: "2026-08-04",
+    });
+  });
+
+  it("reports nothing when today itself is unscheduled", () => {
+    expect(dailyRunway(at("2026-08-02"), week)).toEqual({
+      days: 0,
+      lastCoveredDate: null,
+    });
+  });
+
+  it("ignores dates that have already passed", () => {
+    expect(dailyRunway(at("2026-08-05"), week)).toEqual({
+      days: 2,
+      lastCoveredDate: "2026-08-06",
+    });
+  });
+
+  it("counts across a month boundary", () => {
+    const across = ["2026-08-30", "2026-08-31", "2026-09-01"];
+
+    expect(dailyRunway(at("2026-08-30"), across)).toEqual({
+      days: 3,
+      lastCoveredDate: "2026-09-01",
+    });
   });
 });
 

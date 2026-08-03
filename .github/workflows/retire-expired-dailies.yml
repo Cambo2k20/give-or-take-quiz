@@ -18,6 +18,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 concurrency:
   group: retire-expired-dailies
@@ -89,6 +90,45 @@ jobs:
       - name: Remove .env
         if: always()
         run: rm -f .env
+
+      # Runs whether or not anything retired today: the schedule loses a day
+      # either way, and this is the only job that watches it shrink.
+      - name: Check how much daily schedule is left
+        id: runway
+        run: npm run daily:runway
+
+      # Never blocks the bank refresh below. A missing alarm is a nuisance; a
+      # blocked republish leaves players seeing questions the server won't score.
+      - name: Raise or clear the runway issue
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHORT: ${{ steps.runway.outputs.short }}
+          SUMMARY: ${{ steps.runway.outputs.summary }}
+          BODY_FILE: ${{ steps.runway.outputs.body-file }}
+        run: |
+          title="Daily schedule is running low"
+          existing=$(gh issue list --state open --limit 100 --json number,title \
+            --jq ".[] | select(.title == \"$title\") | .number" | head -1)
+
+          if [ "$SHORT" != "true" ]; then
+            if [ -n "$existing" ]; then
+              gh issue close "$existing" --comment "Runway is back above the floor: $SUMMARY"
+              echo "Runway recovered; closed #$existing."
+            else
+              echo "$SUMMARY Nothing to raise."
+            fi
+            exit 0
+          fi
+
+          # One issue kept current by rewriting its body, rather than a comment
+          # every night: this fires daily until somebody schedules more sets.
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --body-file "$BODY_FILE"
+            echo "Updated #$existing."
+          else
+            gh issue create --title "$title" --body-file "$BODY_FILE"
+          fi
 
       - name: Open or update the refresh pull request
         env:

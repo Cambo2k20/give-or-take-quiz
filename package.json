@@ -17,6 +17,7 @@
     "generate:questions": "tsx --env-file=.env scripts/generate-questions.ts",
     "questions:import": "tsx scripts/import-questions.ts",
     "questions:retire": "tsx scripts/retire-expired-dailies.ts",
+    "daily:runway": "tsx scripts/check-daily-runway.ts",
     "questions:verify": "npm run generate:questions && npm run validate:question-sync && npm run validate:data && npm test && npm run lint && npm run build",
     "lint": "eslint ."
   },
