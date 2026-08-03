@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   MASCOT_MOTION,
   isPrecisionMovement,
+  rapidDragReach,
   reactionForPoints,
+  resolveGripSide,
   resolveRapidDrag,
   smoothThumbVelocity,
 } from "@/src/mascot/mascotState";
@@ -91,6 +93,21 @@ describe("mascot motion state", () => {
     expect(smoothThumbVelocity(0, 0.05, 16.667)).toBeGreaterThan(
       MASCOT_MOTION.rapidEnterSpeed,
     );
+  });
+
+  it("lets a fast thumb outrun the mascot before the arm drags the body", () => {
+    expect(rapidDragReach(0)).toBe(30);
+    expect(rapidDragReach(MASCOT_MOTION.rapidEnterSpeed)).toBeGreaterThan(30);
+    expect(rapidDragReach(MASCOT_MOTION.rapidEnterSpeed * 2)).toBe(88);
+    expect(rapidDragReach(100)).toBe(88);
+  });
+
+  it("moves the grip to the far hand after the thumb passes the body", () => {
+    expect(resolveGripSide("right", 60, 62, true)).toBe("right");
+    expect(resolveGripSide("right", 53, 62, true)).toBe("left");
+    expect(resolveGripSide("left", 70, 62, true)).toBe("left");
+    expect(resolveGripSide("left", 71, 62, true)).toBe("right");
+    expect(resolveGripSide("left", 100, 62, false)).toBe("left");
   });
 });
 

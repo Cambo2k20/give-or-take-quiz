@@ -5,9 +5,12 @@ import {
   MASCOT_REACTION_FACE,
   MASCOT_REACTION_MS,
   isPrecisionMovement,
+  rapidDragReach,
+  resolveGripSide,
   resolveRapidDrag,
   smoothThumbVelocity,
   type MascotExpression,
+  type MascotGripSide,
   type MascotPose,
   type MascotReaction,
   type MascotSnapshot,
@@ -111,6 +114,7 @@ type Sim = {
   precisionStartedAt: number;
   /** Where the resting hand currently sits along the bar, in artwork units. */
   restX: number;
+  gripSide: MascotGripSide;
   pointerDown: boolean;
   wasDragging: boolean;
   hovered: boolean;
@@ -241,6 +245,7 @@ function WarmupSliderMascotComponent({
     rapidStartedAt: 0,
     precisionStartedAt: 0,
     restX: ART.restX,
+    gripSide: "right",
     pointerDown: false,
     wasDragging: false,
     hovered: false,
@@ -372,6 +377,7 @@ function WarmupSliderMascotComponent({
       layer.dataset.pose = sim.pose;
       layer.dataset.expression = sim.expression;
       layer.dataset.reaction = sim.reaction ?? "";
+      layer.dataset.gripSide = sim.gripSide;
       snapshotRef.current?.({
         pose: sim.pose,
         expression: sim.expression,
@@ -479,55 +485,68 @@ function WarmupSliderMascotComponent({
       const barTop = ART.railY - railThicknessRef.current / 2 / scaleNow;
 
       /* ── Gripping hand: the knob, or as near as the arm reaches ──────────── */
-      const shoulderRight = onShoulder(
-        ART.shoulderRightX,
-        ART.shoulderRightY,
+      const gripOnLeft = sim.gripSide === "left";
+      const gripShoulder = onShoulder(
+        gripOnLeft ? ART.shoulderLeftX : ART.shoulderRightX,
+        gripOnLeft ? ART.shoulderLeftY : ART.shoulderRightY,
         head,
         lean,
         lift,
         squash,
       );
-      const gripX = knobU - knobR * 0.25;
+      const gripX = knobU + (gripOnLeft ? 1 : -1) * knobR * 0.25;
       const gripY = ART.railY - knobR * 0.95;
-      const rightHand: Point = { x: gripX, y: gripY };
+      const gripHand: Point = { x: gripX, y: gripY };
 
       /* ── Resting hand: on the bar, kept clear of the knob ────────────────── */
-      const shoulderLeft = onShoulder(
-        ART.shoulderLeftX,
-        ART.shoulderLeftY,
+      const freeShoulder = onShoulder(
+        gripOnLeft ? ART.shoulderRightX : ART.shoulderLeftX,
+        gripOnLeft ? ART.shoulderRightY : ART.shoulderLeftY,
         head,
         lean,
         lift,
         squash,
       );
-      const wanted = sim.bodyX + ART.restX * scaleNow;
-      const clearOfKnob = knobX - (knobR + 18) * scaleNow;
+      const restTargetX = gripOnLeft ? ART.pivotX * 2 - ART.restX : ART.restX;
+      const wanted = sim.bodyX + restTargetX * scaleNow;
       const restOverhang = -Math.min(ART.overhang, 10) * scaleNow;
-      const parked = clamp(
-        wanted,
-        restOverhang,
-        Math.max(restOverhang, clearOfKnob),
-      );
+      const parked = gripOnLeft
+        ? clamp(
+            wanted,
+            Math.min(
+              sim.width - restOverhang,
+              knobX + (knobR + 18) * scaleNow,
+            ),
+            sim.width - restOverhang,
+          )
+        : clamp(
+            wanted,
+            restOverhang,
+            Math.max(
+              restOverhang,
+              knobX - (knobR + 18) * scaleNow,
+            ),
+          );
       sim.restX += ((parked - sim.bodyX) / scaleNow - sim.restX) * follow;
-      const leftHand: Point = { x: sim.restX, y: ART.restY };
+      const freeHand: Point = { x: sim.restX, y: ART.restY };
 
-      const leftTilt = drawArm(
-        leftArmRef.current,
-        leftArmEdgeRef.current,
-        leftPawRef.current,
-        shoulderLeft,
-        leftHand,
-        REST_WRIST_LEFT,
+      const freeTilt = drawArm(
+        gripOnLeft ? rightArmRef.current : leftArmRef.current,
+        gripOnLeft ? rightArmEdgeRef.current : leftArmEdgeRef.current,
+        gripOnLeft ? rightPawRef.current : leftPawRef.current,
+        freeShoulder,
+        freeHand,
+        gripOnLeft ? REST_WRIST_RIGHT : REST_WRIST_LEFT,
         0.4,
         barTop,
       );
       drawArm(
-        rightArmRef.current,
-        rightArmEdgeRef.current,
-        rightPawRef.current,
-        shoulderRight,
-        rightHand,
-        REST_WRIST_RIGHT,
+        gripOnLeft ? leftArmRef.current : rightArmRef.current,
+        gripOnLeft ? leftArmEdgeRef.current : rightArmEdgeRef.current,
+        gripOnLeft ? leftPawRef.current : rightPawRef.current,
+        gripShoulder,
+        gripHand,
+        gripOnLeft ? -169 : REST_WRIST_RIGHT,
         0.6,
         barTop,
       );
@@ -535,16 +554,18 @@ function WarmupSliderMascotComponent({
       /* ── Fingers, drawn in front of the bar and the knob ─────────────────── */
       restFingersRef.current?.setAttribute(
         "transform",
-        `translate(${leftHand.x.toFixed(1)} ${leftHand.y.toFixed(1)}) rotate(${leftTilt.toFixed(1)})`,
+        `translate(${freeHand.x.toFixed(1)} ${freeHand.y.toFixed(1)}) rotate(${freeTilt.toFixed(1)})`,
       );
       /* Authored for a 15-unit knob with the palm at its top: sizing to the real
        * knob and turning with the palm keeps the grip together at any scale. */
       const palmAngle =
-        (Math.atan2(rightHand.y - ART.railY, rightHand.x - knobU) * 180) /
+        (Math.atan2(gripHand.y - ART.railY, gripHand.x - knobU) * 180) /
         Math.PI;
+      const gripRestAngle = gripOnLeft ? -75 : GRIP_REST_ANGLE;
+      const gripScale = knobR / 15;
       gripFingersRef.current?.setAttribute(
         "transform",
-        `translate(${knobU.toFixed(1)} ${ART.railY}) rotate(${(palmAngle - GRIP_REST_ANGLE).toFixed(1)}) scale(${(knobR / 15).toFixed(3)})`,
+        `translate(${knobU.toFixed(1)} ${ART.railY}) rotate(${(palmAngle - gripRestAngle).toFixed(1)}) scale(${gripOnLeft ? -gripScale : gripScale} ${gripScale})`,
       );
     };
 
@@ -566,6 +587,7 @@ function WarmupSliderMascotComponent({
       sim.rapid = false;
       sim.rapidBlend = 0;
       sim.sweat = 0;
+      sim.gripSide = "right";
       const top = railRef.current - (ART.handY + ART.handLift) * scaleNow;
       const transform = `translate3d(${sim.bodyX}px, ${top}px, 0) scale(${scaleNow})`;
       art.style.transform = transform;
@@ -653,19 +675,45 @@ function WarmupSliderMascotComponent({
       sim.wasDragging = dragging;
 
       /* ── Body follows the knob, the arms take up the difference ──────────── */
-      const rawX = knobCenter() + (ART.handNudge - ART.handX) * scaleNow;
+      const knobX = knobCenter();
+      const rightGripAnchor = ART.handX - ART.handNudge;
+      const leftGripAnchor = ART.pivotX * 2 - rightGripAnchor;
       const minX = -ART.overhang * scaleNow;
       const maxX = Math.max(sim.width - (ART.width - 16) * scaleNow, minX);
+      if (Number.isNaN(sim.bodyX)) {
+        sim.bodyX = clamp(
+          knobX - rightGripAnchor * scaleNow,
+          minX,
+          maxX,
+        );
+      }
+      const thumbWithinBody = (knobX - sim.bodyX) / scaleNow;
+      const nextGripSide = resolveGripSide(
+        sim.gripSide,
+        thumbWithinBody,
+        ART.pivotX,
+        sim.rapid,
+      );
+      if (nextGripSide !== sim.gripSide) {
+        sim.gripSide = nextGripSide;
+        layer.dataset.gripSide = sim.gripSide;
+        sim.restX =
+          sim.gripSide === "left" ? ART.pivotX * 2 - ART.restX : ART.restX;
+      }
+      const gripAnchor =
+        sim.gripSide === "left" ? leftGripAnchor : rightGripAnchor;
+      const rawX = knobX - gripAnchor * scaleNow;
       const targetX = clamp(rawX, minX, maxX);
-      if (Number.isNaN(sim.bodyX)) sim.bodyX = targetX;
 
-      const bodySpring = sim.rapid ? 0.18 : precise ? 0.34 : 0.26;
-      const bodyDamping = sim.rapid ? 0.84 : precise ? 0.72 : 0.78;
+      const bodySpring = sim.rapid ? 0.11 : precise ? 0.34 : 0.26;
+      const bodyDamping = sim.rapid ? 0.87 : precise ? 0.72 : 0.78;
       sim.bodyV += (targetX - sim.bodyX) * bodySpring * dt;
       sim.bodyV *= Math.pow(bodyDamping, dt);
       sim.bodyX += sim.bodyV * dt;
 
-      const drag = MASCOT_LIMITS.armReach * scaleNow;
+      const drag =
+        (sim.rapid ? rapidDragReach(thumbSpeed) : MASCOT_LIMITS.armReach) *
+        scaleNow;
       sim.bodyX = clamp(sim.bodyX, targetX - drag, targetX + drag);
       /* How far the knob has run from the body, for the gaze and the lean. */
       const lag = (rawX - sim.bodyX) / scaleNow;

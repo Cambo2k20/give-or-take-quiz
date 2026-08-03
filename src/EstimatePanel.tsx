@@ -117,8 +117,9 @@ export function EstimatePanel({
 
       <div className="slider-wrap">
         {sliderOverlay}
-        <span className="slider-rail" aria-hidden="true" />
-        <span className="slider-fill" aria-hidden="true" />
+        <span className="slider-rail" aria-hidden="true">
+          <span className="slider-fill" />
+        </span>
         {windowHalfWidth !== undefined && (
           <span className="survival-window" aria-hidden="true">
             <span className="survival-post is-left" />
