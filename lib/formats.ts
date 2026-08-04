@@ -1,6 +1,6 @@
 import { isPlayableCategory, shuffled, valueToPosition } from "./game";
 import { questions } from "./questions";
-import type { Question } from "./types";
+import type { GameMode, Question } from "./types";
 
 /**
  * Survival: answer until a guess lands outside a tightening window.
@@ -71,13 +71,28 @@ export function survivalVerdict(
 }
 
 /**
- * One run's question order: the whole bank, shuffled, no repeats. A run that
- * outlives the bank simply ends undefeated — nobody has ever been that good.
- * History is deliberately untouched, exactly as the daily leaves it alone.
+ * One run's question order: the selected category bank, shuffled, no repeats.
+ * Mixed uses the whole playable bank. A run that outlives its bank simply ends
+ * undefeated — nobody has ever been that good. History is deliberately
+ * untouched, exactly as the daily leaves it alone.
  */
-export function buildSurvivalDeck(rng: () => number = Math.random): Question[] {
+export function buildSurvivalDeck(rng?: () => number): Question[];
+export function buildSurvivalDeck(
+  mode: GameMode,
+  rng?: () => number,
+): Question[];
+export function buildSurvivalDeck(
+  modeOrRng: GameMode | (() => number) = "mixed",
+  fallbackRng: () => number = Math.random,
+): Question[] {
+  const mode = typeof modeOrRng === "function" ? "mixed" : modeOrRng;
+  const rng = typeof modeOrRng === "function" ? modeOrRng : fallbackRng;
   return shuffled(
-    questions.filter((question) => isPlayableCategory(question.category)),
+    questions.filter(
+      (question) =>
+        isPlayableCategory(question.category) &&
+        (mode === "mixed" || question.category === mode),
+    ),
     rng,
   );
 }
@@ -85,9 +100,19 @@ export function buildSurvivalDeck(rng: () => number = Math.random): Question[] {
 /** Device-local bests, one per format. The server board is the social layer. */
 export type FormatRecords = {
   survivalBest: number;
+  survivalBestByMode?: Partial<Record<GameMode, number>>;
 };
 
-const EMPTY_RECORDS: FormatRecords = { survivalBest: 0 };
+const EMPTY_RECORDS: FormatRecords = {
+  survivalBest: 0,
+  survivalBestByMode: {},
+};
+
+function validBest(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0
+    ? Math.floor(value)
+    : 0;
+}
 
 export function readFormatRecords(storage?: StorageLike | null): FormatRecords {
   const target =
@@ -103,12 +128,22 @@ export function readFormatRecords(storage?: StorageLike | null): FormatRecords {
     };
     if (stored.version !== 1 || !stored.records) return { ...EMPTY_RECORDS };
 
-    const best = stored.records.survivalBest;
+    const best = validBest(stored.records.survivalBest);
+    const storedByMode = stored.records.survivalBestByMode;
+    const survivalBestByMode = Object.fromEntries(
+      Object.entries(storedByMode ?? {}).flatMap(([mode, value]) => {
+        const parsed = validBest(value);
+        return parsed > 0 ? [[mode, parsed]] : [];
+      }),
+    ) as Partial<Record<GameMode, number>>;
+
+    if (best > 0 && !survivalBestByMode.mixed) {
+      survivalBestByMode.mixed = best;
+    }
+
     return {
-      survivalBest:
-        typeof best === "number" && Number.isFinite(best) && best >= 0
-          ? Math.floor(best)
-          : 0,
+      survivalBest: best,
+      survivalBestByMode,
     };
   } catch {
     return { ...EMPTY_RECORDS };
@@ -137,9 +172,15 @@ export function writeFormatRecords(
 export function recordSurvivalRun(
   records: FormatRecords,
   survived: number,
+  mode: GameMode = "mixed",
 ): FormatRecords {
+  const completed = Math.max(0, Math.floor(survived));
   return {
     ...records,
-    survivalBest: Math.max(records.survivalBest, Math.floor(survived)),
+    survivalBest: Math.max(records.survivalBest, completed),
+    survivalBestByMode: {
+      ...records.survivalBestByMode,
+      [mode]: Math.max(records.survivalBestByMode?.[mode] ?? 0, completed),
+    },
   };
 }

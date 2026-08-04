@@ -75,7 +75,7 @@ import { readFormatRecords } from "@/lib/formats";
 
 async function startRun(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: /^survival$/i }));
-  await user.click(screen.getByRole("button", { name: /start a run/i }));
+  await user.click(screen.getByRole("button", { name: /^mixed/i }));
   expect(
     await screen.findByRole("button", { name: /lock in guess/i }),
   ).toBeEnabled();
