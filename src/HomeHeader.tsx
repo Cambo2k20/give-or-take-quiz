@@ -114,6 +114,8 @@ export function HomeHeader({
   onToggleSoundEffects,
   onToggleTheme,
 }: HomeHeaderProps) {
+  const signedIn = accountLabel !== "Sign in";
+
   return (
     <header className="home-header home-header-redesign">
       <div className="home-header-brand-row">
@@ -129,7 +131,7 @@ export function HomeHeader({
         </button>
 
         <button
-          className="home-header-account"
+          className={`home-header-account${signedIn ? " has-label" : ""}`}
           type="button"
           onClick={onOpenAccount}
           title={accountLabel}
@@ -139,14 +141,19 @@ export function HomeHeader({
               : `Profile, ${accountLabel}`
           }
         >
-          {profileAvatar ?? <ProfileIcon />}
-          {socialUnreadCount > 0 && (
-            <span
-              className="home-header-social-badge"
-              aria-label={`${socialUnreadCount} unread friend updates`}
-            >
-              {socialUnreadCount > 9 ? "9+" : socialUnreadCount}
-            </span>
+          <span className="home-header-account-avatar">
+            {profileAvatar ?? <ProfileIcon />}
+            {socialUnreadCount > 0 && (
+              <span
+                className="home-header-social-badge"
+                aria-label={`${socialUnreadCount} unread friend updates`}
+              >
+                {socialUnreadCount > 9 ? "9+" : socialUnreadCount}
+              </span>
+            )}
+          </span>
+          {signedIn && (
+            <span className="home-header-account-label">{accountLabel}</span>
           )}
         </button>
       </div>

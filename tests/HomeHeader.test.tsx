@@ -77,7 +77,7 @@ describe("HomeHeader", () => {
     expect(callbacks.onToggleTheme).toHaveBeenCalledOnce();
   });
 
-  it("shows social updates on the profile-only avatar button", () => {
+  it("shows the signed-in profile name with social updates", () => {
     renderHeader({
       socialUnreadCount: 3,
       theme: "light",
@@ -88,7 +88,7 @@ describe("HomeHeader", () => {
       screen.getByRole("button", { name: "Profile, Cambo" }),
     ).toBeInTheDocument();
     expect(screen.queryByText("Profile")).toBeNull();
-    expect(screen.queryByText("Cambo")).toBeNull();
+    expect(screen.getByText("Cambo")).toHaveClass("home-header-account-label");
     expect(
       screen.getByRole("button", { name: "Switch to dark mode" }),
     ).toBeInTheDocument();

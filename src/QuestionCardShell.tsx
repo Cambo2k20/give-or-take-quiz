@@ -32,6 +32,7 @@ export function QuestionCardShell({
   const variant = questionArtworkVariant(question.id);
   const PrimaryArtwork = artwork.icons[variant];
   const SecondaryArtwork = artwork.icons[(variant + 1) % artwork.icons.length];
+  const progressParts = progressLabel.match(/^(Question)\s+(.+)$/i);
 
   return (
     <article
@@ -67,7 +68,20 @@ export function QuestionCardShell({
             <span className="question-tag">{subtypeLabel(question)}</span>
           </span>
         </span>
-        <span className="question-card-counter">{progressLabel}</span>
+        <span className="question-card-counter" aria-label={progressLabel}>
+          {progressParts ? (
+            <>
+              <span className="question-card-counter-label">
+                {progressParts[1]}
+              </span>
+              <span className="question-card-counter-value">
+                {progressParts[2]}
+              </span>
+            </>
+          ) : (
+            progressLabel
+          )}
+        </span>
       </header>
 
       <h1 ref={headingRef} tabIndex={-1}>
