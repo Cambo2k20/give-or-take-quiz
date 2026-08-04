@@ -124,13 +124,19 @@ describe("survivalVerdict", () => {
 
 describe("buildSurvivalDeck", () => {
   it("deals the whole bank with no repeats", () => {
-    const deck = buildSurvivalDeck(() => 0.42);
+    const deck = buildSurvivalDeck("mixed", () => 0.42);
     expect(deck.length).toBeGreaterThan(100);
     expect(new Set(deck.map((q) => q.id)).size).toBe(deck.length);
   });
 
+  it("deals only the selected playable category", () => {
+    const deck = buildSurvivalDeck("history", () => 0.42);
+    expect(deck.length).toBeGreaterThan(0);
+    expect(deck.every((question) => question.category === "history")).toBe(true);
+  });
+
   it("excludes questions reserved for a daily that has not been played", () => {
-    const deck = buildSurvivalDeck(() => 0.42);
+    const deck = buildSurvivalDeck("mixed", () => 0.42);
     const dealt = new Set(deck.map((q) => q.id));
     const today = new Date().toISOString().slice(0, 10);
 
@@ -156,15 +162,22 @@ describe("format records", () => {
   });
 
   it("round-trips a best run", () => {
-    writeFormatRecords({ survivalBest: 14 }, window.localStorage);
-    expect(readFormatRecords(window.localStorage).survivalBest).toBe(14);
+    writeFormatRecords(
+      { survivalBest: 14, survivalBestByMode: { history: 8 } },
+      window.localStorage,
+    );
+    expect(readFormatRecords(window.localStorage)).toEqual({
+      survivalBest: 14,
+      survivalBestByMode: { history: 8, mixed: 14 },
+    });
   });
 
   it("only moves the best upward", () => {
-    const first = recordSurvivalRun({ survivalBest: 0 }, 9);
+    const first = recordSurvivalRun({ survivalBest: 0 }, 9, "history");
     expect(first.survivalBest).toBe(9);
-    expect(recordSurvivalRun(first, 4).survivalBest).toBe(9);
-    expect(recordSurvivalRun(first, 12).survivalBest).toBe(12);
+    expect(first.survivalBestByMode?.history).toBe(9);
+    expect(recordSurvivalRun(first, 4, "history").survivalBestByMode?.history).toBe(9);
+    expect(recordSurvivalRun(first, 12, "history").survivalBestByMode?.history).toBe(12);
   });
 
   it("ignores a stored record from another version", () => {

@@ -1269,6 +1269,15 @@ h1[tabindex="-1"]:focus {
   color: var(--ink);
 }
 
+.mode-rank {
+  color: var(--accent-ink);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.055em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
 .mode-description {
   color: var(--muted);
   font-size: 14px;
@@ -5464,6 +5473,12 @@ h1[tabindex="-1"]:focus {
   }
 }
 
+@media (max-width: 960px) {
+  .results-hero {
+    margin-top: 20px;
+  }
+}
+
 @media (max-width: 720px) {
   .site-header,
   .category-screen,
@@ -5534,6 +5549,77 @@ h1[tabindex="-1"]:focus {
     max-width: 100%;
     font-size: 20px;
     line-height: 1.25;
+  }
+
+  .question-card.is-answered {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .question-card.is-answered > h1 {
+    display: none;
+  }
+
+  .question-card.is-answered > .estimate-panel {
+    order: 3;
+    margin-top: 0;
+  }
+
+  .question-card.is-answered > .estimate-panel :is(
+      .estimate-value,
+      .estimate-label,
+      .keyboard-help
+    ) {
+    display: none;
+  }
+
+  .question-card.is-answered > .reveal {
+    display: contents;
+  }
+
+  .question-card.is-answered > .reveal > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .question-card.is-answered > .reveal > .verdict {
+    order: 1;
+    margin-top: 16px;
+  }
+
+  .question-card.is-answered > .reveal > .stat-tiles {
+    order: 2;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 14px;
+  }
+
+  .question-card.is-answered > .reveal .stat-tile {
+    padding: 10px 6px;
+    border-radius: 12px;
+  }
+
+  .question-card.is-answered > .reveal .stat-tile span {
+    margin-bottom: 4px;
+    font-size: 9px;
+  }
+
+  .question-card.is-answered > .reveal .stat-tile strong {
+    font-size: clamp(12px, 3.4vw, 15px);
+  }
+
+  .question-card.is-answered > .reveal > .primary-button {
+    order: 4;
+    margin-top: 12px;
+  }
+
+  .question-card.is-answered > .reveal > .reveal-fact {
+    order: 5;
+    margin: 18px 0 8px;
+  }
+
+  .question-card.is-answered > .reveal > .source-link {
+    order: 6;
   }
 
   .board-titlebar {
@@ -7987,6 +8073,10 @@ h1[tabindex="-1"]:focus {
   .home-header-redesign .home-header-account {
     grid-area: auto;
     grid-column: 3;
+  }
+
+  .mode-rank {
+    font-size: 10px;
   }
 
   .home-header-redesign .home-header-toolbar {

@@ -18,6 +18,7 @@ type QuestionCardShellProps = {
   question: Question;
   progressLabel: string;
   headingRef: Ref<HTMLHeadingElement>;
+  answered?: boolean;
   children: ReactNode;
 };
 
@@ -25,6 +26,7 @@ export function QuestionCardShell({
   question,
   progressLabel,
   headingRef,
+  answered = false,
   children,
 }: QuestionCardShellProps) {
   const category = CATEGORY_BY_ID[question.category];
@@ -36,7 +38,7 @@ export function QuestionCardShell({
 
   return (
     <article
-      className={`question-card theme-${question.category}`}
+      className={`question-card theme-${question.category}${answered ? " is-answered" : ""}`}
       data-artwork-variant={variant}
       data-category={question.category}
     >

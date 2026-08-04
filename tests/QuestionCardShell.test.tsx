@@ -28,6 +28,7 @@ describe("QuestionCardShell", () => {
         question={movieQuestion}
         progressLabel="Question 2 of 5"
         headingRef={null}
+        answered
       >
         <button type="button">Lock in guess</button>
       </QuestionCardShell>,
@@ -52,6 +53,7 @@ describe("QuestionCardShell", () => {
       movieQuestion.prompt,
     );
     expect(container.querySelector("[data-category='movies']")).not.toBeNull();
+    expect(container.querySelector(".question-card")).toHaveClass("is-answered");
   });
 
   it("selects artwork deterministically and reaches every variant", () => {

@@ -35,6 +35,7 @@ function fixtureQuestions(prefix: string) {
 import Game from "@/src/Game";
 import { readBestScores } from "@/lib/game";
 import { dailySets, readDailyProgress } from "@/lib/daily";
+import { writeFormatRecords } from "@/lib/formats";
 
 function categoryButton(
   mode: "Geography" | "History" | "Dinosaurs" | "Games" | "Mixed",
@@ -160,19 +161,34 @@ describe("Game", () => {
     );
   });
 
-  it("reveals the Survival launch panel from the mode card", async () => {
+  it("uses the category chooser to start Survival", async () => {
     const user = userEvent.setup();
+    writeFormatRecords(
+      {
+        survivalBest: 7,
+        survivalBestByMode: { geography: 7 },
+      },
+      window.localStorage,
+    );
     render(<Game />);
 
     await user.click(screen.getByRole("button", { name: "Survival" }));
 
-    expect(
-      screen.getByRole("button", { name: /start a run/i }),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /start a run/i })).toBeNull();
     expect(screen.getByRole("button", { name: "Survival" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
+    expect(categoryButton("Geography")).toHaveTextContent(
+      "Keep answering Geography questions until you miss.",
+    );
+    expect(categoryButton("Geography")).toHaveTextContent("Most rounds 7");
+
+    await user.click(categoryButton("Geography"));
+
+    expect(
+      await screen.findByRole("button", { name: /lock in guess/i }),
+    ).toBeEnabled();
   });
 
   it("starts a mixed round from the category chooser", async () => {

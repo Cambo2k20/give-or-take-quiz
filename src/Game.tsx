@@ -278,11 +278,22 @@ const MODE_LABELS = {
 } as Record<GameMode, string>;
 
 /** Read off the bank, so adding questions updates the chooser by itself. */
-function modeNote(mode: GameMode) {
+function modeNote(mode: GameMode, format: PlayFormat) {
+  if (format === "survival") {
+    return `Survival pool · ${formatPoints(questionCount(mode))} questions`;
+  }
   const perRound = `${QUESTIONS_PER_GAME} questions`;
   return mode === "mixed"
     ? `${perRound} · a bit of everything`
     : `${perRound} · ${formatPoints(questionCount(mode))} in the bank`;
+}
+
+function modeDescription(detail: ModeDetail, format: PlayFormat) {
+  if (format === "classic") return detail.description;
+  if (detail.mode === "mixed") {
+    return "Questions from every playable category continue until you miss.";
+  }
+  return `Keep answering ${detail.title} questions until you miss.`;
 }
 
 async function copyText(text: string) {
@@ -347,8 +358,7 @@ export default function Game() {
         ? (category as CategoryFilter)
         : "all";
     });
-  // Which format the hero is offering. Classic keeps the consequence-free
-  // warm-up; picking Survival is the act of intent that starts a real run.
+  // Which format the category chooser will start.
   const [heroFormat, setHeroFormat] = useState<PlayFormat>("classic");
   const [formatRecords, setFormatRecords] = useState(readFormatRecords);
   const [mascotInGames, setMascotInGames] = useState(readMascotInGames);
@@ -1127,13 +1137,15 @@ export default function Game() {
    * untouched, as in the daily: a run is not a round, and letting it eat the
    * category rotation would starve normal play.
    */
-  function startSurvival(
-    deck: Question[] = buildSurvivalDeck(),
+  function beginSurvival(
+    deck: Question[],
     challenge: ChallengeSummary | null = null,
+    selectedMode: GameMode = "mixed",
   ) {
     setActiveChallenge(challenge);
     setTargetChallengeId(challenge?.id ?? null);
     replaceChallengeLink(challenge?.id ?? null);
+    setMode(selectedMode);
     setSurvivalDeck(deck);
     setSurvivalIndex(0);
     setSurvivalGuesses([]);
@@ -1148,6 +1160,18 @@ export default function Game() {
     setChallengeSubmit({ status: "idle" });
     resetSubmit();
     setPhase("survival");
+  }
+
+  function startSurvival(selectedMode: GameMode = "mixed") {
+    beginSurvival(buildSurvivalDeck(selectedMode), null, selectedMode);
+  }
+
+  function startSelectedCategory(selectedMode: GameMode) {
+    if (heroFormat === "survival") {
+      startSurvival(selectedMode);
+      return;
+    }
+    startGame(selectedMode);
   }
 
   function lockSurvivalGuess() {
@@ -1179,7 +1203,11 @@ export default function Game() {
     // which the server accepts as a completed run.
     if (!alive || !next) {
       const survived = alive ? survivalGuesses.length : survivalGuesses.length - 1;
-      const updated = recordSurvivalRun(formatRecords, Math.max(0, survived));
+      const updated = recordSurvivalRun(
+        formatRecords,
+        Math.max(0, survived),
+        mode,
+      );
       setFormatRecords(updated);
       writeFormatRecords(updated);
       setPhase("survival-over");
@@ -1214,7 +1242,7 @@ export default function Game() {
     setTargetChallengeId(challenge.id);
     replaceChallengeLink(challenge.id);
     if (challenge.format === "survival") {
-      startSurvival(deck, challenge);
+      beginSurvival(deck, challenge);
       return;
     }
 
@@ -1590,39 +1618,17 @@ export default function Game() {
               </button>
             </div>
 
-          {heroFormat === "survival" && (
-            <div className="hero-survival">
-              <div className="hero-survival-head">
-                <span className="question-tag">Survival</span>
-                {formatRecords.survivalBest > 0 && (
-                  <span className="hero-survival-best">
-                    Best run {formatPoints(formatRecords.survivalBest)}
-                  </span>
-                )}
-              </div>
-              <p className="hero-survival-lede">
-                Questions keep coming until one gets away from you. The window
-                you have to land in narrows every three questions.
-              </p>
-              <button
-                className="primary-button"
-                type="button"
-                onClick={() => startSurvival()}
-              >
-                Start a run
-              </button>
-              <p className="hero-survival-note">
-                Drawn from all {formatPoints(questionCount("mixed"))} questions.
-              </p>
-            </div>
-          )}
           </section>
 
           <div className="home-mobile-category-intro" aria-hidden="true">
             <span className="home-flow-thread" />
             <span className="home-flow-node" />
             <h2>Categories</h2>
-            <p>Five questions from whichever you choose</p>
+            <p>
+              {heroFormat === "survival"
+                ? "Keep going in whichever category you choose"
+                : "Five questions from whichever you choose"}
+            </p>
           </div>
 
           <div className="category-picker">
@@ -1631,7 +1637,7 @@ export default function Game() {
               <button
                 className="mode-card"
                 type="button"
-                onClick={() => startGame(MIXED_MODE.mode)}
+                onClick={() => startSelectedCategory(MIXED_MODE.mode)}
               >
                 <span className="mode-card-rest">
                   <span className="mode-icon">{MIXED_MODE.icon}</span>
@@ -1641,13 +1647,26 @@ export default function Game() {
                   <strong className="mode-detail-title" aria-hidden="true">
                     {MIXED_MODE.title}
                   </strong>
-                  <span className="mode-description">{MIXED_MODE.description}</span>
-                  <span className="mode-note">{modeNote(MIXED_MODE.mode)}</span>
-                  {bestScores.mixed > 0 && (
+                  <span className="mode-description">
+                    {modeDescription(MIXED_MODE, heroFormat)}
+                  </span>
+                  <span className="mode-note">
+                    {modeNote(MIXED_MODE.mode, heroFormat)}
+                  </span>
+                  {heroFormat === "classic" && bestScores.mixed > 0 && (
                     <span className="mode-best">
                       Best {formatPoints(bestScores.mixed)}
                     </span>
                   )}
+                  {heroFormat === "survival" &&
+                    (formatRecords.survivalBestByMode?.mixed ?? 0) > 0 && (
+                      <span className="mode-best">
+                        Most rounds{" "}
+                        {formatPoints(
+                          formatRecords.survivalBestByMode?.mixed ?? 0,
+                        )}
+                      </span>
+                    )}
                 </span>
               </button>
               {CATEGORY_MODES.map((detail) => (
@@ -1660,7 +1679,7 @@ export default function Game() {
                 type="button"
                 key={detail.mode}
                 disabled={!isPlayableCategory(detail.mode as QuestionCategory)}
-                onClick={() => startGame(detail.mode)}
+                onClick={() => startSelectedCategory(detail.mode)}
               >
                   <span className="mode-card-rest">
                     <span className="mode-icon">{detail.icon}</span>
@@ -1670,15 +1689,11 @@ export default function Game() {
                     <strong className="mode-detail-title" aria-hidden="true">
                       {detail.title}
                     </strong>
-                    <span className="mode-description">{detail.description}</span>
-                    <span className="mode-note">
-                      {isPlayableCategory(detail.mode as QuestionCategory)
-                        ? modeNote(detail.mode)
-                        : "Coming soon"}
-                    </span>
                     {(() => {
                       if (!isPlayableCategory(detail.mode as QuestionCategory)) {
-                        return null;
+                        return (
+                          <span className="mode-note">Coming soon</span>
+                        );
                       }
                       // A title only appears once it has been earned — Newcomer is
                       // for the account screen, not the front page.
@@ -1688,14 +1703,31 @@ export default function Game() {
                         ? rankByCategory.get(detail.mode as QuestionCategory)?.title
                         : null;
                       const best = bestScores[detail.mode];
-                      if (best <= 0 && !earnedTitle) return null;
+                      const survivalBest =
+                        formatRecords.survivalBestByMode?.[detail.mode] ?? 0;
 
                       return (
-                        <span className="mode-best">
-                          {best > 0 && `Best ${formatPoints(best)}`}
-                          {best > 0 && earnedTitle && " · "}
-                          {earnedTitle}
-                        </span>
+                        <>
+                          {earnedTitle && (
+                            <span className="mode-rank">{earnedTitle}</span>
+                          )}
+                          <span className="mode-description">
+                            {modeDescription(detail, heroFormat)}
+                          </span>
+                          <span className="mode-note">
+                            {modeNote(detail.mode, heroFormat)}
+                          </span>
+                          {heroFormat === "classic" && best > 0 && (
+                            <span className="mode-best">
+                              Best {formatPoints(best)}
+                            </span>
+                          )}
+                          {heroFormat === "survival" && survivalBest > 0 && (
+                            <span className="mode-best">
+                              Most rounds {formatPoints(survivalBest)}
+                            </span>
+                          )}
+                        </>
                       );
                     })()}
                   </span>
@@ -1707,7 +1739,11 @@ export default function Game() {
             <span>
               {formatPoints(questionCount("mixed"))} sourced questions, bundled with the app
             </span>
-            <span>Best scores stay on this device</span>
+            <span>
+              {heroFormat === "survival"
+                ? "Survival records stay on this device"
+                : "Best scores stay on this device"}
+            </span>
           </div>
         </section>
       )}
@@ -1753,6 +1789,7 @@ export default function Game() {
             question={question}
             progressLabel={`Question ${questionIndex + 1} of ${gameQuestions.length}`}
             headingRef={focusHeadingRef}
+            answered={locked}
           >
             <EstimatePanel
               question={question}
@@ -2107,7 +2144,7 @@ export default function Game() {
               : survivalGuesses[survivalGuesses.length - 1]?.question ?? null
           }
           guess={survivalGuesses[survivalGuesses.length - 1]?.guess ?? 0}
-          onRunAgain={() => startSurvival()}
+          onRunAgain={() => startSurvival(mode)}
           onHome={() => setPhase("category")}
           onShare={shareResult}
           shareStatus={shareStatus}
