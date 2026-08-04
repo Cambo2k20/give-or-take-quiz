@@ -10,8 +10,6 @@ function renderHeader(
 ) {
   const callbacks = {
     onHome: vi.fn(),
-    onPlayDaily: vi.fn(),
-    onOpenArchive: vi.fn(),
     onOpenLeaderboard: vi.fn(),
     onOpenAccount: vi.fn(),
     onToggleTheme: vi.fn(),
@@ -19,11 +17,6 @@ function renderHeader(
 
   render(
     <HomeHeader
-      date="2026-07-27"
-      streak={0}
-      playedToday={false}
-      score={null}
-      archiveCount={3}
       leaderboardEnabled
       accountLabel="Cambo"
       theme="dark"
@@ -36,31 +29,24 @@ function renderHeader(
 }
 
 describe("HomeHeader", () => {
-  it("merges the playable daily, centred brand, and navigation controls", async () => {
+  it("keeps the compact brand and global navigation controls together", async () => {
     const user = userEvent.setup();
-    const callbacks = renderHeader();
-
-    const daily = screen.getByRole("button", {
-      name: "Play today's daily, Monday 27 July",
+    const callbacks = renderHeader({
+      musicControls: <button type="button">Music</button>,
     });
-    expect(screen.getByText("Mon 27 Jul")).toBeInTheDocument();
-    expect(screen.getByText("No streak")).toBeInTheDocument();
-    expect(screen.queryByText("Play")).not.toBeInTheDocument();
-    const lowerRow = document.querySelector(".home-header-lower");
-    expect(lowerRow).not.toBeNull();
+
+    const header = document.querySelector(".home-header-redesign");
+    expect(header).not.toBeNull();
     expect(
-      within(lowerRow as HTMLElement).getByRole("button", {
-        name: "Past dailies",
-      }),
+      within(header as HTMLElement).getByRole("button", { name: "Music" }),
     ).toBeInTheDocument();
+    expect(document.querySelector(".home-header-music")).not.toBeNull();
     expect(
-      within(lowerRow as HTMLElement).getByRole("button", {
+      within(header as HTMLElement).getByRole("button", {
         name: "Switch to light mode",
       }),
     ).toBeInTheDocument();
 
-    await user.click(daily);
-    await user.click(screen.getByRole("button", { name: "Past dailies" }));
     await user.click(screen.getByRole("button", { name: "Give or Take home" }));
     await user.click(screen.getByRole("button", { name: "Leaderboard" }));
     await user.click(screen.getByRole("button", { name: "Profile, Cambo" }));
@@ -68,31 +54,21 @@ describe("HomeHeader", () => {
       screen.getByRole("button", { name: "Switch to light mode" }),
     );
 
-    expect(callbacks.onPlayDaily).toHaveBeenCalledOnce();
-    expect(callbacks.onOpenArchive).toHaveBeenCalledOnce();
     expect(callbacks.onHome).toHaveBeenCalledOnce();
     expect(callbacks.onOpenLeaderboard).toHaveBeenCalledOnce();
     expect(callbacks.onOpenAccount).toHaveBeenCalledOnce();
     expect(callbacks.onToggleTheme).toHaveBeenCalledOnce();
   });
 
-  it("announces replay score without adding visible density", () => {
+  it("shows social updates without adding the account name to the compact label", () => {
     renderHeader({
-      playedToday: true,
-      score: 4321,
-      streak: 3,
-      archiveCount: 0,
+      socialUnreadCount: 3,
       theme: "light",
     });
 
-    expect(
-      screen.getByRole("button", {
-        name: "Replay today's daily, Monday 27 July. Your score is 4,321 out of 5,000 points",
-      }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("3 days")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Past dailies" })).toBeNull();
-    expect(screen.queryByText("4,321")).toBeNull();
+    expect(screen.getByText("3")).toHaveAccessibleName("3 unread friend updates");
+    expect(screen.getByText("Profile")).toBeInTheDocument();
+    expect(screen.queryByText("Cambo")).toBeNull();
     expect(
       screen.getByRole("button", { name: "Switch to dark mode" }),
     ).toBeInTheDocument();

@@ -83,7 +83,6 @@ import {
 import { useProgress } from "./useProgress";
 import { EstimatePanel } from "./EstimatePanel";
 import { QuestionCardShell } from "./QuestionCardShell";
-import { HeroDemo } from "./HeroDemo";
 import { DailyHero } from "./DailyHero";
 import { JoinLeaderboardForm } from "./Leaderboard";
 import type { SubmittedDailyRound } from "../lib/leaderboard";
@@ -549,8 +548,6 @@ export default function Game() {
     [dailyProgress, syncedDailyResults],
   );
   const streak = activeStreak(shownDailyProgress);
-  const playedToday =
-    shownDailyProgress.dates[today]?.officialScore != null;
 
   // A challenge link survives authentication and display-name setup. Only once
   // both are ready do we hand it to the participant-only Friends screen.
@@ -1405,14 +1402,9 @@ export default function Game() {
         mode={theme}
         variant="backdrop"
       />
-      <BackgroundMusicPlayer />
       {todaysDaily ? (
         <HomeHeader
-          date={todaysDaily.date}
-          streak={streak}
-          playedToday={playedToday}
-          score={shownDailyProgress.dates[today]?.officialScore ?? null}
-          archiveCount={archiveDates.length}
+          musicControls={<BackgroundMusicPlayer placement="header" />}
           leaderboardEnabled={leaderboard.enabled}
           accountLabel={
             auth.status === "signed-in"
@@ -1422,14 +1414,14 @@ export default function Game() {
           socialUnreadCount={social.unreadCount}
           theme={theme}
           onHome={goHome}
-          onPlayDaily={() => startDaily(todaysDaily.date)}
-          onOpenArchive={() => setPhase("daily-archive")}
           onOpenLeaderboard={openLeaderboard}
           onOpenAccount={() => setPhase("account")}
           onToggleTheme={toggleTheme}
         />
       ) : (
-        <header className="site-header">
+        <>
+          <BackgroundMusicPlayer />
+          <header className="site-header">
         <button
           className="wordmark"
           type="button"
@@ -1509,19 +1501,12 @@ export default function Game() {
             )}
           </button>
         </div>
-        </header>
+          </header>
+        </>
       )}
 
       {activePhase === "category" && (
-        <section className="category-screen">
-          <div className="hero-copy">
-            <p className="eyebrow">A game of informed guesses</p>
-            <h1>How close can you get?</h1>
-            <p className="hero-lede">
-              Five questions. One slider. Put your instinct somewhere on the line.
-            </p>
-          </div>
-
+        <section className="category-screen home-flow-redesign">
           {todaysDaily && (
             <DailyHero
               set={todaysDaily}
@@ -1529,9 +1514,11 @@ export default function Game() {
               today={shownDailyProgress.dates[today]}
               rank={shownDailyRank}
               boardEnabled={leaderboard.enabled}
+              archiveCount={archiveDates.length}
               onPlay={() => startDaily(todaysDaily.date)}
               onReplay={() => startDaily(todaysDaily.date)}
               onOpenBoard={() => openLeaderboard("daily")}
+              onOpenArchive={() => setPhase("daily-archive")}
               onShare={() =>
                 void shareDailyScore(
                   todaysDaily.date,
@@ -1543,35 +1530,40 @@ export default function Game() {
             />
           )}
 
-          <h2 className="keep-playing-label">Keep playing</h2>
+          <section className="home-flow-section home-game-modes" aria-labelledby="home-game-modes-heading">
+            <span className="home-flow-thread is-first" aria-hidden="true" />
+            <header className="home-flow-heading">
+              <span className="home-flow-node" aria-hidden="true" />
+              <h2 id="home-game-modes-heading">Game Modes</h2>
+              <p>Pick how the questions come at you</p>
+            </header>
 
-          {/* Format pills: how you play, kept off the subject grid below. */}
-          <div
-            className="hero-formats board-formats"
-            role="group"
-            aria-label="Choose a format"
-          >
-            <button
-              type="button"
-              className={`hero-format board-format${heroFormat === "classic" ? " is-current" : ""}`}
-              aria-pressed={heroFormat === "classic"}
-              onClick={() => setHeroFormat("classic")}
-            >
-              Classic
-            </button>
-            <button
-              type="button"
-              className={`hero-format board-format${heroFormat === "survival" ? " is-current" : ""}`}
-              aria-pressed={heroFormat === "survival"}
-              onClick={() => setHeroFormat("survival")}
-            >
-              Survival
-            </button>
-          </div>
+            <div className="home-mode-grid" role="group" aria-label="Choose a format">
+              <button
+                type="button"
+                className={`home-mode-card${heroFormat === "classic" ? " is-current" : ""}`}
+                aria-label="Classic"
+                aria-pressed={heroFormat === "classic"}
+                onClick={() => setHeroFormat("classic")}
+              >
+                <span className="home-mode-mark" aria-hidden="true" />
+                <strong>Classic</strong>
+                <span>Five questions, one score at the end.</span>
+              </button>
+              <button
+                type="button"
+                className={`home-mode-card${heroFormat === "survival" ? " is-current" : ""}`}
+                aria-label="Survival"
+                aria-pressed={heroFormat === "survival"}
+                onClick={() => setHeroFormat("survival")}
+              >
+                <span className="home-mode-mark" aria-hidden="true" />
+                <strong>Survival</strong>
+                <span>Keep guessing until you miss.</span>
+              </button>
+            </div>
 
-          {heroFormat === "classic" ? (
-            <HeroDemo onPlay={() => startGame("mixed")} />
-          ) : (
+          {heroFormat === "survival" && (
             <div className="hero-survival">
               <div className="hero-survival-head">
                 <span className="question-tag">Survival</span>
@@ -1597,12 +1589,20 @@ export default function Game() {
               </p>
             </div>
           )}
+          </section>
+
+          <div className="home-mobile-category-intro" aria-hidden="true">
+            <span className="home-flow-thread" />
+            <span className="home-flow-node" />
+            <h2>Categories</h2>
+            <p>Five questions from whichever you choose</p>
+          </div>
 
           <div className="category-picker">
             <h2 className="mode-grid-label">All categories</h2>
-            <div className="mixed-mode-row">
+            <div className="mode-grid" aria-label="Choose a category">
               <button
-                className="mode-card mixed-mode-card"
+                className="mode-card"
                 type="button"
                 onClick={() => startGame(MIXED_MODE.mode)}
               >
@@ -1623,8 +1623,6 @@ export default function Game() {
                   )}
                 </span>
               </button>
-            </div>
-            <div className="mode-grid" aria-label="Choose a category">
               {CATEGORY_MODES.map((detail) => (
                 <button
                 className={`mode-card${

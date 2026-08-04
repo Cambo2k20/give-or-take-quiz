@@ -7,6 +7,14 @@ import { MUSIC_TRACKS } from "@/src/musicPlaylist";
 import { MUSIC_PREFERENCE_STORAGE_KEY } from "@/src/musicPreference";
 
 describe("BackgroundMusicPlayer", () => {
+  it("supports placement inside the home header", () => {
+    const { container } = render(
+      <BackgroundMusicPlayer placement="header" />,
+    );
+
+    expect(container.querySelector(".music-player")).toHaveClass("is-header");
+  });
+
   it("exposes persistent volume and mute controls", async () => {
     const user = userEvent.setup();
     const { container } = render(<BackgroundMusicPlayer />);

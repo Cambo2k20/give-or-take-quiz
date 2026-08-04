@@ -83,7 +83,7 @@ describe("Game", () => {
     render(<Game />);
 
     expect(
-      screen.getByRole("heading", { name: /how close can you get\?/i }),
+      screen.getByRole("heading", { name: /game modes/i }),
     ).toBeInTheDocument();
     expect(categoryButton("Geography")).toBeInTheDocument();
     expect(categoryButton("History")).toBeInTheDocument();
@@ -92,15 +92,17 @@ describe("Game", () => {
     await startGame(user, "Geography");
 
     expect(
-      screen.queryByRole("heading", { name: /how close can you get\?/i }),
+      screen.queryByRole("heading", { name: /game modes/i }),
     ).not.toBeInTheDocument();
     expect(screen.getByRole("slider")).toBeInTheDocument();
   });
 
-  it("shows ten playable subject cards", () => {
+  it("shows Mixed before the ten playable subject cards", () => {
     render(<Game />);
 
-    expect(document.querySelectorAll(".mode-grid > .mode-card")).toHaveLength(10);
+    const categoryCards = document.querySelectorAll(".mode-grid > .mode-card");
+    expect(categoryCards).toHaveLength(11);
+    expect(categoryCards[0]).toHaveTextContent("Mixed");
     expect(categoryButton("Dinosaurs")).toBeEnabled();
     expect(categoryButton("Games")).toBeEnabled();
   });
@@ -145,57 +147,45 @@ describe("Game", () => {
     ).toBeEnabled();
   });
 
-  it("plays the hero demo without banking a score", async () => {
-    const user = userEvent.setup();
+  it("keeps Classic selected without starting or banking a round", () => {
     render(<Game />);
 
-    // The slider is on the home page itself, before any category is chosen.
-    expect(screen.getByRole("slider")).toBeEnabled();
-
-    await user.click(screen.getByRole("button", { name: /check my guess/i }));
-
-    expect(screen.getByRole("slider")).toBeDisabled();
-    expect(screen.getByText(/^Answer$/i)).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /play a full round/i }),
-    ).toBeInTheDocument();
-
-    // A warm-up must not touch the stored best scores.
+    expect(screen.getByRole("button", { name: "Classic" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.queryByRole("slider")).not.toBeInTheDocument();
     expect(readBestScores(window.localStorage)).toEqual(
       expect.objectContaining({ mixed: 0 }),
     );
   });
 
-  it("re-arms the hero demo when another question is requested", async () => {
+  it("reveals the Survival launch panel from the mode card", async () => {
     const user = userEvent.setup();
     render(<Game />);
 
-    await user.click(screen.getByRole("button", { name: /check my guess/i }));
-    await user.click(screen.getByRole("button", { name: /try another/i }));
+    await user.click(screen.getByRole("button", { name: "Survival" }));
 
-    expect(screen.getByRole("slider")).toBeEnabled();
     expect(
-      screen.getByRole("button", { name: /check my guess/i }),
+      screen.getByRole("button", { name: /start a run/i }),
     ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /play a full round/i }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Survival" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 
-  it("starts a mixed round from the hero demo", async () => {
+  it("starts a mixed round from the category chooser", async () => {
     const user = userEvent.setup();
     render(<Game />);
 
-    await user.click(screen.getByRole("button", { name: /check my guess/i }));
-    await user.click(
-      screen.getByRole("button", { name: /play a full round/i }),
-    );
+    await user.click(categoryButton("Mixed"));
 
     expect(
       await screen.findByRole("button", { name: /lock in guess/i }),
     ).toBeEnabled();
     expect(
-      screen.queryByRole("heading", { name: /how close can you get\?/i }),
+      screen.queryByRole("heading", { name: /game modes/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -318,7 +308,7 @@ describe("Game", () => {
     );
     expect(
       await screen.findByRole("heading", {
-        name: /how close can you get\?/i,
+        name: /game modes/i,
       }),
     ).toBeInTheDocument();
   });

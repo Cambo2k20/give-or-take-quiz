@@ -135,11 +135,10 @@ describe("publishing a finished round", () => {
     const user = userEvent.setup();
     render(<Game />);
 
-    // Two entry points by design: the compact header control and the home
-    // screen's Daily hero.
+    // The redesigned home keeps one clear Daily entry point in the hero.
     expect(
       screen.getAllByRole("button", { name: /play today's daily/i }),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
     expect(document.querySelector(".daily-strip")).not.toBeInTheDocument();
 
     await user.click(
@@ -187,7 +186,7 @@ describe("publishing a finished round", () => {
     expect(api.publishDaily).not.toHaveBeenCalled();
   });
 
-  it("keeps the merged daily header on the account screen", async () => {
+  it("keeps compact global navigation on the account screen", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.setSystemTime(new Date("2026-08-01T09:00:00"));
 
@@ -195,16 +194,15 @@ describe("publishing a finished round", () => {
     render(<Game />);
 
     expect(
-      homeHeader().getByRole("button", { name: /play today's daily/i }),
+      dailyHero().getByRole("button", { name: /play today's daily/i }),
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Profile, Ada" }));
 
-    // The hero is home-screen only; the header control is what must survive
-    // the trip to the account screen.
+    // The Daily hero is home-screen only; the compact global header remains.
     expect(document.querySelector(".daily-hero")).not.toBeInTheDocument();
     expect(
-      homeHeader().getByRole("button", { name: /play today's daily/i }),
+      homeHeader().getByRole("button", { name: "Leaderboard" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Give or Take home" }),
@@ -212,9 +210,6 @@ describe("publishing a finished round", () => {
 
     await user.click(screen.getByRole("button", { name: "Give or Take home" }));
 
-    expect(
-      homeHeader().getByRole("button", { name: /play today's daily/i }),
-    ).toBeInTheDocument();
     expect(
       dailyHero().getByRole("button", { name: /play today's daily/i }),
     ).toBeInTheDocument();
@@ -245,7 +240,7 @@ describe("publishing a finished round", () => {
       dailyHero().getByRole("button", { name: /replay for practice/i }),
     ).toBeInTheDocument();
 
-    await user.click(homeHeader().getByRole("button", { name: "Past dailies" }));
+    await user.click(screen.getByRole("button", { name: "Past dailies" }));
 
     expect(
       await screen.findByRole("heading", { name: "Past dailies" }),
@@ -266,7 +261,7 @@ describe("publishing a finished round", () => {
 
     const user = userEvent.setup();
     render(<Game />);
-    await user.click(homeHeader().getByRole("button", { name: "Past dailies" }));
+    await user.click(screen.getByRole("button", { name: "Past dailies" }));
 
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent(/couldn't sync account history/i);

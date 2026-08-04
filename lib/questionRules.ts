@@ -171,25 +171,23 @@ export function validateQuestion(
       );
     }
 
-    // A population prompt has to pin down what is being counted. The UN series
-    // needs the "country-total" wording to rule out a city or metro reading. A
-    // named census already carries its own scope and its own published figure,
-    // so it states the definition just as firmly.
     const prompt = question.prompt.toLowerCase();
+    const referenceDefinition = question.referenceYear?.toLowerCase() ?? "";
     const statesDefinition =
       question.subtype === "country"
-        ? prompt.includes("country-total") || /\bcensus\b/.test(prompt)
+        ? prompt.includes("population") || /\bcensus\b/.test(prompt)
         : prompt.includes("city proper") ||
           prompt.includes("urban area") ||
-          prompt.includes("urban agglomeration");
+          prompt.includes("urban agglomeration") ||
+          referenceDefinition.includes("city proper");
 
     if (!statesDefinition) {
       report(
-      question.id,
-      question.subtype === "country"
-        ? "population prompt must say country-total, or name the census it counts"
-        : "population prompt must state whether it counts the city proper or urban area",
-    );
+        question.id,
+        question.subtype === "country"
+          ? "population prompt must say population, or name the census it counts"
+          : "population prompt or referenceYear must state whether it counts the city proper or urban area",
+      );
     }
   }
 
