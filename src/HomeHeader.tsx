@@ -1,109 +1,114 @@
-import { DAILY_MAX_SCORE } from "../lib/daily";
+import type { ReactNode } from "react";
+
 import { BrandMark } from "./BrandMark";
-import { compactReadableDate, readableDate } from "./Daily";
-import { formatPoints } from "./questionText";
 import type { Theme } from "./theme";
 
-const FlameIcon = () => (
+const LeaderboardIcon = () => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="2"
+    strokeWidth="1.9"
+    strokeLinecap="round"
+    strokeLinejoin="round"
     aria-hidden="true"
   >
-    <path
-      d="M12 3c.4 2.6-1 3.9-2.4 5.2C8 9.7 6.6 11 6.6 13.6a5.4 5.4 0 0 0 10.8 0c0-2-.8-3.4-1.8-4.6-.4 1-1.1 1.6-2 1.9.5-2.9-.6-6-1.6-7.9Z"
-      strokeLinejoin="round"
-    />
+    <path d="M4 20h16" />
+    <rect x="5" y="12" width="4.6" height="6" rx="1.2" />
+    <rect x="9.7" y="7" width="4.6" height="11" rx="1.2" />
+    <rect x="14.4" y="14.5" width="4.6" height="3.5" rx="1.2" />
+  </svg>
+);
+
+const ProfileIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.9"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="9" r="3.6" />
+    <path d="M5 19.5c1.3-3.1 3.9-4.6 7-4.6s5.7 1.5 7 4.6" />
   </svg>
 );
 
 type HomeHeaderProps = {
-  date: string;
-  streak: number;
-  playedToday: boolean;
-  score: number | null;
-  archiveCount: number;
   leaderboardEnabled: boolean;
   accountLabel: string;
   socialUnreadCount?: number;
+  musicControls?: ReactNode;
   theme: Theme;
   onHome: () => void;
-  onPlayDaily: () => void;
-  onOpenArchive: () => void;
   onOpenLeaderboard: () => void;
   onOpenAccount: () => void;
   onToggleTheme: () => void;
 };
 
-function dailyActionLabel({
-  date,
-  playedToday,
-  score,
-}: Pick<HomeHeaderProps, "date" | "playedToday" | "score">) {
-  const dateLabel = readableDate(date);
-  if (!playedToday) return `Play today's daily, ${dateLabel}`;
-
-  return `Replay today's daily, ${dateLabel}. Your score is ${formatPoints(
-    score ?? 0,
-  )} out of ${formatPoints(DAILY_MAX_SCORE)} points`;
-}
-
 export function HomeHeader({
-  date,
-  streak,
-  playedToday,
-  score,
-  archiveCount,
   leaderboardEnabled,
   accountLabel,
   socialUnreadCount = 0,
+  musicControls,
   theme,
   onHome,
-  onPlayDaily,
-  onOpenArchive,
   onOpenLeaderboard,
   onOpenAccount,
   onToggleTheme,
 }: HomeHeaderProps) {
   return (
-    <header className="home-header">
-      <div className="home-header-lower">
-        <div className="home-header-daily-controls">
-          <button
-            className="home-header-daily"
-            type="button"
-            onClick={onPlayDaily}
-            aria-label={dailyActionLabel({ date, playedToday, score })}
-          >
-            <span className="home-header-daily-flag">
-              <span className="home-header-daily-dot" aria-hidden="true" />
-              Daily
-            </span>
-            <time dateTime={date}>{compactReadableDate(date)}</time>
+    <header className="home-header home-header-redesign">
+      <div className="home-header-music">{musicControls}</div>
+
+      <button
+        className="wordmark home-header-wordmark"
+        type="button"
+        onClick={onHome}
+        aria-label="Give or Take home"
+      >
+        <BrandMark />
+        <span>Give or Take</span>
+      </button>
+
+      <div className="home-header-side">
+        <button
+          className="board-button home-header-board"
+          type="button"
+          onClick={onOpenLeaderboard}
+          aria-label="Leaderboard"
+          title={
+            leaderboardEnabled
+              ? undefined
+              : "Leaderboard data is unavailable in this local setup"
+          }
+        >
+          <LeaderboardIcon />
+          <span>Leaderboard</span>
+        </button>
+        <button
+          className="board-button home-header-account"
+          type="button"
+          onClick={onOpenAccount}
+          title={accountLabel}
+          aria-label={
+            accountLabel === "Sign in"
+              ? "Profile, sign in"
+              : `Profile, ${accountLabel}`
+          }
+        >
+          <ProfileIcon />
+          <span>Profile</span>
+          {socialUnreadCount > 0 && (
             <span
-              className={`home-header-streak${streak > 0 ? " is-lit" : ""}`}
+              className="home-header-social-badge"
+              aria-label={`${socialUnreadCount} unread friend updates`}
             >
-              <FlameIcon />
-              {streak > 0
-                ? `${streak} day${streak === 1 ? "" : "s"}`
-                : "No streak"}
+              {socialUnreadCount > 9 ? "9+" : socialUnreadCount}
             </span>
-          </button>
-
-          {archiveCount > 0 && (
-            <button
-              className="home-header-past"
-              type="button"
-              onClick={onOpenArchive}
-              aria-label="Past dailies"
-            >
-              Past
-            </button>
           )}
-        </div>
-
+        </button>
         <button
           className="theme-toggle home-header-theme-toggle"
           type="button"
@@ -141,56 +146,6 @@ export function HomeHeader({
                 strokeLinejoin="round"
               />
             </svg>
-          )}
-        </button>
-      </div>
-
-      <button
-        className="wordmark home-header-wordmark"
-        type="button"
-        onClick={onHome}
-        aria-label="Give or Take home"
-      >
-        <BrandMark />
-        <span>Give or Take</span>
-      </button>
-
-      <div className="home-header-side">
-        <button
-          className="board-button home-header-board"
-          type="button"
-          onClick={onOpenLeaderboard}
-          aria-label="Leaderboard"
-          title={
-            leaderboardEnabled
-              ? undefined
-              : "Leaderboard data is unavailable in this local setup"
-          }
-        >
-          <span className="home-header-board-full">Leaderboard</span>
-          <span className="home-header-board-short" aria-hidden="true">
-            Board
-          </span>
-        </button>
-        <button
-          className="board-button home-header-account"
-          type="button"
-          onClick={onOpenAccount}
-          title={accountLabel}
-          aria-label={
-            accountLabel === "Sign in"
-              ? "Profile, sign in"
-              : `Profile, ${accountLabel}`
-          }
-        >
-          <span>Profile</span>
-          {socialUnreadCount > 0 && (
-            <span
-              className="home-header-social-badge"
-              aria-label={`${socialUnreadCount} unread friend updates`}
-            >
-              {socialUnreadCount > 9 ? "9+" : socialUnreadCount}
-            </span>
           )}
         </button>
       </div>

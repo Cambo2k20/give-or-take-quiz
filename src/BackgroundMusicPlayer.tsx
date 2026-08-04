@@ -17,7 +17,13 @@ import {
   type MusicPreference,
 } from "./musicPreference";
 
-export function BackgroundMusicPlayer() {
+type BackgroundMusicPlayerProps = {
+  placement?: "floating" | "header";
+};
+
+export function BackgroundMusicPlayer({
+  placement = "floating",
+}: BackgroundMusicPlayerProps) {
   const [trackIndex, setTrackIndex] = useState(0);
   const [open, setOpen] = useState(false);
   const [preference, setPreference] = useState(readMusicPreference);
@@ -95,7 +101,10 @@ export function BackgroundMusicPlayer() {
   const silent = preference.muted || preference.volume === 0;
 
   return (
-    <aside className="music-player" aria-label="Background music">
+    <aside
+      className={`music-player${placement === "header" ? " is-header" : ""}`}
+      aria-label="Background music"
+    >
       {open && (
         <div className="music-player-panel" id={panelId}>
           <p className="music-player-kicker">Now playing</p>
@@ -125,6 +134,7 @@ export function BackgroundMusicPlayer() {
         <button
           className="music-player-open"
           type="button"
+          aria-label="Music"
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpen((current) => !current)}

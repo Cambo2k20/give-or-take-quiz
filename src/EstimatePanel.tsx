@@ -144,10 +144,10 @@ export function EstimatePanel({
           }
           onKeyDown={handleKeyDown}
         />
-      </div>
-      <div className="range-labels" aria-hidden="true">
-        <span>{formatQuestionValue(question, question.min)}</span>
-        <span>{formatQuestionValue(question, question.max)}</span>
+        <div className="range-labels" aria-hidden="true">
+          <span>{formatQuestionValue(question, question.min)}</span>
+          <span>{formatQuestionValue(question, question.max)}</span>
+        </div>
       </div>
       {!locked && (
         <p className="keyboard-help">

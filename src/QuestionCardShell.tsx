@@ -56,16 +56,20 @@ export function QuestionCardShell({
 
       <header className="question-card-header">
         <span className="question-card-category">
-          <CategoryIcon
-            category={question.category}
-            className="question-card-category-icon"
-          />
-          <span>{category.label}</span>
+          <span className="question-card-category-icon-shell">
+            <CategoryIcon
+              category={question.category}
+              className="question-card-category-icon"
+            />
+          </span>
+          <span className="question-card-category-copy">
+            <span className="question-card-category-name">{category.label}</span>
+            <span className="question-tag">{subtypeLabel(question)}</span>
+          </span>
         </span>
         <span className="question-card-counter">{progressLabel}</span>
       </header>
 
-      <span className="question-tag">{subtypeLabel(question)}</span>
       <h1 ref={headingRef} tabIndex={-1}>
         {question.prompt}
       </h1>

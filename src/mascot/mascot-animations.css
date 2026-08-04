@@ -276,7 +276,7 @@
 /* Room for the mascot to peek above the track. */
 .estimate-panel.has-mascot .slider-wrap {
   height: 108px;
-  margin-top: 64px;
+  margin-top: 88px;
 }
 
 /* The track and its markers sit in front of the body, the thumb in front of the hand. */
@@ -287,6 +287,12 @@
 .estimate-panel.has-mascot .answer-dot,
 .estimate-panel.has-mascot .estimate-slider {
   z-index: 1;
+}
+
+@media (max-width: 720px) {
+  .estimate-panel.has-mascot .slider-wrap {
+    margin-top: 64px;
+  }
 }
 
 @media (max-width: 420px) {

@@ -136,15 +136,14 @@ describe("survival", () => {
     expect(best).toBe(submitted.length - 1);
   });
 
-  it("keeps the classic hero a consequence-free warm-up", async () => {
-    const user = userEvent.setup();
+  it("keeps the selected Classic mode consequence-free until a category starts", () => {
     render(<Game />);
 
-    // Classic is the default: the hero is the demo, not question 1 of a run.
-    await user.click(screen.getByRole("button", { name: /check my guess/i }));
-    expect(
-      screen.getByRole("button", { name: /play a full round/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Classic" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.queryByRole("slider")).not.toBeInTheDocument();
 
     expect(api.publishSurvival).not.toHaveBeenCalled();
     expect(api.publish).not.toHaveBeenCalled();

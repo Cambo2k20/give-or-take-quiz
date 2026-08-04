@@ -1,23 +1,33 @@
+import type { CSSProperties } from "react";
 import { accuracyTier } from "../lib/game";
 import { DAILY_MAX_SCORE, type DailyDateProgress } from "../lib/daily";
 import type { DailySet } from "../lib/types";
+import dailyQuizIcon from "./assets/home/daily-quiz.png";
+import dailyStreakIcon from "./assets/home/daily-streak.png";
+import sunriseDecoration from "./assets/home/sunrise.png";
 import { readableDate } from "./Daily";
+import { WarmupSliderMascot } from "./mascot/WarmupSliderMascot";
 import { formatPoints } from "./questionText";
 
-const FlameIcon = () => (
+const ArchiveIcon = () => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="2"
+    strokeWidth="1.9"
+    strokeLinecap="round"
+    strokeLinejoin="round"
     aria-hidden="true"
   >
-    <path
-      d="M12 3c.4 2.6-1 3.9-2.4 5.2C8 9.7 6.6 11 6.6 13.6a5.4 5.4 0 0 0 10.8 0c0-2-.8-3.4-1.8-4.6-.4 1-1.1 1.6-2 1.9.5-2.9-.6-6-1.6-7.9Z"
-      strokeLinejoin="round"
-    />
+    <path d="M12 7.5v5l3 2" />
+    <path d="M3.6 12a8.4 8.4 0 1 0 2.2-5.7" />
+    <path d="M3.4 4.2v3.6H7" />
   </svg>
 );
+
+function iconMask(url: string) {
+  return { "--home-icon-url": `url("${url}")` } as CSSProperties;
+}
 
 /** Distinct subjects in the set, in the order they are asked. */
 function subjectCount(set: DailySet) {
@@ -36,9 +46,11 @@ type DailyHeroProps = {
   rank: number | null;
   /** Without a configured leaderboard there is no board to send anyone to. */
   boardEnabled: boolean;
+  archiveCount?: number;
   onPlay: () => void;
   onReplay: () => void;
   onOpenBoard: () => void;
+  onOpenArchive?: () => void;
   onShare: () => void;
   shareStatus: string;
 };
@@ -49,9 +61,11 @@ export function DailyHero({
   today,
   rank,
   boardEnabled,
+  archiveCount = 0,
   onPlay,
   onReplay,
   onOpenBoard,
+  onOpenArchive = () => {},
   onShare,
   shareStatus,
 }: DailyHeroProps) {
@@ -60,25 +74,61 @@ export function DailyHero({
 
   return (
     <section
-      className={`daily-hero${played ? " is-played" : ""}`}
+      className={`daily-hero home-daily-hero${played ? " is-played" : ""}`}
       aria-labelledby="daily-hero-heading"
     >
+      <span
+        className="home-daily-sunrise"
+        style={iconMask(sunriseDecoration)}
+        aria-hidden="true"
+      />
+
       <div className="daily-hero-head">
-        <span className="daily-hero-flag">
-          <span className="daily-hero-dot" aria-hidden="true" />
-          Today's Daily
+        <span className={`daily-hero-streak${streak > 0 ? " is-lit" : ""}`}>
+          <span
+            className="home-daily-streak-icon"
+            style={iconMask(dailyStreakIcon)}
+            aria-hidden="true"
+          />
+          {streakLabel(streak)}
+        </span>
+
+        {archiveCount > 0 && (
+          <button
+            className="home-daily-archive"
+            type="button"
+            onClick={onOpenArchive}
+            aria-label="Past dailies"
+          >
+            <ArchiveIcon />
+            <span>Daily Archives</span>
+          </button>
+        )}
+      </div>
+
+      <div className="home-daily-intro">
+        <span className="home-daily-icon-plate" aria-hidden="true">
+          <span
+            className="home-daily-quiz-icon"
+            style={iconMask(dailyQuizIcon)}
+          />
         </span>
         <time className="daily-hero-date" dateTime={set.date}>
           {readableDate(set.date)}
         </time>
+        <h2 id="daily-hero-heading" className="daily-hero-heading">
+          {played ? "Today's score" : "Today's Daily Quiz"}
+        </h2>
+        {!played && (
+          <p className="daily-hero-lede">
+            {set.questions.length} questions · ~2 min · {subjectCount(set)}{" "}
+            subjects
+          </p>
+        )}
       </div>
 
       {played ? (
         <>
-          <h2 id="daily-hero-heading" className="daily-hero-heading">
-            Today's score
-          </h2>
-
           <div className="daily-hero-score">
             <strong>{formatPoints(score)}</strong>
             <span>/ {formatPoints(DAILY_MAX_SCORE)}</span>
@@ -101,15 +151,11 @@ export function DailyHero({
             </ol>
           )}
 
-          <div className="daily-hero-facts">
-            <span className={`daily-hero-streak${streak > 0 ? " is-lit" : ""}`}>
-              <FlameIcon />
-              {streakLabel(streak)}
-            </span>
-            {rank !== null && (
+          {rank !== null && (
+            <div className="daily-hero-facts">
               <span className="daily-hero-rank">Daily rank #{rank}</span>
-            )}
-          </div>
+            </div>
+          )}
 
           <div
             className={`daily-hero-actions${boardEnabled ? "" : " is-single"}`}
@@ -146,19 +192,20 @@ export function DailyHero({
         </>
       ) : (
         <>
-          <h2 id="daily-hero-heading" className="daily-hero-heading">
-            {readableDate(set.date)}
-          </h2>
-
-          <p className="daily-hero-lede">
-            {set.questions.length} questions · ~2 min · {subjectCount(set)}{" "}
-            subjects
-          </p>
-
-          <span className={`daily-hero-streak${streak > 0 ? " is-lit" : ""}`}>
-            <FlameIcon />
-            {streakLabel(streak)}
-          </span>
+          <div className="home-daily-slider-preview" aria-hidden="true">
+            <WarmupSliderMascot
+              className="home-daily-mascot"
+              position={0.46}
+              railCenter={50}
+              railThickness={14}
+              thumbSize={28}
+              scale={0.5}
+            />
+            <span className="home-daily-slider-rail">
+              <span />
+            </span>
+            <span className="home-daily-slider-thumb" />
+          </div>
 
           <button className="primary-button" type="button" onClick={onPlay}>
             Play today's Daily

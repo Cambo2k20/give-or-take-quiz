@@ -34,6 +34,13 @@ describe("QuestionCardShell", () => {
     );
 
     expect(screen.getByText("Movies")).toBeInTheDocument();
+    expect(container.querySelector(".question-card-category-icon-shell")).not.toBeNull();
+    expect(container.querySelector(".question-card-category-name")).toHaveTextContent(
+      "Movies",
+    );
+    expect(container.querySelector(".question-card-category-copy")).toHaveTextContent(
+      "MoviesHistoric event",
+    );
     expect(screen.getByText("Question 2 of 5")).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
       movieQuestion.prompt,
