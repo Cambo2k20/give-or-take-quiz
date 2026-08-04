@@ -1,4 +1,5 @@
 import type { MascotReaction } from "./mascotState";
+import { readSoundEffectsEnabled } from "../soundPreference";
 
 export type MascotSound = "bigHowl" | "growl" | "quietHowl";
 
@@ -154,6 +155,7 @@ function playHowl(sound: HowlSound) {
 export function playMascotSound(reaction: MascotReaction) {
   const sound = mascotSoundForReaction(reaction);
   if (!sound || typeof document === "undefined") return;
+  if (!readSoundEffectsEnabled()) return;
   if (document.visibilityState === "hidden") return;
   if (navigator.userActivation && !navigator.userActivation.hasBeenActive) {
     return;
