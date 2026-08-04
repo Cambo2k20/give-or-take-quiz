@@ -78,6 +78,7 @@ import {
   ProfileAvatarArtwork,
   ProgressRibbon,
   RankPanel,
+  ResultProgressCard,
   UnlocksPanel,
   hasEarnedTitle,
 } from "./Progress";
@@ -89,6 +90,7 @@ import { JoinLeaderboardForm } from "./Leaderboard";
 import type { SubmittedDailyRound } from "../lib/leaderboard";
 import {
   formatPoints,
+  resultDelta,
   unitSuffix,
   useCountUp,
   verdictDetail,
@@ -129,6 +131,7 @@ import {
 } from "../lib/playerProfileLink";
 import { usePublicProfile } from "./usePublicProfile";
 import { WarmupSliderMascot } from "./mascot/WarmupSliderMascot";
+import { MascotPose } from "./mascot/MascotPose";
 import { reactionForTier } from "./mascot/mascotState";
 import {
   readMascotInGames,
@@ -340,6 +343,7 @@ export default function Game() {
     readEquippedBackgroundTheme,
   );
   const [bestScores, setBestScores] = useState<BestScores>(readBestScores);
+  const [bestBeforeRound, setBestBeforeRound] = useState(0);
   const [questionHistory, setQuestionHistory] = useState(readQuestionHistory);
   const [dailyProgress, setDailyProgress] = useState(readDailyProgress);
   const [dailyHistorySync, setDailyHistorySync] =
@@ -524,6 +528,20 @@ export default function Game() {
     () => results.reduce((sum, result) => sum + result.points, 0),
     [results],
   );
+  const countedTotalScore = useCountUp(
+    totalScore,
+    activePhase === "results",
+  );
+  const bullseyeCount = results.filter(
+    (result) => accuracyTier(result.points).id === "bullseye",
+  ).length;
+  const isNewPersonalBest =
+    !dailyDate &&
+    !activeChallenge &&
+    totalScore > 0 &&
+    totalScore > bestBeforeRound;
+  const resultProgressCategory: QuestionCategory | null =
+    !dailyDate && mode !== "mixed" ? mode : null;
   const question = gameQuestions[questionIndex];
   const guess = question ? positionToValue(question, position) : 0;
   const currentResult = results[questionIndex];
@@ -1125,6 +1143,7 @@ export default function Game() {
     setTargetChallengeId(null);
     replaceChallengeLink(null);
     const draw = selectQuestionsWithHistory(selectedMode, questionHistory);
+    setBestBeforeRound(bestScores[selectedMode]);
     setMode(selectedMode);
     setDailyDate(null);
     setQuestionHistory(draw.history);
@@ -1862,18 +1881,99 @@ export default function Game() {
 
       {activePhase === "results" && (
         <section className="results-screen">
-          <div className="results-hero">
-            <p className="eyebrow">
-              {dailyDate ? `Daily · ${dailyDate}` : MODE_LABELS[mode]} · Game
-              complete
-            </p>
-            <h1 ref={focusHeadingRef} tabIndex={-1}>
-              Final score
-            </h1>
-            <div className="final-score">
-              <strong>{formatPoints(totalScore)}</strong>
-              <span>/ {formatPoints(maxScore)}</span>
+          <div className="results-hero results-tally-hero">
+            <div className="results-tally-meta">
+              <span className="results-category-pill">
+                <span className="results-category-icon" aria-hidden="true">
+                  {dailyDate || mode === "mixed"
+                    ? MIXED_MODE.icon
+                    : categoryLabels[mode].icon}
+                </span>
+                {dailyDate ? "Daily" : MODE_LABELS[mode]}
+              </span>
+              <span className="results-format-label">
+                <span className="results-format-full">
+                  {activeChallenge
+                    ? "Challenge · Game complete"
+                    : dailyDate
+                      ? isPracticeRound
+                        ? "Daily · Practice"
+                        : "Daily · Game complete"
+                      : "Classic · Game complete"}
+                </span>
+                <span className="results-format-short">
+                  {activeChallenge ? "Challenge" : dailyDate ? "Daily" : "Classic"}
+                </span>
+              </span>
             </div>
+
+            <div className="results-score-row">
+              <div className="results-score-copy">
+                <h1 ref={focusHeadingRef} tabIndex={-1}>
+                  Final score
+                </h1>
+                <div className="final-score">
+                  <strong>{formatPoints(countedTotalScore)}</strong>
+                  <span>/ {formatPoints(maxScore)}</span>
+                </div>
+              </div>
+              <MascotPose
+                pose="celebrating"
+                decorative
+                animated
+                className="results-celebration-mascot"
+              />
+              {!activeChallenge && (
+                <div
+                  className={`result-best-callout${
+                    isNewPersonalBest ? " is-new-best" : ""
+                  }`}
+                  role="status"
+                >
+                  <span className="result-best-mark" aria-hidden="true">
+                    {isNewPersonalBest ? "▲" : "●"}
+                  </span>
+                  <span>
+                    {dailyDate
+                      ? isPracticeRound
+                        ? "Practice round · official score unchanged"
+                        : streak > 0
+                          ? `${streak}-day streak · come back tomorrow`
+                          : "Daily complete · start a streak tomorrow"
+                      : isNewPersonalBest
+                        ? bestBeforeRound > 0
+                          ? `New personal best · ${formatPoints(totalScore - bestBeforeRound)} above your last`
+                          : "New personal best · first score"
+                        : `Personal best · ${formatPoints(bestScores[mode])}`}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="results-tally" aria-label="Scores by question">
+              {results.map((result, index) => {
+                const resultTier = accuracyTier(result.points);
+                return (
+                  <div
+                    className={`results-tally-item tier-${resultTier.id}`}
+                    key={result.question.id}
+                    aria-label={`Question ${index + 1}: ${formatPoints(result.points)} points`}
+                  >
+                    <div className="results-tally-track" aria-hidden="true">
+                      <span
+                        style={{
+                          height: `${result.points === 0 ? 0 : Math.max(5, result.points / 10)}%`,
+                          animationDelay: `${260 + index * 130}ms`,
+                        }}
+                      />
+                    </div>
+                    <strong>{formatPoints(result.points)}</strong>
+                    <span>Q{index + 1}</span>
+                  </div>
+                );
+              })}
+            </div>
+
             {activeChallenge ? (
               <ChallengeResultCallout
                 state={challengeSubmit}
@@ -1884,61 +1984,104 @@ export default function Game() {
                 shareStatus={shareStatus}
               />
             ) : (
-            <div className="result-summary">
-              <p>
-                {dailyDate
-                  ? streak > 0
-                    ? `That's a ${streak}-day streak. Come back tomorrow to keep it.`
-                    : "Play tomorrow's daily to start a streak."
-                  : totalScore === bestScores[mode] && totalScore > 0
-                    ? "That’s your best score in this category."
-                    : `Your best ${MODE_LABELS[mode].toLowerCase()} score is ${formatPoints(bestScores[mode])}.`}
-              </p>
-              <div className="result-actions">
-                {dailyDate ? (
+              <>
+                <div className="result-actions">
+                  {dailyDate ? (
+                    <button
+                      className="primary-button"
+                      type="button"
+                      onClick={() => setPhase("category")}
+                    >
+                      Back to the game
+                    </button>
+                  ) : (
+                    <button
+                      className="primary-button"
+                      type="button"
+                      onClick={() => startGame(mode)}
+                    >
+                      Play again
+                    </button>
+                  )}
                   <button
-                    className="primary-button"
+                    className="secondary-button"
                     type="button"
-                    onClick={() => setPhase("category")}
+                    onClick={() =>
+                      setPhase(dailyDate ? "daily-archive" : "category")
+                    }
                   >
-                    Back to the game
+                    {dailyDate ? "Past dailies" : "Change category"}
                   </button>
-                ) : (
                   <button
-                    className="primary-button"
+                    className="secondary-button"
                     type="button"
-                    onClick={() => startGame(mode)}
+                    onClick={shareResult}
                   >
-                    Play again
+                    Share result
                   </button>
-                )}
-                <button
-                  className="secondary-button"
-                  type="button"
-                  onClick={() =>
-                    setPhase(dailyDate ? "daily-archive" : "category")
-                  }
-                >
-                  {dailyDate ? "Past dailies" : "Change category"}
-                </button>
-                <button
-                  className="secondary-button"
-                  type="button"
-                  onClick={shareResult}
-                >
-                  Share result
-                </button>
-              </div>
-              <p className="share-status" role="status">
-                {shareStatus}
-              </p>
-            </div>
+                </div>
+                <p className="share-status" role="status">
+                  {shareStatus}
+                </p>
+              </>
             )}
           </div>
 
-          <ProgressRibbon change={progress.change} labels={categoryLabels} />
+          <ResultProgressCard
+            category={resultProgressCategory}
+            progress={progress.progress}
+            change={progress.change}
+            labels={categoryLabels}
+          >
+            {!activeChallenge &&
+              leaderboard.enabled &&
+              leaderboard.ready &&
+              auth.canUseLeaderboard &&
+              player && (
+                <div className="result-board-summary">
+                  <div className="board-status" role="status">
+                    {leaderboard.submit.status === "sending" &&
+                      "Saving your score…"}
+                    {leaderboard.submit.status === "sent" && (
+                      <>
+                        Saved as <strong>{player.displayName}</strong>. The server
+                        scored this round{" "}
+                        <strong>
+                          {formatPoints(leaderboard.submit.totalScore)}
+                        </strong>
+                        .
+                      </>
+                    )}
+                    {leaderboard.submit.status === "failed" && (
+                      <span className="is-error">
+                        {leaderboard.submit.message}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    className="result-board-link"
+                    type="button"
+                    onClick={() =>
+                      openLeaderboard(dailyDate ? "daily" : "classic")
+                    }
+                  >
+                    <span className="result-board-full">
+                      {dailyDate
+                        ? "See today's Daily board →"
+                        : "See the Classic leaderboard →"}
+                    </span>
+                    <span className="result-board-short" aria-hidden="true">
+                      Board →
+                    </span>
+                  </button>
+                </div>
+              )}
+          </ResultProgressCard>
 
-          {!activeChallenge && leaderboard.enabled && leaderboard.ready && (
+          {!activeChallenge &&
+            leaderboard.enabled &&
+            leaderboard.ready &&
+            (!auth.canUseLeaderboard || !player) && (
             <div className="board-callout">
               {auth.status === "signed-out" ? (
                 <>
@@ -1988,22 +2131,42 @@ export default function Game() {
           <div className="breakdown">
             <div className="section-heading">
               <h2>Question by question</h2>
-              <span>{results.length} rounds</span>
+              <span>
+                {results.length} rounds
+                {bullseyeCount > 0 && (
+                  <span className="breakdown-highlight">
+                    {" "}·{" "}
+                    {bullseyeCount === 1
+                      ? "one bullseye"
+                      : `${bullseyeCount} bullseyes`}
+                  </span>
+                )}
+              </span>
             </div>
             <ol className="result-list">
-              {results.map((result) => (
+              {results.map((result, index) => (
                 <li
                   key={result.question.id}
                   className={`tier-${accuracyTier(result.points).id}`}
+                  style={{ animationDelay: `${260 + index * 130}ms` }}
                 >
                   <div className="result-question">
                     <strong>{result.question.prompt}</strong>
                     <span>
                       Your guess{" "}
                       {formatQuestionValue(result.question, result.guess)}
-                      {unitSuffix(result.question)} · Answer{" "}
+                      {unitSuffix(result.question)} → answer{" "}
                       {formatQuestionValue(result.question, result.question.answer)}
-                      {unitSuffix(result.question)}
+                      {unitSuffix(result.question)} ·{" "}
+                      {resultDelta(result.question, result.guess)}
+                    </span>
+                    <span className="result-accuracy-track" aria-hidden="true">
+                      <span
+                        style={{
+                          width: `${result.points / 10}%`,
+                          animationDelay: `${380 + index * 130}ms`,
+                        }}
+                      />
                     </span>
                   </div>
                   <strong className="result-points">

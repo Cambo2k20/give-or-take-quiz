@@ -41,6 +41,20 @@ function differenceLabel(question: Question, guess: number) {
   return formatQuestionValue(question, difference);
 }
 
+/** Compact signed difference for the result list, without repeating a sentence. */
+export function resultDelta(question: Question, guess: number) {
+  if (guess === question.answer) return "exact";
+  const direction =
+    question.unit === "year"
+      ? guess < question.answer
+        ? "early"
+        : "late"
+      : guess < question.answer
+        ? "under"
+        : "over";
+  return `${differenceLabel(question, guess)} ${direction}`;
+}
+
 export function verdictDetail(question: Question, guess: number) {
   if (guess === question.answer) return "Exactly right.";
   const behind = guess < question.answer;
@@ -83,7 +97,7 @@ export function useCountUp(target: number, enabled: boolean) {
     const duration = 550;
     const start = performance.now();
     let frame = requestAnimationFrame(function step(now) {
-      const progress = Math.min(1, (now - start) / duration);
+      const progress = Math.min(1, Math.max(0, (now - start) / duration));
       setValue(Math.round(target * (1 - (1 - progress) ** 3)));
       if (progress < 1) frame = requestAnimationFrame(step);
     });

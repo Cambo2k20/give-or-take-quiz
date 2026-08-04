@@ -33,7 +33,7 @@ function fixtureQuestions(prefix: string) {
 }
 
 import Game from "@/src/Game";
-import { readBestScores } from "@/lib/game";
+import { readBestScores, writeBestScores } from "@/lib/game";
 import { dailySets, readDailyProgress } from "@/lib/daily";
 import { writeFormatRecords } from "@/lib/formats";
 
@@ -127,6 +127,10 @@ describe("Game", () => {
 
   it("shows a complete results summary, saves the best score, and restarts", async () => {
     const user = userEvent.setup();
+    writeBestScores({
+      ...readBestScores(window.localStorage),
+      history: 1,
+    });
     render(<Game />);
 
     await completeRound(user, "History");
@@ -137,6 +141,12 @@ describe("Game", () => {
     expect(readBestScores(window.localStorage).history).toEqual(
       expect.any(Number),
     );
+    expect(screen.getByText(/new personal best .* above your last/i)).toBeInTheDocument();
+    expect(document.querySelectorAll(".results-tally-item")).toHaveLength(5);
+    expect(document.querySelectorAll(".result-accuracy-track")).toHaveLength(5);
+    expect(
+      document.querySelector(".results-celebration-mascot"),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /play again/i }));
 

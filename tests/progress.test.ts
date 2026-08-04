@@ -277,6 +277,7 @@ describe("diffProgress", () => {
     // would be worse than staying quiet.
     const after = { ...before };
     expect(diffProgress(null, after)).toEqual({
+      xpGained: [],
       rankUps: [],
       unlocked: [],
       badgesUnlocked: [],
@@ -285,6 +286,7 @@ describe("diffProgress", () => {
 
   it("reports nothing when nothing actually moved", () => {
     expect(diffProgress(before, before)).toEqual({
+      xpGained: [],
       rankUps: [],
       unlocked: [],
       badgesUnlocked: [],
@@ -300,6 +302,7 @@ describe("diffProgress", () => {
     };
 
     expect(diffProgress(before, after)).toEqual({
+      xpGained: [],
       rankUps: [
         { category: "population", rank: 5, title: "People Watcher" },
       ],
@@ -314,7 +317,12 @@ describe("diffProgress", () => {
       categories: [{ ...before.categories[0], xp: 800 }],
     };
 
-    expect(diffProgress(before, after).rankUps).toEqual([]);
+    expect(diffProgress(before, after)).toEqual({
+      xpGained: [{ category: "population", xp: 400 }],
+      rankUps: [],
+      unlocked: [],
+      badgesUnlocked: [],
+    });
   });
 
   it("catches a newly earned achievement without re-announcing an old one", () => {

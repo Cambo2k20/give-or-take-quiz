@@ -219,7 +219,7 @@ function progressAtRank(
 vi.mock("@/src/useProgress", () => ({ useProgress: vi.fn() }));
 
 import Game from "@/src/Game";
-import { ProgressRibbon } from "@/src/Progress";
+import { ProgressRibbon, ResultProgressCard } from "@/src/Progress";
 import { MASCOT_IN_GAMES_STORAGE_KEY } from "@/src/mascot/mascotPreference";
 import { useProgress } from "@/src/useProgress";
 
@@ -752,6 +752,38 @@ describe("progression screens", () => {
 });
 
 describe("rank badge rewards", () => {
+  it("shows exact XP movement in the score-screen rank card", () => {
+    const labels = Object.fromEntries(
+      fixture.categories.map((entry) => [
+        entry.category,
+        { title: entry.category[0].toUpperCase() + entry.category.slice(1) },
+      ]),
+    ) as Record<QuestionCategory, { title: string }>;
+
+    render(
+      <ResultProgressCard
+        category="population"
+        progress={fixture}
+        change={{
+          xpGained: [{ category: "population", xp: 120 }],
+          rankUps: [],
+          unlocked: [],
+          badgesUnlocked: [],
+        }}
+        labels={labels}
+      >
+        <span>Saved as Ada</span>
+      </ResultProgressCard>,
+    );
+
+    expect(
+      screen.getByRole("progressbar", { name: /population rank progress/i }),
+    ).toHaveAttribute("aria-valuenow", "4200");
+    expect(screen.getByText(/\+120 XP this round/i)).toBeInTheDocument();
+    expect(screen.getByText("Saved as Ada")).toBeInTheDocument();
+    expect(screen.getByText(/Rank 15/i)).toBeInTheDocument();
+  });
+
   it("announces the badge and suppresses the duplicate rank-up line", () => {
     const badge = progressAtRank(
       "population",
@@ -769,6 +801,7 @@ describe("rank badge rewards", () => {
     render(
       <ProgressRibbon
         change={{
+          xpGained: [],
           rankUps: [
             { category: "population", rank: 5, title: "People Watcher" },
           ],
