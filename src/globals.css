@@ -7934,13 +7934,13 @@ h1[tabindex="-1"]:focus {
   .home-header-redesign .home-header-wordmark {
     grid-area: auto;
     grid-column: 2;
-    gap: 7px;
-    font-size: clamp(18px, 5.4vw, 21px);
+    gap: 8px;
+    font-size: clamp(21px, 6vw, 23px);
   }
 
   .home-header-redesign .home-header-wordmark .wordmark-mark {
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
   }
 
   .home-header-redesign .home-header-account {
@@ -7950,8 +7950,20 @@ h1[tabindex="-1"]:focus {
 
   .home-header-redesign .home-header-toolbar {
     width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
     padding-top: 8px;
     border-top: 1px solid color-mix(in srgb, var(--accent) 20%, var(--line));
+  }
+
+  .home-header-redesign .home-header-toolbar > * {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .home-header-redesign .home-header-theme-toggle {
+    grid-area: auto;
+    justify-self: stretch;
   }
 
   .home-header-redesign .home-header-control,
