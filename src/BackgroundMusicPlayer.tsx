@@ -126,35 +126,55 @@ export function BackgroundMusicPlayer({
               aria-label="Music volume"
             />
           </label>
+          {placement === "header" && (
+            <button
+              className="music-player-panel-mute"
+              type="button"
+              aria-label={preference.muted ? "Unmute music" : "Mute music"}
+              aria-pressed={preference.muted}
+              onClick={toggleMuted}
+            >
+              {preference.muted ? "Unmute music" : "Mute music"}
+            </button>
+          )}
           <small>All tracks play in sequence and loop automatically.</small>
         </div>
       )}
 
-      <div className="music-player-dock">
+      <div
+        className={`music-player-dock${placement === "header" ? " is-toolbar" : ""}`}
+      >
         <button
           className="music-player-open"
           type="button"
           aria-label="Music"
           aria-expanded={open}
           aria-controls={panelId}
+          data-enabled={!silent}
           onClick={() => setOpen((current) => !current)}
         >
-          <MusicNotesIcon size={18} weight="bold" aria-hidden="true" />
+          <MusicNotesIcon
+            size={18}
+            weight={placement === "header" ? "regular" : "bold"}
+            aria-hidden="true"
+          />
           <span>Music</span>
         </button>
-        <button
-          className="music-player-mute"
-          type="button"
-          aria-label={preference.muted ? "Unmute music" : "Mute music"}
-          aria-pressed={preference.muted}
-          onClick={toggleMuted}
-        >
-          {silent ? (
-            <SpeakerSlashIcon size={18} weight="bold" aria-hidden="true" />
-          ) : (
-            <SpeakerHighIcon size={18} weight="bold" aria-hidden="true" />
-          )}
-        </button>
+        {placement !== "header" && (
+          <button
+            className="music-player-mute"
+            type="button"
+            aria-label={preference.muted ? "Unmute music" : "Mute music"}
+            aria-pressed={preference.muted}
+            onClick={toggleMuted}
+          >
+            {silent ? (
+              <SpeakerSlashIcon size={18} weight="bold" aria-hidden="true" />
+            ) : (
+              <SpeakerHighIcon size={18} weight="bold" aria-hidden="true" />
+            )}
+          </button>
+        )}
       </div>
 
       <audio

@@ -75,6 +75,7 @@ import {
   AchievementPanel,
   MascotGamePreference,
   ProfileDashboard,
+  ProfileAvatarArtwork,
   ProgressRibbon,
   RankPanel,
   UnlocksPanel,
@@ -133,6 +134,10 @@ import {
   readMascotInGames,
   writeMascotInGames,
 } from "./mascot/mascotPreference";
+import {
+  readSoundEffectsEnabled,
+  writeSoundEffectsEnabled,
+} from "./soundPreference";
 import {
   PublicProfileEditor,
   PublicProfileEditorState,
@@ -315,6 +320,9 @@ export default function Game() {
   // Read straight from the browser during the first render. The app is fully
   // client-rendered, so there is no server pass to mismatch against.
   const [theme, setTheme] = useState<Theme>(readTheme);
+  const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(
+    readSoundEffectsEnabled,
+  );
   // The selected custom skin, if any. It may support one display mode or both,
   // while `theme` remains the independent mode axis.
   const [bgTheme, setBgTheme] = useState<BackgroundThemeId | null>(
@@ -1063,6 +1071,14 @@ export default function Game() {
     applyTheme(next);
   }
 
+  function toggleSoundEffects() {
+    setSoundEffectsEnabled((enabled) => {
+      const next = !enabled;
+      writeSoundEffectsEnabled(next);
+      return next;
+    });
+  }
+
   /** Equips a background, or clears it if it was already equipped — a toggle
    * rather than a one-way switch, so a player can always get back to plain
    * light/dark with nothing behind it. */
@@ -1406,16 +1422,27 @@ export default function Game() {
         <HomeHeader
           musicControls={<BackgroundMusicPlayer placement="header" />}
           leaderboardEnabled={leaderboard.enabled}
+          leaderboardActive={activePhase === "leaderboard"}
           accountLabel={
             auth.status === "signed-in"
               ? (player?.displayName ?? auth.user?.email ?? "Account")
               : "Sign in"
           }
+          profileAvatar={
+            player ? (
+              <ProfileAvatarArtwork
+                avatarKey={player.avatarKey}
+                className="home-header-avatar-artwork"
+              />
+            ) : undefined
+          }
           socialUnreadCount={social.unreadCount}
+          soundEffectsEnabled={soundEffectsEnabled}
           theme={theme}
           onHome={goHome}
           onOpenLeaderboard={openLeaderboard}
           onOpenAccount={() => setPhase("account")}
+          onToggleSoundEffects={toggleSoundEffects}
           onToggleTheme={toggleTheme}
         />
       ) : (

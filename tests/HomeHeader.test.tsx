@@ -12,6 +12,7 @@ function renderHeader(
     onHome: vi.fn(),
     onOpenLeaderboard: vi.fn(),
     onOpenAccount: vi.fn(),
+    onToggleSoundEffects: vi.fn(),
     onToggleTheme: vi.fn(),
   };
 
@@ -19,6 +20,7 @@ function renderHeader(
     <HomeHeader
       leaderboardEnabled
       accountLabel="Cambo"
+      soundEffectsEnabled
       theme="dark"
       {...callbacks}
       {...overrides}
@@ -42,12 +44,26 @@ describe("HomeHeader", () => {
     ).toBeInTheDocument();
     expect(document.querySelector(".home-header-music")).not.toBeNull();
     expect(
+      within(header as HTMLElement).getByRole("toolbar", {
+        name: "Quick controls",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Give or Take")).toHaveClass(
+      "home-header-wordmark-text",
+    );
+    expect(screen.getByText("Sound")).toBeInTheDocument();
+    expect(screen.getByText("Board")).toBeInTheDocument();
+    expect(screen.getByText("Theme")).toBeInTheDocument();
+    expect(
       within(header as HTMLElement).getByRole("button", {
         name: "Switch to light mode",
       }),
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Give or Take home" }));
+    await user.click(
+      screen.getByRole("button", { name: "Disable sound effects" }),
+    );
     await user.click(screen.getByRole("button", { name: "Leaderboard" }));
     await user.click(screen.getByRole("button", { name: "Profile, Cambo" }));
     await user.click(
@@ -55,19 +71,23 @@ describe("HomeHeader", () => {
     );
 
     expect(callbacks.onHome).toHaveBeenCalledOnce();
+    expect(callbacks.onToggleSoundEffects).toHaveBeenCalledOnce();
     expect(callbacks.onOpenLeaderboard).toHaveBeenCalledOnce();
     expect(callbacks.onOpenAccount).toHaveBeenCalledOnce();
     expect(callbacks.onToggleTheme).toHaveBeenCalledOnce();
   });
 
-  it("shows social updates without adding the account name to the compact label", () => {
+  it("shows social updates on the profile-only avatar button", () => {
     renderHeader({
       socialUnreadCount: 3,
       theme: "light",
     });
 
     expect(screen.getByText("3")).toHaveAccessibleName("3 unread friend updates");
-    expect(screen.getByText("Profile")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Profile, Cambo" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Profile")).toBeNull();
     expect(screen.queryByText("Cambo")).toBeNull();
     expect(
       screen.getByRole("button", { name: "Switch to dark mode" }),
@@ -101,7 +121,26 @@ describe("HomeHeader", () => {
     expect(
       screen.getByRole("button", { name: "Profile, sign in" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Profile")).toBeInTheDocument();
+    expect(screen.queryByText("Profile")).toBeNull();
+  });
+
+  it("exposes the inactive states without changing their destinations", () => {
+    renderHeader({
+      leaderboardActive: true,
+      soundEffectsEnabled: false,
+      theme: "light",
+    });
+
+    expect(screen.getByRole("button", { name: "Leaderboard" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(
+      screen.getByRole("button", { name: "Enable sound effects" }),
+    ).toHaveAttribute("aria-pressed", "false");
+    expect(
+      screen.getByRole("button", { name: "Switch to dark mode" }),
+    ).toHaveAttribute("aria-pressed", "false");
   });
 
 });

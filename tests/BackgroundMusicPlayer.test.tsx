@@ -13,6 +13,30 @@ describe("BackgroundMusicPlayer", () => {
     );
 
     expect(container.querySelector(".music-player")).toHaveClass("is-header");
+    expect(container.querySelector(".music-player-dock")).toHaveClass(
+      "is-toolbar",
+    );
+    expect(screen.getByRole("button", { name: "Music" })).toHaveAttribute(
+      "data-enabled",
+      "true",
+    );
+    expect(
+      screen.queryByRole("button", { name: /mute music/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps music mute available inside the header panel", async () => {
+    const user = userEvent.setup();
+    render(<BackgroundMusicPlayer placement="header" />);
+
+    await user.click(screen.getByRole("button", { name: "Music" }));
+    const mute = screen.getByRole("button", { name: "Mute music" });
+    await user.click(mute);
+
+    expect(screen.getByRole("button", { name: "Unmute music" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 
   it("exposes persistent volume and mute controls", async () => {

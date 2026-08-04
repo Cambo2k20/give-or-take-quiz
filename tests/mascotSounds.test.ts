@@ -5,6 +5,7 @@ import {
   nextMascotHowlClip,
   playMascotSound,
 } from "@/src/mascot/mascotSounds";
+import { writeSoundEffectsEnabled } from "@/src/soundPreference";
 
 describe("mascot sounds", () => {
   it("uses quiet howls for Not bad and big howls for higher scores", () => {
@@ -39,5 +40,15 @@ describe("mascot sounds", () => {
     vi.stubGlobal("Audio", undefined);
     expect(() => playMascotSound("averageAnswer")).not.toThrow();
     vi.unstubAllGlobals();
+  });
+
+  it("does not construct audio while sound effects are disabled", () => {
+    const AudioMock = vi.fn();
+    vi.stubGlobal("Audio", AudioMock);
+    writeSoundEffectsEnabled(false);
+
+    playMascotSound("averageAnswer");
+
+    expect(AudioMock).not.toHaveBeenCalled();
   });
 });

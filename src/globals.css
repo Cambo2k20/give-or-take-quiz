@@ -7692,73 +7692,284 @@ h1[tabindex="-1"]:focus {
   padding: 8px 9px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  grid-template-areas: "music brand nav";
+  grid-template-areas: "toolbar brand account";
   align-items: center;
   gap: 16px;
   border-color: color-mix(in srgb, var(--accent) 30%, var(--line));
-  background: color-mix(in srgb, var(--surface) 96%, var(--bg));
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
   box-shadow:
     0 18px 54px color-mix(in srgb, var(--bg) 58%, transparent),
     inset 0 1px 0 color-mix(in srgb, var(--ink) 4%, transparent);
 }
 
-.home-header-redesign .home-header-music {
-  grid-area: music;
-  min-width: 0;
-  justify-self: start;
+.home-header-redesign .home-header-brand-row {
+  display: contents;
+}
+
+.home-header-redesign .home-header-balance {
+  display: none;
 }
 
 .home-header-redesign .home-header-wordmark {
+  grid-area: brand;
   min-height: 44px;
+  min-width: 0;
   justify-self: center;
-  font-size: 21px;
+  gap: 8px;
+  color: var(--accent-ink);
+  font-family: var(--font-display);
+  font-size: clamp(20px, 2.2vw, 24px);
+  font-weight: 650;
+  line-height: 1;
+  text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 30%, transparent);
+  white-space: nowrap;
+  transition:
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.home-header-redesign .home-header-wordmark:hover {
+  color: color-mix(in srgb, var(--accent-ink) 82%, var(--ink));
+}
+
+.home-header-redesign .home-header-wordmark:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.home-header-redesign .home-header-wordmark-text {
+  white-space: nowrap;
 }
 
 .home-header-redesign .home-header-wordmark .wordmark-mark {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(
+    0 0 8px color-mix(in srgb, var(--accent) 24%, transparent)
+  );
 }
 
-.home-header-redesign .home-header-side {
-  min-width: auto;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-self: end;
-  gap: 8px;
-}
-
-.home-header-redesign .music-player-dock {
-  border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
-  background: color-mix(in srgb, var(--surface) 70%, var(--accent-wash));
-  box-shadow: none;
-}
-
-.home-header-redesign .board-button,
-.home-header-redesign .theme-toggle {
+.home-header-redesign .home-header-account {
+  grid-area: account;
+  position: relative;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
   min-height: 44px;
-  border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
-  background: color-mix(in srgb, var(--surface) 70%, var(--accent-wash));
-}
-
-.home-header-redesign .board-button {
-  padding-inline: 17px;
-  gap: 7px;
-  font-size: 13px;
-}
-
-.home-header-redesign .board-button > svg {
-  display: none;
-  width: 19px;
-  height: 19px;
-}
-
-.home-header-redesign .theme-toggle {
-  position: static;
-  flex: none;
+  padding: 4px;
+  display: grid;
+  place-items: center;
+  justify-self: end;
+  overflow: visible;
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line));
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 74%, var(--accent-wash));
   color: var(--accent-ink);
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink) 6%, transparent);
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.home-header-redesign .home-header-account:hover {
   border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  background: color-mix(in srgb, var(--accent-wash) 78%, var(--surface));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--ink) 7%, transparent),
+    0 0 18px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.home-header-redesign .home-header-account:active {
+  transform: translateY(1px) scale(0.97);
+}
+
+.home-header-redesign .home-header-account > svg {
+  width: 20px;
+  height: 20px;
+}
+
+.home-header-redesign .home-header-avatar-artwork {
+  width: 34px;
+  height: 34px;
+  display: block;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.home-header-redesign .home-header-toolbar {
+  grid-area: toolbar;
+  width: min(100%, 272px);
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  justify-self: start;
+}
+
+.home-header-redesign .home-header-music,
+.home-header-redesign .music-player.is-header,
+.home-header-redesign .music-player-dock.is-toolbar {
+  width: 100%;
+  min-width: 0;
+}
+
+.home-header-redesign .home-header-control,
+.home-header-redesign .music-player-dock.is-toolbar {
+  min-height: 44px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 76%, var(--accent-wash));
+  color: color-mix(in srgb, var(--accent-ink) 58%, var(--muted));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.home-header-redesign .home-header-control,
+.home-header-redesign .music-player-open {
+  min-width: 0;
+  height: 44px;
+  padding: 0 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 850;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.home-header-redesign .music-player-open {
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.home-header-redesign .home-header-control > svg,
+.home-header-redesign .music-player-open > svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.home-header-redesign .home-header-control:is(:hover, :focus-visible),
+.home-header-redesign .music-player-open:is(:hover, :focus-visible),
+.home-header-redesign .home-header-sound[aria-pressed="true"],
+.home-header-redesign .home-header-board[aria-current="page"],
+.home-header-redesign .music-player-open[data-enabled="true"],
+.home-header-redesign .music-player-open[aria-expanded="true"] {
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  background: color-mix(in srgb, var(--accent-wash) 78%, var(--surface));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.home-header-redesign
+  .music-player-dock.is-toolbar:has(
+    .music-player-open:is([data-enabled="true"], [aria-expanded="true"])
+  ) {
+  border-color: var(--accent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.home-header-redesign .home-header-control:active,
+.home-header-redesign .music-player-open:active {
+  transform: translateY(1px) scale(0.97);
+}
+
+.home-header-redesign .music-player.is-header .music-player-panel {
+  top: calc(100% + 10px);
+  width: min(300px, calc(100vw - 44px));
+}
+
+.music-player-panel-mute {
+  min-height: 36px;
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line));
+  border-radius: 999px;
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+  font-size: 11px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+@media (max-width: 780px) {
+  .home-header.home-header-redesign {
+    width: calc(100% - 24px);
+    min-height: 0;
+    margin-top: 12px;
+    padding: 8px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "brand-row"
+      "toolbar";
+    gap: 0;
+    border-radius: 22px;
+  }
+
+  .home-header-redesign .home-header-brand-row {
+    grid-area: brand-row;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    align-items: center;
+  }
+
+  .home-header-redesign .home-header-balance {
+    display: block;
+    width: 44px;
+    height: 44px;
+  }
+
+  .home-header-redesign .home-header-wordmark {
+    grid-area: auto;
+    grid-column: 2;
+    gap: 8px;
+    font-size: clamp(21px, 6vw, 23px);
+  }
+
+  .home-header-redesign .home-header-wordmark .wordmark-mark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .home-header-redesign .home-header-account {
+    grid-area: auto;
+    grid-column: 3;
+  }
+
+  .home-header-redesign .home-header-toolbar {
+    width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid color-mix(in srgb, var(--accent) 20%, var(--line));
+  }
+
+  .home-header-redesign .home-header-toolbar > * {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .home-header-redesign .home-header-theme-toggle {
+    grid-area: auto;
+    justify-self: stretch;
+  }
+
+  .home-header-redesign .home-header-control,
+  .home-header-redesign .music-player-open {
+    font-size: clamp(9.5px, 2.8vw, 11px);
+  }
 }
 
 .home-flow-redesign {
@@ -8219,49 +8430,6 @@ h1[tabindex="-1"]:focus {
 }
 
 @media (max-width: 600px) {
-  .home-header.home-header-redesign {
-    width: calc(100% - 40px);
-    min-height: 60px;
-    margin-top: 22px;
-    padding: 7px 8px;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    grid-template-areas: "music brand nav";
-    gap: 8px;
-  }
-
-  .home-header-redesign .home-header-wordmark {
-    min-width: 0;
-    gap: 8px;
-    font-size: 16px;
-  }
-
-  .home-header-redesign .home-header-wordmark .wordmark-mark {
-    width: 26px;
-    height: 26px;
-  }
-
-  .home-header-redesign .home-header-side {
-    gap: 6px;
-  }
-
-  .home-header-redesign .board-button,
-  .home-header-redesign .theme-toggle {
-    width: 44px;
-    min-width: 44px;
-    height: 44px;
-    padding: 0;
-    display: grid;
-    place-items: center;
-  }
-
-  .home-header-redesign .board-button > svg {
-    display: block;
-  }
-
-  .home-header-redesign .board-button > span:not(.home-header-social-badge) {
-    display: none;
-  }
-
   .home-flow-redesign {
     width: min(100%, 430px);
     padding: 22px 20px 76px;
@@ -8495,43 +8663,7 @@ h1[tabindex="-1"]:focus {
   }
 }
 
-@media (max-width: 480px) {
-  .home-header-redesign .home-header-wordmark span,
-  .home-header-redesign .music-player-open span {
-    display: none;
-  }
-
-  .home-header-redesign .board-button,
-  .home-header-redesign .theme-toggle {
-    width: 38px;
-    min-width: 38px;
-    height: 38px;
-    min-height: 38px;
-  }
-
-  .home-header-redesign .home-header-side {
-    gap: 4px;
-  }
-
-  .home-header-redesign .music-player-open {
-    width: 38px;
-    min-height: 38px;
-    padding: 0;
-    justify-content: center;
-  }
-
-  .home-header-redesign .music-player-mute {
-    width: 38px;
-    min-height: 38px;
-  }
-}
-
 @media (max-width: 380px) {
-  .home-header.home-header-redesign {
-    width: calc(100% - 24px);
-    gap: 6px;
-  }
-
   .home-flow-redesign {
     padding-inline: 12px;
   }
