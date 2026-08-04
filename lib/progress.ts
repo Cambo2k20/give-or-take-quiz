@@ -234,6 +234,7 @@ export const EMPTY_PROGRESS = EMPTY;
  * before.
  */
 export type ProgressChange = {
+  xpGained: Array<{ category: QuestionCategory; xp: number }>;
   rankUps: Array<{ category: QuestionCategory; rank: number; title: string }>;
   unlocked: Achievement[];
   badgesUnlocked: RankBadge[];
@@ -245,8 +246,13 @@ export function diffProgress(
 ): ProgressChange {
   // With nothing to compare against, nothing is *newly* earned. Announcing a
   // player's whole back catalogue after one round would be worse than silence.
-  if (!before) return { rankUps: [], unlocked: [], badgesUnlocked: [] };
+  if (!before) {
+    return { xpGained: [], rankUps: [], unlocked: [], badgesUnlocked: [] };
+  }
 
+  const previousXp = new Map(
+    before.categories.map((entry) => [entry.category, entry.xp]),
+  );
   const previousRank = new Map(
     before.categories.map((entry) => [entry.category, entry.rank]),
   );
@@ -258,6 +264,12 @@ export function diffProgress(
   );
 
   return {
+    xpGained: after.categories
+      .map((entry) => ({
+        category: entry.category,
+        xp: entry.xp - (previousXp.get(entry.category) ?? 0),
+      }))
+      .filter((entry) => entry.xp > 0),
     rankUps: after.categories
       .filter((entry) => entry.rank > (previousRank.get(entry.category) ?? 1))
       .map(({ category, rank, title }) => ({ category, rank, title })),

@@ -1213,3 +1213,163 @@ export function ProgressRibbon({
     </div>
   );
 }
+
+/**
+ * The score screen's persistent progression card. Unlike ProgressRibbon it
+ * shows the current subject ladder even when the round did not unlock a
+ * reward, then folds any exact server-confirmed movement into the same card.
+ */
+export function ResultProgressCard({
+  category,
+  progress,
+  change,
+  labels,
+  children,
+}: {
+  category: QuestionCategory | null;
+  progress: PlayerProgress | null;
+  change: ProgressChange | null;
+  labels: Record<QuestionCategory, { title: string }>;
+  children?: ReactNode;
+}) {
+  const rank = category
+    ? progress?.categories.find((entry) => entry.category === category) ?? null
+    : null;
+  const currentBadge =
+    category && progress?.badgeCatalogueAvailable
+      ? progress.badges.find(
+          (badge) => badge.category === category && badge.current,
+        ) ?? null
+      : null;
+  const nextBadge =
+    category && rank && progress?.badgeCatalogueAvailable
+      ? progress.badges
+          .filter(
+            (badge) =>
+              badge.category === category && badge.rankFloor > rank.rank,
+          )
+          .sort((left, right) => left.rankFloor - right.rankFloor)[0] ?? null
+      : null;
+  const gainedForCategory = category
+    ? change?.xpGained.find((entry) => entry.category === category)?.xp ?? 0
+    : 0;
+  const totalXpGained =
+    change?.xpGained.reduce((sum, entry) => sum + entry.xp, 0) ?? 0;
+  const announcedBadgeRanks = new Set(
+    (change?.badgesUnlocked ?? []).map(
+      (badge) => `${badge.category}:${badge.rankFloor}`,
+    ),
+  );
+  const remainingRankUps = (change?.rankUps ?? []).filter(
+    (up) => !announcedBadgeRanks.has(`${up.category}:${up.rank}`),
+  );
+  const hasRewards = Boolean(
+    change &&
+      (change.badgesUnlocked.length > 0 ||
+        remainingRankUps.length > 0 ||
+        change.unlocked.length > 0 ||
+        (!rank && totalXpGained > 0)),
+  );
+
+  if (!rank && !hasRewards && !children) return null;
+
+  const remaining = rank ? Math.max(0, rank.nextRankXp - rank.xp) : 0;
+
+  return (
+    <section className="result-progress-card" aria-label="Round progress">
+      {rank && category && (
+        <div className="result-rank-row">
+          <RankBadgeArtwork
+            badgeKey={currentBadge?.badgeKey}
+            className="result-current-badge"
+            eager
+          />
+          <div className="result-rank-main">
+            <div className="result-rank-heading">
+              <strong>
+                {labels[category].title} · Rank {rank.rank}
+              </strong>
+              <span>
+                {formatPoints(rank.xp)} / {formatPoints(rank.nextRankXp)} XP
+              </span>
+            </div>
+            <div
+              className="result-rank-track"
+              role="progressbar"
+              aria-label={`${labels[category].title} rank progress`}
+              aria-valuemin={rank.rankFloorXp}
+              aria-valuemax={rank.nextRankXp}
+              aria-valuenow={rank.xp}
+            >
+              <span style={{ width: `${rank.fraction * 100}%` }} />
+            </div>
+            <p>
+              {formatPoints(remaining)} XP to rank {rank.rank + 1}
+              {gainedForCategory > 0 && (
+                <>
+                  {" "}·{" "}
+                  <strong>+{formatPoints(gainedForCategory)} XP this round</strong>
+                </>
+              )}
+            </p>
+          </div>
+          {nextBadge && (
+            <div className="result-next-badge">
+              <RankBadgeArtwork badgeKey={nextBadge.badgeKey} eager />
+              <span>
+                Next badge
+                <strong>Rank {nextBadge.rankFloor}</strong>
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {hasRewards && change && (
+        <div className="result-rewards" role="status">
+          {!rank && totalXpGained > 0 && (
+            <p>
+              <span className="achievement-pip" aria-hidden="true" />
+              <strong>+{formatPoints(totalXpGained)} XP</strong> across{" "}
+              {change.xpGained.length}{" "}
+              {change.xpGained.length === 1 ? "subject" : "subjects"}
+            </p>
+          )}
+          {change.badgesUnlocked.map((badge) => (
+            <div className="result-reward-badge" key={badge.badgeKey}>
+              <RankBadgeArtwork badgeKey={badge.badgeKey} eager />
+              <p>
+                Badge unlocked ·{" "}
+                <strong>
+                  {labels[badge.category].title} · {badge.title} · Rank{" "}
+                  {badge.rankFloor}
+                </strong>
+              </p>
+            </div>
+          ))}
+          {remainingRankUps.map((up) => (
+            <p key={up.category}>
+              <span className="achievement-pip" aria-hidden="true" />
+              Rank up ·{" "}
+              <strong>
+                {labels[up.category].title} · Rank {up.rank}
+              </strong>
+            </p>
+          ))}
+          {change.unlocked.map((item) => (
+            <p key={item.id}>
+              <span
+                className={`achievement-pip tier-${item.tier}`}
+                aria-hidden="true"
+              />
+              Achievement unlocked · <strong>{item.name}</strong>
+              <span className="result-reward-detail">{item.description}</span>
+            </p>
+          ))}
+        </div>
+      )}
+
+      {children && <div className="result-progress-board">{children}</div>}
+    </section>
+  );
+}
