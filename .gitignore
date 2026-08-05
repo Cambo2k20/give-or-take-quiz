@@ -31,6 +31,8 @@ yarn-error.log*
 /work/
 /outputs/
 /.npm-cache/
+# Supabase Studio saves ad-hoc queries here; they are not project source
+/supabase/snippets/
 
 # leftovers from the pre-Vite toolchain; safe to delete from your checkout
 /.vinext/
