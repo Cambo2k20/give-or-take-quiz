@@ -264,7 +264,7 @@ describe("First Light SVG artwork", () => {
     );
     expect(
       container.querySelectorAll("mask[data-first-light-asset]"),
-    ).toHaveLength(18);
+    ).toHaveLength(16);
     expect(container.querySelectorAll(".first-light__hero")).toHaveLength(3);
     expect(
       container.querySelectorAll(".first-light__foreground rect[mask]"),
@@ -272,19 +272,78 @@ describe("First Light SVG artwork", () => {
     expect(
       container.querySelectorAll(".first-light__category-foliage"),
     ).toHaveLength(2);
+    expect(container.querySelectorAll(".first-light__edge-bank")).toHaveLength(
+      2,
+    );
+    expect(container.querySelectorAll(".first-light__phone-edge")).toHaveLength(
+      2,
+    );
+    expect(container.querySelector("[data-first-light-starfield]")).not.toBeNull();
+    expect(
+      container.querySelectorAll("[data-first-light-starfield] circle"),
+    ).toHaveLength(210);
+    expect(
+      container.querySelector("[data-first-light-morning-star]"),
+    ).not.toBeNull();
+    expect(
+      container.querySelectorAll("[data-first-light-constellation]"),
+    ).toHaveLength(3);
+    expect(container.querySelectorAll(".first-light__meteor")).toHaveLength(3);
 
     const ridge = container.querySelector(".first-light__ridge");
-    expect(ridge).toHaveAttribute("x", "-1150");
-    expect(ridge).toHaveAttribute("opacity", "0.92");
+    expect(ridge).toHaveAttribute("x", "-200");
+    expect(ridge).toHaveAttribute("y", "205");
+    expect(ridge).toHaveAttribute("width", "2000");
+    expect(ridge).toHaveAttribute("height", "250");
+    expect(ridge).toHaveAttribute("opacity", "1");
+    expect(
+      ridge?.querySelector("path[data-first-light-ridge-path]"),
+    ).not.toBeNull();
+    const dawn = container.querySelector(".first-light__dawn");
+    expect(dawn?.nextElementSibling).toBe(ridge);
+    const treeline = container.querySelector(".first-light__treeline");
+    expect(treeline).toHaveAttribute("x", "0");
+    expect(treeline).toHaveAttribute("y", "350");
+    expect(treeline).toHaveAttribute("width", "1952");
+    expect(treeline).toHaveAttribute("height", "122");
+    expect(treeline).toHaveAttribute("opacity", "0.95");
+    expect(
+      treeline?.querySelector("path[data-first-light-treeline-path]"),
+    ).not.toBeNull();
   });
 
   it("keeps motion transform-and-opacity-only with a complete reduced-motion frame", () => {
     expect(firstLightStyles).not.toContain("filter:");
     expect(firstLightStyles.match(/will-change:/g)).toHaveLength(1);
     expect(firstLightStyles).toContain(
-      "first-light-desktop-cross 110s",
+      "animation: first-light-desktop-cross 110s linear infinite;",
     );
-    expect(firstLightStyles).toContain("first-light-phone-cross 80s");
+    expect(firstLightStyles).toContain(
+      "animation: first-light-phone-cross 80s linear infinite;",
+    );
+    expect(firstLightStyles).toContain(
+      "animation: first-light-meteor-cross 37s linear -9s infinite;",
+    );
+    expect(firstLightStyles).toContain("@keyframes first-light-star-glimmer");
+    expect(firstLightStyles).toContain("@keyframes first-light-morning-star");
+    expect(firstLightStyles).toContain("@keyframes first-light-meteor-cross");
+    expect(firstLightStyles).not.toContain("linear -55s infinite");
+    expect(firstLightStyles).not.toContain("linear -40s infinite");
+    expect(firstLightStyles).toContain(
+      ".first-light.svg-theme-artwork--backdrop",
+    );
+    expect(firstLightStyles).toContain(
+      ".first-light.svg-theme-artwork--preview",
+    );
+    expect(firstLightStyles).not.toContain(".first-light--backdrop");
+    expect(firstLightStyles).toContain(
+      "@container first-light (max-aspect-ratio: 4 / 3) and (min-width: 601px)",
+    );
+    expect(firstLightStyles).toContain(
+      ".first-light__category-foliage--left",
+    );
+    expect(firstLightStyles).toContain(".first-light__phone-edge--right");
+    expect(firstLightStyles).not.toContain(".first-light--preview");
     expect(firstLightStyles).toContain(
       "@media (prefers-reduced-motion: reduce)",
     );

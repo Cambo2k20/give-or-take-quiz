@@ -20,6 +20,37 @@
   transition: opacity 180ms ease;
 }
 
+.first-light__edge-bank,
+.first-light__category-foliage,
+.first-light__phone-edge {
+  transform-box: view-box;
+  transition: transform 180ms ease-out;
+}
+
+.first-light__edge-bank--left {
+  transform: translate3d(var(--first-light-edge-shift, 0px), 0, 0);
+}
+
+.first-light__edge-bank--right {
+  transform: translate3d(calc(0px - var(--first-light-edge-shift, 0px)), 0, 0);
+}
+
+.first-light__category-foliage--left {
+  transform: translate3d(calc(0px - var(--first-light-category-shift, 0px)), 0, 0);
+}
+
+.first-light__category-foliage--right {
+  transform: translate3d(var(--first-light-category-shift, 0px), 0, 0);
+}
+
+.first-light__phone-edge--left {
+  transform: translate3d(calc(0px - var(--first-light-phone-left-shift, 0px)), 0, 0);
+}
+
+.first-light__phone-edge--right {
+  transform: translate3d(var(--first-light-phone-right-shift, 0px), 0, 0);
+}
+
 .first-light__hero--phone,
 .first-light__hero--desktop,
 .first-light__phone-foreground {
@@ -32,60 +63,101 @@
   opacity: 0;
 }
 
-.first-light--preview .first-light__herd-travel {
+.first-light__meteor {
+  opacity: 0;
+}
+
+.first-light.svg-theme-artwork--preview .first-light__herd-travel {
   transform: translate3d(-220px, 0, 0);
 }
 
-.first-light--preview .first-light__pterosaurs {
+.first-light.svg-theme-artwork--preview .first-light__pterosaurs {
   opacity: 0.64;
   transform: translate3d(720px, 0, 0);
 }
 
-.first-light--backdrop .first-light__hero-travel--desktop {
-  animation: first-light-desktop-cross 110s linear -55s infinite;
+.first-light.svg-theme-artwork--backdrop .first-light__hero-travel--desktop {
+  animation: first-light-desktop-cross 110s linear infinite;
 }
 
-.first-light--backdrop .first-light__hero-travel--phone {
-  animation: first-light-phone-cross 80s linear -40s infinite;
+.first-light.svg-theme-artwork--backdrop .first-light__hero-travel--phone {
+  animation: first-light-phone-cross 80s linear infinite;
 }
 
-.first-light--backdrop .first-light__hero-pose--a {
+.first-light.svg-theme-artwork--backdrop .first-light__hero-pose--a {
   animation: first-light-step-a 3.2s ease-in-out infinite;
 }
 
-.first-light--backdrop .first-light__hero-pose--b {
+.first-light.svg-theme-artwork--backdrop .first-light__hero-pose--b {
   animation: first-light-step-b 3.2s ease-in-out infinite;
 }
 
-.first-light--backdrop .first-light__herd-travel {
+.first-light.svg-theme-artwork--backdrop .first-light__herd-travel {
   animation: first-light-herd-cross 228s linear -80s infinite;
 }
 
-.first-light--backdrop .first-light__herd-pose--a {
+.first-light.svg-theme-artwork--backdrop .first-light__herd-pose--a {
   animation: first-light-step-a 5.4s ease-in-out infinite;
 }
 
-.first-light--backdrop .first-light__herd-pose--b {
+.first-light.svg-theme-artwork--backdrop .first-light__herd-pose--b {
   animation: first-light-step-b 5.4s ease-in-out infinite;
 }
 
-.first-light--backdrop .first-light__pterosaurs {
+.first-light.svg-theme-artwork--backdrop .first-light__pterosaurs {
   animation: first-light-ptero-cross 54s linear -35s infinite;
 }
 
-.first-light--backdrop .first-light__ptero-pose--a {
+.first-light.svg-theme-artwork--backdrop .first-light__ptero-pose--a {
   animation: first-light-step-a 0.9s ease-in-out infinite;
 }
 
-.first-light--backdrop .first-light__ptero-pose--b {
+.first-light.svg-theme-artwork--backdrop .first-light__ptero-pose--b {
   animation: first-light-step-b 0.9s ease-in-out infinite;
 }
 
-.first-light--backdrop
+.first-light.svg-theme-artwork--backdrop .first-light__star-glimmer--1 {
+  animation: first-light-star-glimmer 7s ease-in-out -2s infinite alternate;
+}
+
+.first-light.svg-theme-artwork--backdrop .first-light__star-glimmer--2 {
+  animation: first-light-star-glimmer 11s ease-in-out -7s infinite alternate;
+}
+
+.first-light.svg-theme-artwork--backdrop .first-light__star-glimmer--3 {
+  animation: first-light-star-glimmer 15s ease-in-out -4s infinite alternate;
+}
+
+.first-light.svg-theme-artwork--backdrop .first-light__morning-star {
+  animation: first-light-morning-star 7s ease-in-out -3s infinite;
+}
+
+.first-light.svg-theme-artwork--backdrop .first-light__meteor--one {
+  --first-light-meteor-x: 220px;
+  --first-light-meteor-y: 116px;
+  animation: first-light-meteor-cross 37s linear -9s infinite;
+}
+
+.first-light.svg-theme-artwork--backdrop .first-light__meteor--two {
+  --first-light-meteor-x: 190px;
+  --first-light-meteor-y: 100px;
+  animation: first-light-meteor-cross 53s linear -31s infinite;
+}
+
+.first-light.svg-theme-artwork--backdrop .first-light__meteor--three {
+  --first-light-meteor-x: 160px;
+  --first-light-meteor-y: 84px;
+  animation: first-light-meteor-cross 71s linear -45s infinite;
+}
+
+.first-light.svg-theme-artwork--backdrop
   :where(
     .first-light__hero-travel,
     .first-light__herd-travel,
-    .first-light__pterosaurs
+    .first-light__pterosaurs,
+    .first-light__star-glimmer,
+    .first-light__morning-star,
+    .first-light__meteor
   ) {
   will-change: transform, opacity;
 }
@@ -100,6 +172,55 @@
   }
   to {
     transform: translate3d(-2220px, 0, 0);
+  }
+}
+
+@keyframes first-light-star-glimmer {
+  from {
+    opacity: 0.56;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes first-light-morning-star {
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.62;
+  }
+}
+
+@keyframes first-light-meteor-cross {
+  0%,
+  78% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+  79% {
+    opacity: 0.08;
+  }
+  80% {
+    opacity: 0.95;
+  }
+  84% {
+    opacity: 0;
+    transform: translate3d(
+      var(--first-light-meteor-x),
+      var(--first-light-meteor-y),
+      0
+    );
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(
+      var(--first-light-meteor-x),
+      var(--first-light-meteor-y),
+      0
+    );
   }
 }
 
@@ -167,6 +288,7 @@
 }
 
 @container first-light (max-aspect-ratio: 3 / 4) {
+  .first-light__foreground,
   .first-light__hero--wide,
   .first-light__hero--desktop {
     display: none;
@@ -175,6 +297,98 @@
   .first-light__hero--phone,
   .first-light__phone-foreground {
     display: block;
+  }
+}
+
+@container first-light (max-aspect-ratio: 4 / 3) and (min-aspect-ratio: 21 / 20) {
+  .first-light__edge-bank {
+    --first-light-edge-shift: 100px;
+  }
+}
+
+@container first-light (max-aspect-ratio: 21 / 20) and (min-aspect-ratio: 3 / 4) {
+  .first-light__edge-bank {
+    display: none;
+  }
+}
+
+@container first-light (max-aspect-ratio: 4 / 3) and (min-width: 601px) {
+  .first-light__category-foliage {
+    --first-light-category-shift: 152px;
+  }
+}
+
+@container first-light (max-aspect-ratio: 4 / 3) and (max-width: 600px) and (min-aspect-ratio: 3 / 4) {
+  .first-light__category-foliage {
+    --first-light-category-shift: 48px;
+  }
+}
+
+@container first-light (min-aspect-ratio: 27 / 20) and (max-width: 2400px) {
+  .first-light__category-foliage {
+    --first-light-category-shift: 24px;
+  }
+}
+
+@container first-light (min-aspect-ratio: 27 / 20) and (max-width: 2200px) {
+  .first-light__category-foliage {
+    --first-light-category-shift: 48px;
+  }
+}
+
+@container first-light (min-aspect-ratio: 27 / 20) and (max-width: 1920px) {
+  .first-light__category-foliage {
+    --first-light-category-shift: 80px;
+  }
+}
+
+@container first-light (min-aspect-ratio: 27 / 20) and (max-width: 1600px) {
+  .first-light__category-foliage {
+    --first-light-category-shift: 152px;
+  }
+}
+
+@container first-light (min-aspect-ratio: 27 / 20) and (max-width: 1440px) {
+  .first-light__category-foliage {
+    --first-light-category-shift: 200px;
+  }
+}
+
+@container first-light (min-aspect-ratio: 27 / 20) and (max-width: 1376px) {
+  .first-light__category-foliage {
+    --first-light-category-shift: 224px;
+  }
+}
+
+@container first-light (min-aspect-ratio: 27 / 20) and (max-width: 1280px) {
+  .first-light__category-foliage {
+    --first-light-category-shift: 260px;
+  }
+}
+
+@container first-light (min-aspect-ratio: 27 / 20) and (max-width: 1200px) {
+  .first-light__category-foliage {
+    --first-light-category-shift: 296px;
+  }
+}
+
+@container first-light (min-aspect-ratio: 27 / 20) and (max-width: 1260px) {
+  .first-light__edge-bank {
+    display: none;
+  }
+}
+
+@container first-light (max-aspect-ratio: 3 / 4) and (max-width: 420px) {
+  .first-light__phone-edge {
+    --first-light-phone-left-shift: 136px;
+    --first-light-phone-right-shift: 140px;
+  }
+}
+
+@container first-light (max-aspect-ratio: 3 / 4) and (min-width: 421px) {
+  .first-light__phone-edge {
+    --first-light-phone-left-shift: 230px;
+    --first-light-phone-right-shift: 220px;
   }
 }
 

@@ -14,10 +14,10 @@ import juvenileAUrl from "../assets/themes/first-light/juvenile-a.svg";
 import juvenileBUrl from "../assets/themes/first-light/juvenile-b.svg";
 import pteroAUrl from "../assets/themes/first-light/ptero-a.svg";
 import pteroBUrl from "../assets/themes/first-light/ptero-b.svg";
-import ridgeUrl from "../assets/themes/first-light/ridge.svg";
+import ridgeSvg from "../assets/themes/first-light/ridge.svg?raw";
 import sauropodAUrl from "../assets/themes/first-light/sauropod-adult-a.svg";
 import sauropodBUrl from "../assets/themes/first-light/sauropod-adult-b.svg";
-import treelineUrl from "../assets/themes/first-light/treeline.svg";
+import treelineSvg from "../assets/themes/first-light/treeline.svg?raw";
 import type { ThemeArtworkProps } from "./ThemeArtwork";
 import { SvgArtworkFrame } from "./SvgArtworkFrame";
 import "./first-light.css";
@@ -25,8 +25,6 @@ import "./first-light.css";
 export const themeId = "first-light" satisfies BackgroundThemeId;
 
 const ASSET_MASKS = [
-  ["ridge", ridgeUrl],
-  ["treeline", treelineUrl],
   ["sauropodA", sauropodAUrl],
   ["sauropodB", sauropodBUrl],
   ["juvenileA", juvenileAUrl],
@@ -45,7 +43,122 @@ const ASSET_MASKS = [
   ["frond8", frond8Url],
 ] as const;
 
+const ridgePathMatch = ridgeSvg.match(/\sd="([^"]+)"/);
+if (!ridgePathMatch) {
+  throw new Error("First Light ridge.svg does not contain a path.");
+}
+const RIDGE_PATH = ridgePathMatch[1];
+
+const treelinePathMatch = treelineSvg.match(/\sd="([^"]+)"/);
+if (!treelinePathMatch) {
+  throw new Error("First Light treeline.svg does not contain a path.");
+}
+const TREELINE_PATH = treelinePathMatch[1];
+
 type AssetKey = (typeof ASSET_MASKS)[number][0];
+
+type StarTone = "cool" | "white" | "warm";
+type DustStar = readonly [number, number, number, number, StarTone];
+
+function createDustStars(count: number, seed: number): DustStar[] {
+  let state = seed >>> 0;
+  const random = () => {
+    state += 0x6d2b79f5;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+
+  return Array.from({ length: count }, () => {
+    const x = +(random() * 1600).toFixed(1);
+    const y = +(8 + Math.pow(random(), 1.18) * 322).toFixed(1);
+    const magnitude = Math.pow(random(), 2.8);
+    const radius = +(0.34 + magnitude * 0.82).toFixed(2);
+    const extinction = 1 - y / 760;
+    const opacity = +((0.16 + magnitude * 0.48) * extinction).toFixed(2);
+    const temperature = random();
+    const tone: StarTone = temperature > 0.86
+      ? "warm"
+      : temperature < 0.38
+        ? "cool"
+        : "white";
+
+    return [x, y, radius, opacity, tone] as const;
+  });
+}
+
+const DUST_STARS = createDustStars(128, 20260805);
+
+const FINE_STARS = [
+  [34, 42, 0.7, 0.42],
+  [78, 92, 0.55, 0.34],
+  [126, 28, 0.8, 0.48],
+  [164, 154, 0.65, 0.3],
+  [218, 112, 0.55, 0.4],
+  [248, 38, 0.9, 0.56],
+  [302, 82, 0.65, 0.32],
+  [344, 214, 0.7, 0.26],
+  [374, 34, 0.55, 0.36],
+  [424, 176, 0.8, 0.44],
+  [458, 94, 0.6, 0.3],
+  [506, 246, 0.65, 0.22],
+  [548, 30, 0.8, 0.5],
+  [574, 162, 0.55, 0.34],
+  [624, 104, 0.7, 0.42],
+  [668, 222, 0.55, 0.24],
+  [702, 42, 0.65, 0.38],
+  [754, 182, 0.9, 0.48],
+  [790, 118, 0.55, 0.28],
+  [828, 24, 0.7, 0.46],
+  [862, 212, 0.65, 0.24],
+  [906, 148, 0.8, 0.4],
+  [948, 54, 0.55, 0.34],
+  [994, 242, 0.7, 0.2],
+  [1032, 98, 0.65, 0.44],
+  [1068, 32, 0.85, 0.52],
+  [1112, 190, 0.55, 0.26],
+  [1150, 126, 0.7, 0.38],
+  [1196, 238, 0.6, 0.22],
+  [1232, 40, 0.75, 0.48],
+  [1278, 178, 0.55, 0.3],
+  [1314, 92, 0.8, 0.5],
+  [1358, 228, 0.65, 0.2],
+  [1392, 34, 0.55, 0.36],
+  [1436, 146, 0.7, 0.42],
+  [1474, 76, 0.9, 0.54],
+  [1518, 212, 0.55, 0.24],
+  [1570, 118, 0.7, 0.38],
+  [104, 222, 0.6, 0.25],
+  [286, 266, 0.55, 0.2],
+  [486, 292, 0.7, 0.18],
+  [712, 282, 0.6, 0.18],
+  [936, 302, 0.55, 0.16],
+  [1164, 278, 0.65, 0.18],
+  [1408, 292, 0.55, 0.16],
+  [1540, 258, 0.7, 0.2],
+] as const;
+
+const BRIGHT_STARS = [
+  [54, 186, 1.45, 0.72, "cool"],
+  [188, 54, 1.8, 0.86, "white"],
+  [276, 138, 1.25, 0.68, "warm"],
+  [356, 76, 1.55, 0.78, "cool"],
+  [468, 206, 1.2, 0.62, "white"],
+  [584, 68, 1.95, 0.9, "warm"],
+  [676, 152, 1.35, 0.7, "cool"],
+  [770, 46, 1.65, 0.82, "white"],
+  [858, 126, 1.2, 0.66, "warm"],
+  [934, 88, 1.8, 0.86, "cool"],
+  [1018, 204, 1.3, 0.64, "white"],
+  [1096, 62, 1.55, 0.8, "warm"],
+  [1182, 154, 1.25, 0.7, "cool"],
+  [1260, 52, 1.9, 0.88, "white"],
+  [1344, 194, 1.35, 0.66, "warm"],
+  [1428, 96, 1.6, 0.78, "cool"],
+  [1510, 42, 1.35, 0.72, "white"],
+  [1560, 184, 1.75, 0.82, "warm"],
+] as const;
 
 type SilhouetteProps = {
   className?: string;
@@ -143,6 +256,113 @@ export default function FirstLightArtwork(props: ThemeArtworkProps) {
               stopColor="var(--artwork-first-light-sky-horizon)"
             />
           </linearGradient>
+          <radialGradient id={id("airglow-blue")} cx="0.5" cy="0.5" r="0.5">
+            <stop
+              offset="0"
+              stopColor="var(--artwork-first-light-airglow-blue)"
+              stopOpacity="0.34"
+            />
+            <stop
+              offset="0.5"
+              stopColor="var(--artwork-first-light-airglow-blue)"
+              stopOpacity="0.12"
+            />
+            <stop
+              offset="1"
+              stopColor="var(--artwork-first-light-airglow-blue)"
+              stopOpacity="0"
+            />
+          </radialGradient>
+          <radialGradient id={id("airglow-violet")} cx="0.5" cy="0.5" r="0.5">
+            <stop
+              offset="0"
+              stopColor="var(--artwork-first-light-airglow-violet)"
+              stopOpacity="0.26"
+            />
+            <stop
+              offset="0.56"
+              stopColor="var(--artwork-first-light-airglow-violet)"
+              stopOpacity="0.08"
+            />
+            <stop
+              offset="1"
+              stopColor="var(--artwork-first-light-airglow-violet)"
+              stopOpacity="0"
+            />
+          </radialGradient>
+          <radialGradient id={id("milky-way")} cx="0.48" cy="0.46" r="0.58">
+            <stop
+              offset="0"
+              stopColor="var(--artwork-first-light-milky-way)"
+              stopOpacity="0.16"
+            />
+            <stop
+              offset="0.34"
+              stopColor="var(--artwork-first-light-milky-way)"
+              stopOpacity="0.07"
+            />
+            <stop
+              offset="0.72"
+              stopColor="var(--artwork-first-light-milky-way)"
+              stopOpacity="0.025"
+            />
+            <stop
+              offset="1"
+              stopColor="var(--artwork-first-light-milky-way)"
+              stopOpacity="0"
+            />
+          </radialGradient>
+          <radialGradient id={id("milky-way-rift")}>
+            <stop
+              offset="0"
+              stopColor="var(--artwork-first-light-sky-top)"
+              stopOpacity="0.72"
+            />
+            <stop
+              offset="0.55"
+              stopColor="var(--artwork-first-light-sky-top)"
+              stopOpacity="0.28"
+            />
+            <stop
+              offset="1"
+              stopColor="var(--artwork-first-light-sky-top)"
+              stopOpacity="0"
+            />
+          </radialGradient>
+          <radialGradient id={id("zodiacal-light")}>
+            <stop
+              offset="0"
+              stopColor="var(--artwork-first-light-star-warm)"
+              stopOpacity="0.1"
+            />
+            <stop
+              offset="0.56"
+              stopColor="var(--artwork-first-light-star-warm)"
+              stopOpacity="0.035"
+            />
+            <stop
+              offset="1"
+              stopColor="var(--artwork-first-light-star-warm)"
+              stopOpacity="0"
+            />
+          </radialGradient>
+          <radialGradient id={id("morning-star")}>
+            <stop
+              offset="0"
+              stopColor="var(--artwork-first-light-star-warm)"
+              stopOpacity="0.42"
+            />
+            <stop
+              offset="0.48"
+              stopColor="var(--artwork-first-light-star-warm)"
+              stopOpacity="0.11"
+            />
+            <stop
+              offset="1"
+              stopColor="var(--artwork-first-light-star-warm)"
+              stopOpacity="0"
+            />
+          </radialGradient>
           <linearGradient id={id("ground")} x1="0" y1="0" x2="0" y2="1">
             <stop
               offset="0"
@@ -338,21 +558,149 @@ export default function FirstLightArtwork(props: ThemeArtworkProps) {
 
         <rect x="0" y="0" width="1600" height="472" fill={`url(#${id("sky")})`} />
 
-        <g fill="var(--artwork-first-light-star)">
-          <circle cx="196" cy="64" r="1.7" opacity="0.5" />
-          <circle cx="392" cy="118" r="1.2" opacity="0.34" />
-          <circle cx="268" cy="182" r="1.4" opacity="0.28" />
-          <circle cx="596" cy="52" r="1.9" opacity="0.46" />
-          <circle cx="742" cy="132" r="1.1" opacity="0.26" />
-          <circle cx="884" cy="76" r="1.5" opacity="0.4" />
-          <circle cx="1046" cy="146" r="1.2" opacity="0.24" />
-          <circle cx="1178" cy="58" r="1.8" opacity="0.44" />
-          <circle cx="1330" cy="112" r="1.3" opacity="0.3" />
-          <circle cx="1462" cy="170" r="1.1" opacity="0.2" />
-          <circle cx="1548" cy="42" r="1.6" opacity="0.38" />
-          <circle cx="86" cy="140" r="1.3" opacity="0.3" />
-          <circle cx="470" cy="212" r="1" opacity="0.18" />
-          <circle cx="1244" cy="228" r="1" opacity="0.15" />
+        <g className="first-light__night-colour" aria-hidden="true">
+          <ellipse cx="330" cy="142" rx="620" ry="270" fill={`url(#${id("airglow-blue")})`} />
+          <ellipse cx="1330" cy="112" rx="520" ry="230" fill={`url(#${id("airglow-violet")})`} />
+          <path
+            d="M-90 -22 C220 4 492 74 764 182 C1010 280 1252 366 1690 434 L1690 510 C1270 452 990 366 720 260 C450 154 190 82 -90 64 Z"
+            fill={`url(#${id("milky-way")})`}
+            opacity="0.78"
+          />
+          <path
+            d="M-40 18 C256 56 502 126 744 222 C996 322 1252 394 1640 442 L1640 472 C1256 432 980 360 722 260 C468 162 222 96 -40 62 Z"
+            fill={`url(#${id("milky-way")})`}
+            opacity="0.28"
+          />
+          <ellipse
+            cx="650"
+            cy="176"
+            rx="330"
+            ry="34"
+            fill={`url(#${id("milky-way-rift")})`}
+            opacity="0.48"
+            transform="rotate(18 650 176)"
+          />
+          <ellipse
+            cx="1220"
+            cy="348"
+            rx="250"
+            ry="28"
+            fill={`url(#${id("milky-way-rift")})`}
+            opacity="0.34"
+            transform="rotate(18 1220 348)"
+          />
+          <ellipse
+            cx="1010"
+            cy="410"
+            rx="92"
+            ry="275"
+            fill={`url(#${id("zodiacal-light")})`}
+            opacity="0.72"
+            transform="rotate(-12 1010 410)"
+          />
+        </g>
+
+        <g className="first-light__starfield" data-first-light-starfield>
+          <g className="first-light__starfield--dust">
+            {DUST_STARS.map(([cx, cy, r, opacity, tone]) => {
+              const fill = tone === "warm"
+                ? "var(--artwork-first-light-star-warm)"
+                : tone === "cool"
+                  ? "var(--artwork-first-light-star-cool)"
+                  : "var(--artwork-first-light-star)";
+
+              return (
+                <circle
+                  key={`${cx}-${cy}`}
+                  cx={cx}
+                  cy={cy}
+                  r={r}
+                  fill={fill}
+                  opacity={opacity}
+                />
+              );
+            })}
+          </g>
+          <g className="first-light__starfield--fine" fill="var(--artwork-first-light-star)">
+            {FINE_STARS.map(([cx, cy, r, opacity]) => (
+              <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={r} opacity={opacity} />
+            ))}
+          </g>
+          {BRIGHT_STARS.map(([cx, cy, r, opacity, tone], index) => {
+            const fill = tone === "warm"
+              ? "var(--artwork-first-light-star-warm)"
+              : tone === "cool"
+                ? "var(--artwork-first-light-star-cool)"
+                : "var(--artwork-first-light-star)";
+
+            return (
+              <g
+                className={`first-light__star-glimmer first-light__star-glimmer--${(index % 3) + 1}`}
+                fill={fill}
+                key={`${cx}-${cy}`}
+              >
+                <circle cx={cx} cy={cy} r={r * 2.8} opacity={opacity * 0.08} />
+                <circle cx={cx} cy={cy} r={r} opacity={opacity} />
+              </g>
+            );
+          })}
+        </g>
+
+        <g
+          className="first-light__morning-star"
+          data-first-light-morning-star
+          transform="translate(912 208)"
+        >
+          <circle r="17" fill={`url(#${id("morning-star")})`} />
+          <path d="M0 -15 L1.7 0 L0 15 L-1.7 0 Z" fill="var(--artwork-first-light-star-warm)" opacity="0.48" />
+          <path d="M-16 0 L0 -1.7 L16 0 L0 1.7 Z" fill="var(--artwork-first-light-star-warm)" opacity="0.36" />
+          <circle r="2.1" fill="var(--artwork-first-light-star)" />
+        </g>
+
+        <g
+          className="first-light__constellations"
+          fill="var(--artwork-first-light-constellation)"
+          stroke="var(--artwork-first-light-constellation)"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <g data-first-light-constellation="cygnus">
+            <polyline points="358,136 438,151 522,126" fill="none" strokeWidth="0.75" opacity="0.16" />
+            <polyline points="420,58 430,104 438,151 448,202" fill="none" strokeWidth="0.75" opacity="0.16" />
+            {[[358, 136], [438, 151], [522, 126], [420, 58], [430, 104], [448, 202]].map(([cx, cy]) => (
+              <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.35" opacity="0.78" stroke="none" />
+            ))}
+          </g>
+          <g data-first-light-constellation="ursa-major">
+            <polyline points="650,146 706,110 762,92 820,74 874,112 812,138 762,92" fill="none" strokeWidth="0.7" opacity="0.14" />
+            {[[650, 146], [706, 110], [762, 92], [820, 74], [874, 112], [812, 138]].map(([cx, cy]) => (
+              <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.3" opacity="0.74" stroke="none" />
+            ))}
+          </g>
+          <g data-first-light-constellation="cassiopeia">
+            <polyline points="1170,86 1214,122 1264,76 1320,116 1376,70" fill="none" strokeWidth="0.75" opacity="0.15" />
+            {[[1170, 86], [1214, 122], [1264, 76], [1320, 116], [1376, 70]].map(([cx, cy]) => (
+              <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.45" opacity="0.8" stroke="none" />
+            ))}
+          </g>
+        </g>
+
+        <g className="first-light__meteors" strokeLinecap="round">
+          <g className="first-light__meteor first-light__meteor--one">
+            <path d="M196 52 L292 102" fill="none" stroke="var(--artwork-first-light-meteor)" strokeWidth="1" opacity="0.3" />
+            <path d="M252 82 L292 102" fill="none" stroke="var(--artwork-first-light-meteor)" strokeWidth="1.8" opacity="0.82" />
+            <circle cx="292" cy="102" r="2.1" fill="var(--artwork-first-light-meteor)" />
+          </g>
+          <g className="first-light__meteor first-light__meteor--two">
+            <path d="M1018 48 L1100 92" fill="none" stroke="var(--artwork-first-light-meteor)" strokeWidth="0.9" opacity="0.28" />
+            <path d="M1064 72 L1100 92" fill="none" stroke="var(--artwork-first-light-meteor)" strokeWidth="1.6" opacity="0.78" />
+            <circle cx="1100" cy="92" r="1.9" fill="var(--artwork-first-light-meteor)" />
+          </g>
+          <g className="first-light__meteor first-light__meteor--three">
+            <path d="M566 198 L638 236" fill="none" stroke="var(--artwork-first-light-meteor)" strokeWidth="0.8" opacity="0.24" />
+            <path d="M606 219 L638 236" fill="none" stroke="var(--artwork-first-light-meteor)" strokeWidth="1.45" opacity="0.72" />
+            <circle cx="638" cy="236" r="1.7" fill="var(--artwork-first-light-meteor)" />
+          </g>
         </g>
         <g fill={`url(#${id("cloud-cool")})`}>
           <path
@@ -383,16 +731,7 @@ export default function FirstLightArtwork(props: ThemeArtworkProps) {
           />
         </g>
 
-        <Silhouette
-          className="first-light__ridge"
-          fill="var(--artwork-first-light-ridge)"
-          height={190}
-          maskId={assetMask("ridge")}
-          opacity={0.92}
-          width={3200}
-          x={-1150}
-          y={282}
-        />
+        {/* The broad dawn sits behind the landform; the lower bank retains atmospheric haze. */}
         <g className="first-light__dawn">
           <ellipse cx="840" cy="482" rx="500" ry="228" fill={`url(#${id("dawn")})`} />
           <ellipse
@@ -412,16 +751,39 @@ export default function FirstLightArtwork(props: ThemeArtworkProps) {
             opacity="0.26"
           />
         </g>
+        <svg
+          className="first-light__ridge"
+          height={250}
+          opacity={1}
+          preserveAspectRatio="none"
+          viewBox="0 0 3200 200"
+          width={2000}
+          x={-200}
+          y={205}
+        >
+          <path
+            data-first-light-ridge-path
+            d={RIDGE_PATH}
+            fill="var(--artwork-first-light-ridge)"
+          />
+        </svg>
         <rect x="0" y="420" width="1600" height="56" fill={`url(#${id("valley")})`} />
-        <Silhouette
-          fill="var(--artwork-first-light-treeline)"
+        <svg
+          className="first-light__treeline"
           height={122}
-          maskId={assetMask("treeline")}
           opacity={0.95}
+          preserveAspectRatio="none"
+          viewBox="0 0 3200 200"
           width={1952}
           x={0}
           y={350}
-        />
+        >
+          <path
+            data-first-light-treeline-path
+            d={TREELINE_PATH}
+            fill="var(--artwork-first-light-treeline)"
+          />
+        </svg>
         <rect x="0" y="470" width="1600" height="430" fill={`url(#${id("ground")})`} />
         <rect x="0" y="412" width="1600" height="96" fill={`url(#${id("bank")})`} />
 
@@ -526,54 +888,66 @@ export default function FirstLightArtwork(props: ThemeArtworkProps) {
         </g>
 
         <g className="first-light__foreground">
-          <g transform="rotate(-3 -300 900)">
-            <Silhouette fill={foliageFill} height={653.3} maskId={assetMask("frond1")} opacity={0.96} width={560} x={-300} y={246.7} />
-          </g>
-          <g transform="rotate(-2 -140 900)">
-            <Silhouette fill={foliageFill} height={303.3} maskId={assetMask("frond2")} opacity={0.88} width={260} x={-160} y={596.7} />
-          </g>
-          <g transform="rotate(3 -20 900)">
-            <Silhouette fill={foliageFill} height={257} maskId={assetMask("frond4")} opacity={0.86} width={220} x={-40} y={643} />
-          </g>
-          <g transform="rotate(-2 60 900)">
-            <Silhouette fill={foliageFill} height={233.7} maskId={assetMask("frond8")} opacity={0.82} width={200} x={40} y={666.3} />
-          </g>
-          <g className="first-light__category-foliage first-light__category-foliage--left" transform="rotate(-2 520 900)">
-            <Silhouette fill={foliageFill} height={210} maskId={assetMask("frond3")} opacity={0.76} width={180} x={340} y={690} />
-          </g>
-          <g className="first-light__category-foliage first-light__category-foliage--right" transform="rotate(2 1080 900)">
-            <Silhouette fill={foliageFill} height={210} maskId={assetMask("frond2")} opacity={0.76} width={180} x={1080} y={690} />
-          </g>
-          <g transform="translate(1600 0) scale(-1 1)">
-            <g transform="rotate(-2 -220 900)">
-              <Silhouette fill={foliageFill} height={560} maskId={assetMask("frond1")} opacity={0.88} width={480} x={-220} y={340} />
+          <g className="first-light__edge-bank first-light__edge-bank--left">
+            <g transform="rotate(-3 -300 900)">
+              <Silhouette fill={foliageFill} height={653.3} maskId={assetMask("frond1")} opacity={0.96} width={560} x={-300} y={246.7} />
             </g>
-            <g transform="rotate(-3 60 900)">
-              <Silhouette fill={foliageFill} height={257} maskId={assetMask("frond5")} opacity={0.84} width={220} x={40} y={643} />
+            <g transform="rotate(-2 -140 900)">
+              <Silhouette fill={foliageFill} height={303.3} maskId={assetMask("frond2")} opacity={0.88} width={260} x={-160} y={596.7} />
+            </g>
+            <g transform="rotate(3 -20 900)">
+              <Silhouette fill={foliageFill} height={257} maskId={assetMask("frond4")} opacity={0.86} width={220} x={-40} y={643} />
+            </g>
+            <g transform="rotate(-2 60 900)">
+              <Silhouette fill={foliageFill} height={233.7} maskId={assetMask("frond8")} opacity={0.82} width={200} x={40} y={666.3} />
             </g>
           </g>
-          <g transform="rotate(2 1600 900)">
-            <Silhouette fill={foliageFill} height={233.7} maskId={assetMask("frond3")} opacity={0.82} width={200} x={1400} y={666.3} />
+          <g className="first-light__category-foliage first-light__category-foliage--left">
+            <g transform="rotate(-2 520 900)">
+              <Silhouette fill={foliageFill} height={210} maskId={assetMask("frond3")} opacity={0.76} width={180} x={340} y={690} />
+            </g>
           </g>
-          <g transform="rotate(2 1540 900)">
-            <Silhouette fill={foliageFill} height={222} maskId={assetMask("frond7")} opacity={0.8} width={190} x={1360} y={678} />
+          <g className="first-light__category-foliage first-light__category-foliage--right">
+            <g transform="rotate(2 1080 900)">
+              <Silhouette fill={foliageFill} height={210} maskId={assetMask("frond2")} opacity={0.76} width={180} x={1080} y={690} />
+            </g>
+          </g>
+          <g className="first-light__edge-bank first-light__edge-bank--right">
+            <g transform="translate(1600 0) scale(-1 1)">
+              <g transform="rotate(-2 -220 900)">
+                <Silhouette fill={foliageFill} height={560} maskId={assetMask("frond1")} opacity={0.88} width={480} x={-220} y={340} />
+              </g>
+              <g transform="rotate(-3 60 900)">
+                <Silhouette fill={foliageFill} height={257} maskId={assetMask("frond5")} opacity={0.84} width={220} x={40} y={643} />
+              </g>
+            </g>
+            <g transform="rotate(2 1600 900)">
+              <Silhouette fill={foliageFill} height={233.7} maskId={assetMask("frond3")} opacity={0.82} width={200} x={1400} y={666.3} />
+            </g>
+            <g transform="rotate(2 1540 900)">
+              <Silhouette fill={foliageFill} height={222} maskId={assetMask("frond7")} opacity={0.8} width={190} x={1360} y={678} />
+            </g>
           </g>
         </g>
 
         <g className="first-light__phone-foreground">
-          <g transform="rotate(-4 440 900)">
-            <Silhouette fill={foliageFill} height={396.7} maskId={assetMask("frond2")} opacity={0.9} width={340} x={440} y={503.3} />
-          </g>
-          <g transform="translate(1600 0) scale(-1 1)">
-            <g transform="rotate(-3 440 900)">
-              <Silhouette fill={foliageFill} height={385} maskId={assetMask("frond1")} opacity={0.9} width={330} x={440} y={515} />
+          <g className="first-light__phone-edge first-light__phone-edge--left">
+            <g transform="rotate(-4 440 900)">
+              <Silhouette fill={foliageFill} height={396.7} maskId={assetMask("frond2")} opacity={0.9} width={340} x={440} y={503.3} />
+            </g>
+            <g transform="rotate(-2 400 900)">
+              <Silhouette fill={foliageFill} height={350} maskId={assetMask("frond6")} opacity={0.88} width={300} x={400} y={550} />
             </g>
           </g>
-          <g transform="rotate(-2 400 900)">
-            <Silhouette fill={foliageFill} height={350} maskId={assetMask("frond6")} opacity={0.88} width={300} x={400} y={550} />
-          </g>
-          <g transform="rotate(2 1200 900)">
-            <Silhouette fill={foliageFill} height={373.3} maskId={assetMask("frond7")} opacity={0.86} width={320} x={880} y={526.7} />
+          <g className="first-light__phone-edge first-light__phone-edge--right">
+            <g transform="translate(1600 0) scale(-1 1)">
+              <g transform="rotate(-3 440 900)">
+                <Silhouette fill={foliageFill} height={385} maskId={assetMask("frond1")} opacity={0.9} width={330} x={440} y={515} />
+              </g>
+            </g>
+            <g transform="rotate(2 1200 900)">
+              <Silhouette fill={foliageFill} height={373.3} maskId={assetMask("frond7")} opacity={0.86} width={320} x={880} y={526.7} />
+            </g>
           </g>
         </g>
       </svg>
