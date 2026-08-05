@@ -29,6 +29,7 @@ export type PublicCategoryRank = {
   xp: number;
   rank: number;
   title: string;
+  simulated?: boolean;
 };
 
 export type PublicBadge = {
@@ -36,6 +37,7 @@ export type PublicBadge = {
   category: QuestionCategory;
   rankFloor: number;
   title: string;
+  simulated?: boolean;
 };
 
 export type PublicAchievement = {
@@ -43,6 +45,7 @@ export type PublicAchievement = {
   name: string;
   description: string;
   tier: "bronze" | "silver" | "gold";
+  simulated?: boolean;
 };
 
 export type PublicClassicBest = {
@@ -64,6 +67,7 @@ export type PublicProfileShowcase = {
 export type PublicPlayerProfile = {
   player: PublicProfilePlayer;
   isQa: boolean;
+  isSimulated?: boolean;
   relationship: ProfileRelationship;
   showcase: PublicProfileShowcase;
   totalXp: number;
@@ -149,6 +153,7 @@ export function mapPublicPlayerProfile(value: unknown): PublicPlayerProfile {
           xp: number(rank.xp),
           rank: number(rank.rank),
           title: text(rank.title, "Newcomer"),
+          simulated: rank.simulated === true,
         }]
       : [];
   });
@@ -162,6 +167,7 @@ export function mapPublicPlayerProfile(value: unknown): PublicPlayerProfile {
           category,
           rankFloor: number(badge.rank_floor),
           title: text(badge.title),
+          simulated: badge.simulated === true,
         }]
       : [];
   });
@@ -186,6 +192,7 @@ export function mapPublicPlayerProfile(value: unknown): PublicPlayerProfile {
         : DEFAULT_PROFILE_AVATAR,
     },
     isQa: row.is_qa === true,
+    isSimulated: row.is_simulated === true,
     relationship: relationship(row.relationship),
     showcase: {
       featuredBadgeKey: playableBadgeKey(showcase.featured_badge_key),
@@ -210,6 +217,7 @@ export function mapPublicPlayerProfile(value: unknown): PublicPlayerProfile {
         description: text(achievement.description),
         tier:
           tier === "gold" || tier === "silver" ? tier : ("bronze" as const),
+        simulated: achievement.simulated === true,
       };
     }),
     classicBests,

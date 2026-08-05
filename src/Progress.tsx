@@ -253,13 +253,15 @@ type ProfileDashboardProps = {
   onOpenRanks: (category?: QuestionCategory) => void;
   onOpenAchievements: () => void;
   onOpenUnlocks: () => void;
-  onOpenFriends: () => void;
+  onOpenFriends?: () => void;
   onCustomisePublicProfile: () => void;
   mascotInGames: boolean;
   onMascotInGamesChange: (enabled: boolean) => void;
-  friendCount: number;
-  activeChallengeCount: number;
-  socialUnreadCount: number;
+  friendCount?: number;
+  activeChallengeCount?: number;
+  socialUnreadCount?: number;
+  isQa?: boolean;
+  simulationPanel?: ReactNode;
   onSignOut: () => void;
   headingRef: RefObject<HTMLHeadingElement | null>;
 };
@@ -359,6 +361,8 @@ export function ProfileDashboard({
   friendCount,
   activeChallengeCount,
   socialUnreadCount,
+  isQa = false,
+  simulationPanel,
   onSignOut,
   headingRef,
 }: ProfileDashboardProps) {
@@ -479,6 +483,7 @@ export function ProfileDashboard({
               <h1 id="profile-name" ref={headingRef} tabIndex={-1}>
                 {displayName}
               </h1>
+              {isQa && <QaStatusBadge />}
               <button
                 className="profile-name-edit"
                 type="button"
@@ -488,18 +493,23 @@ export function ProfileDashboard({
               </button>
             </div>
             <p>
-              {highest
+              {isQa && highest
+                ? `${highest.title} · simulated rank ${highest.rank}`
+                : highest
                 ? `${highest.title} · highest rank in ${labels[highest.category].title}`
                 : "Newcomer"}
             </p>
           </div>
         </div>
         <div className="profile-total">
-          <span>Total XP</span>
+          <span>{isQa ? "Simulated XP" : "Total XP"}</span>
           <strong>{formatPoints(progress.totalXp)}</strong>
         </div>
         <div className="profile-facts">
-          <span>{progress.categories.length} subject ladders</span>
+          <span>
+            {progress.categories.length} subject ladders
+            {isQa ? " · simulated" : ""}
+          </span>
           <span>
             {earned.length} of {progress.achievements.length} achievements
           </span>
@@ -519,6 +529,8 @@ export function ProfileDashboard({
           </button>
         </div>
       </section>
+
+      {simulationPanel}
 
       {nameEditorOpen && (
         <section className="profile-section profile-display-name-card">
@@ -553,7 +565,9 @@ export function ProfileDashboard({
             </button>
           </div>
           <p className="profile-avatar-picker-lede">
-            Use the default artwork or any subject badge you have earned.
+            {isQa
+              ? "Use built-in artwork or any badge allowed by your simulated rank."
+              : "Use the default artwork or any subject badge you have earned."}
           </p>
           <div className="profile-avatar-options">
             {avatarOptions.map((option) => {
@@ -602,8 +616,9 @@ export function ProfileDashboard({
             <p className="eyebrow">Seen from the leaderboard</p>
             <h2>Public profile</h2>
             <p>
-              Feature an earned title, pin achievements and choose an unlocked
-              banner without changing your own game background.
+              {isQa
+                ? "Feature simulated titles, achievements and unlocked banners. Your public QA marker remains visible."
+                : "Feature an earned title, pin achievements and choose an unlocked banner without changing your own game background."}
             </p>
           </div>
           <button
@@ -615,6 +630,7 @@ export function ProfileDashboard({
           </button>
         </section>
 
+        {!isQa && onOpenFriends && (
         <section className="profile-section profile-friends-card">
           <div>
             <p className="eyebrow">Play together, in your own time</p>
@@ -626,10 +642,10 @@ export function ProfileDashboard({
           </div>
           <div className="profile-friends-summary" aria-label="Friends summary">
             <span>
-              <strong>{friendCount}</strong> friends
+              <strong>{friendCount ?? 0}</strong> friends
             </span>
             <span>
-              <strong>{activeChallengeCount}</strong> active
+              <strong>{activeChallengeCount ?? 0}</strong> active
             </span>
           </div>
           <button
@@ -638,16 +654,17 @@ export function ProfileDashboard({
             onClick={onOpenFriends}
           >
             Open Friends
-            {socialUnreadCount > 0 && (
+            {(socialUnreadCount ?? 0) > 0 && (
               <span
                 className="social-badge"
-                aria-label={`${socialUnreadCount} unread friend updates`}
+                aria-label={`${socialUnreadCount ?? 0} unread friend updates`}
               >
-                {socialUnreadCount > 9 ? "9+" : socialUnreadCount}
+                {(socialUnreadCount ?? 0) > 9 ? "9+" : socialUnreadCount}
               </span>
             )}
           </button>
         </section>
+        )}
       </div>
 
       <div className="profile-dashboard-grid">
@@ -670,7 +687,9 @@ export function ProfileDashboard({
               return (
                 <li
                   key={entry.category}
-                  className={entry.questionsAnswered === 0 ? "is-unplayed" : ""}
+                  className={
+                    entry.questionsAnswered === 0 && !isQa ? "is-unplayed" : ""
+                  }
                   style={{ animationDelay: `${index * 45}ms` }}
                 >
                   <button
@@ -695,7 +714,9 @@ export function ProfileDashboard({
                       <span style={{ width: `${entry.fraction * 100}%` }} />
                     </div>
                     <p>
-                      {entry.questionsAnswered === 0
+                      {isQa
+                        ? `Simulated rank ${entry.rank} · ${formatPoints(entry.xp)} XP`
+                        : entry.questionsAnswered === 0
                         ? gatedTheme
                           ? `Never played · unlocks ${gatedTheme.name} at rank ${gatedTheme.gate.rank}`
                           : "Never played"
@@ -735,7 +756,9 @@ export function ProfileDashboard({
                   />
                   <div>
                     <strong>{item.name}</strong>
-                    <span>{item.description}</span>
+                    <span>
+                      {item.description}{item.simulated ? " · Simulated" : ""}
+                    </span>
                   </div>
                   {item.earned ? (
                     <span className="achievement-tick" aria-label="Earned">
@@ -1139,7 +1162,7 @@ export function RankPanel({
             </select>
           </label>
           <div className="rank-total-compact">
-            <span>Total XP</span>
+            <span>{progress.isSimulated ? "Simulated XP" : "Total XP"}</span>
             <strong>{formatPoints(progress.totalXp)}</strong>
           </div>
         </div>
@@ -1174,7 +1197,9 @@ export function RankPanel({
             <p className="rank-subject-progress-copy">
               <strong>{formatPoints(selected.xp)} XP</strong>
               <span>
-                {formatPoints(remaining)} XP to rank {selected.rank + 1}
+                {progress.isSimulated
+                  ? "Simulated progression"
+                  : `${formatPoints(remaining)} XP to rank ${selected.rank + 1}`}
               </span>
             </p>
           </div>
@@ -1200,11 +1225,19 @@ export function RankPanel({
             </div>
             <div>
               <dt>Questions answered</dt>
-              <dd>{formatPoints(selected.questionsAnswered)}</dd>
+              <dd>
+                {progress.isSimulated
+                  ? "Not simulated"
+                  : formatPoints(selected.questionsAnswered)}
+              </dd>
             </div>
             <div>
               <dt>Perfect answers</dt>
-              <dd>{formatPoints(selected.perfectAnswers)}</dd>
+              <dd>
+                {progress.isSimulated
+                  ? "Not simulated"
+                  : formatPoints(selected.perfectAnswers)}
+              </dd>
             </div>
           </dl>
         </section>
@@ -1223,7 +1256,7 @@ export function RankPanel({
           </div>
           <span>
             {progress.badgeCatalogueAvailable
-              ? `${earnedCount} of 6 earned`
+              ? `${earnedCount} of 6 ${progress.isSimulated ? "simulated" : "earned"}`
               : "Catalogue unavailable"}
           </span>
         </div>
@@ -1306,14 +1339,17 @@ export function AchievementPanel({ progress }: { progress: PlayerProgress }) {
     <div className="progress-panel">
       <div className="progress-summary">
         <div>
-          <p className="progress-eyebrow">Earned</p>
+          <p className="progress-eyebrow">
+            {progress.isSimulated ? "Simulated" : "Earned"}
+          </p>
           <strong className="progress-total">
             {earned} <span className="progress-of">of {progress.achievements.length}</span>
           </strong>
         </div>
         <p className="progress-summary-note">
-          Every one of these counts rounds you have already played, so they
-          catch up the moment you sign in.
+          {progress.isSimulated
+            ? "Presentation-only achievement eligibility. No rounds, streaks or competitive progress are created."
+            : "Every one of these counts rounds you have already played, so they catch up the moment you sign in."}
         </p>
       </div>
 
@@ -1331,7 +1367,9 @@ export function AchievementPanel({ progress }: { progress: PlayerProgress }) {
                 </span>
               )}
             </div>
-            <p className="achievement-detail">{item.description}</p>
+            <p className="achievement-detail">
+              {item.description}{item.simulated ? " · Simulated" : ""}
+            </p>
             {!item.earned && (
               <p className="achievement-progress">
                 {formatPoints(item.progress)} / {formatPoints(item.threshold)}
@@ -1381,8 +1419,9 @@ export function UnlocksPanel({
           </strong>
         </div>
         <p className="progress-summary-note">
-          Backgrounds earned through subject ranks. Tap one you've unlocked to
-          apply it everywhere; tap it again to remove it.
+          {progress.isSimulated
+            ? "Background eligibility follows simulated subject ranks. Tap one to apply it everywhere; tap it again to remove it."
+            : "Backgrounds earned through subject ranks. Tap one you've unlocked to apply it everywhere; tap it again to remove it."}
         </p>
       </div>
 

@@ -49,12 +49,60 @@ vi.mock("@/src/useProgress", async () => {
   );
   return {
     ...actual,
-    useProgress: (playerId: string | null) => {
+    useProgress: (playerId: string | null, qaSimulation = false) => {
       api.progressPlayerIds.push(playerId);
+      if (qaSimulation && playerId) {
+        const categories = [
+          "population", "history", "geography", "science", "animals",
+          "space", "technology", "movies", "dinosaurs", "games",
+        ] as const;
+        return {
+          enabled: true,
+          progress: {
+            isSimulated: true,
+            totalXp: 702_950,
+            categories: categories.map((category) => ({
+              category,
+              xp: 70_295,
+              rank: 30,
+              title: "QA Master",
+              questionsAnswered: 0,
+              perfectAnswers: 0,
+              rankFloorXp: 70_295,
+              nextRankXp: 73_961,
+              fraction: 0,
+              simulated: true,
+            })),
+            achievements: [],
+            badges: [],
+            badgeCatalogueAvailable: false,
+          },
+          change: null,
+          refresh: vi.fn(),
+          reload: vi.fn().mockResolvedValue(null),
+          clearChange: vi.fn(),
+        };
+      }
       return actual.useProgress(playerId);
     },
   };
 });
+
+vi.mock("@/src/useQaSimulation", () => ({
+  useQaSimulation: () => ({
+    simulation: {
+      categoryRanks: Object.fromEntries([
+        "population", "history", "geography", "science", "animals",
+        "space", "technology", "movies", "dinosaurs", "games",
+      ].map((category) => [category, 30])),
+      simulateAllAchievements: true,
+    },
+    status: "ready" as const,
+    error: "",
+    save: vi.fn(),
+    retry: vi.fn(),
+  }),
+}));
 
 vi.mock("@/src/useSocial", async () => {
   const actual = await vi.importActual<typeof import("@/src/useSocial")>(
@@ -224,10 +272,10 @@ describe("QA scoreless play", () => {
     expect(
       screen.getByRole("heading", { name: "Testasaurus Rex" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("QA account · Scoreless play")).toBeInTheDocument();
-    expect(screen.queryByText("Subjects")).toBeNull();
+    expect(screen.getAllByText(/simulated rank 30/i).length).toBeGreaterThan(0);
+    expect(screen.getByText("Subjects")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Open Friends" })).toBeNull();
-    expect(api.progressPlayerIds.every((id) => id === null)).toBe(true);
+    expect(api.progressPlayerIds).toContain("qa-user");
     expect(api.socialPlayerIds.every((id) => id === null)).toBe(true);
   });
 
