@@ -63,6 +63,7 @@ export type PublicProfileShowcase = {
 
 export type PublicPlayerProfile = {
   player: PublicProfilePlayer;
+  isQa: boolean;
   relationship: ProfileRelationship;
   showcase: PublicProfileShowcase;
   totalXp: number;
@@ -184,6 +185,7 @@ export function mapPublicPlayerProfile(value: unknown): PublicPlayerProfile {
         ? avatar
         : DEFAULT_PROFILE_AVATAR,
     },
+    isQa: row.is_qa === true,
     relationship: relationship(row.relationship),
     showcase: {
       featuredBadgeKey: playableBadgeKey(showcase.featured_badge_key),
@@ -235,7 +237,18 @@ export async function fetchPublicPlayerProfile(
     p_player_id: playerId,
   });
   if (error) throw new Error(error.message);
-  return data ? mapPublicPlayerProfile(data) : null;
+  if (!data) return null;
+
+  const { data: isQa, error: qaError } = await client().rpc(
+    "get_public_qa_profile_status",
+    { p_player_id: playerId },
+  );
+  if (qaError) throw new Error(qaError.message);
+
+  return mapPublicPlayerProfile({
+    ...object(data),
+    is_qa: isQa === true,
+  });
 }
 
 export async function updateProfileShowcase(

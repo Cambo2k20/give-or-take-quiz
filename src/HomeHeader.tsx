@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { BrandMark } from "./BrandMark";
+import { QaStatusBadge } from "./QaStatus";
 import type { Theme } from "./theme";
 
 const LeaderboardIcon = () => (
@@ -88,6 +89,7 @@ type HomeHeaderProps = {
   accountLabel: string;
   profileAvatar?: ReactNode;
   socialUnreadCount?: number;
+  isQa?: boolean;
   musicControls?: ReactNode;
   soundEffectsEnabled: boolean;
   leaderboardActive?: boolean;
@@ -104,6 +106,7 @@ export function HomeHeader({
   accountLabel,
   profileAvatar,
   socialUnreadCount = 0,
+  isQa = false,
   musicControls,
   soundEffectsEnabled,
   leaderboardActive = false,
@@ -153,7 +156,10 @@ export function HomeHeader({
             )}
           </span>
           {signedIn && (
-            <span className="home-header-account-label">{accountLabel}</span>
+            <span className="home-header-account-identity">
+              <span className="home-header-account-label">{accountLabel}</span>
+              {isQa && <QaStatusBadge />}
+            </span>
           )}
         </button>
       </div>

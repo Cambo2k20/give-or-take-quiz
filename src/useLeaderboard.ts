@@ -13,7 +13,7 @@ import {
   fetchMyDailyRank,
   fetchMyOfficialDaily,
   fetchSurvivalLeaderboard,
-  joinLeaderboard,
+  saveProfileDisplayName,
   submitDailyRound,
   submitRound,
   submitSurvivalRun,
@@ -33,7 +33,10 @@ export type SubmitState =
  * a timer or polls: the board is fetched when someone asks to see it, and a
  * round is published only once the player has chosen a name.
  */
-export function useLeaderboard(userId: string | null) {
+export function useLeaderboard(
+  userId: string | null,
+  canUseAccountIdentity = true,
+) {
   // Keyed by account, so the profile belonging to a previous sign-in is never
   // shown to the next one. Deriving both profile and ready from this keeps the
   // signed-out case out of the effect entirely.
@@ -46,14 +49,19 @@ export function useLeaderboard(userId: string | null) {
   const [boardError, setBoardError] = useState<string | null>(null);
   const [submit, setSubmit] = useState<SubmitState>({ status: "idle" });
 
-  const forThisUser = userId && loaded?.userId === userId ? loaded : null;
+  const forThisUser =
+    canUseAccountIdentity && userId && loaded?.userId === userId ? loaded : null;
   const profile = forThisUser?.profile ?? null;
-  const ready = !leaderboardEnabled || !userId || forThisUser !== null;
+  const ready =
+    !canUseAccountIdentity ||
+    !leaderboardEnabled ||
+    !userId ||
+    forThisUser !== null;
 
   // Only ever fetches for a signed-in account, and only from a callback, so no
   // state is set synchronously while rendering.
   useEffect(() => {
-    if (!leaderboardEnabled || !userId) return;
+    if (!leaderboardEnabled || !userId || !canUseAccountIdentity) return;
     let cancelled = false;
 
     currentProfile()
@@ -69,17 +77,32 @@ export function useLeaderboard(userId: string | null) {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, canUseAccountIdentity]);
 
   const join = useCallback(async (name: string) => {
-    const joined = await joinLeaderboard(name);
-    setLoaded({ userId: joined.id, profile: joined });
+    if (!canUseAccountIdentity) {
+      throw new Error("Account identity is unavailable until verification finishes.");
+    }
+    const joined = await saveProfileDisplayName(name);
+    setLoaded((current) => ({
+      userId: joined.id,
+      profile: {
+        ...joined,
+        avatarKey:
+          current?.userId === joined.id && current.profile
+            ? current.profile.avatarKey
+            : joined.avatarKey,
+      },
+    }));
     return joined;
-  }, []);
+  }, [canUseAccountIdentity]);
 
   const updateAvatar = useCallback(
     async (avatarKey: ProfileAvatarKey) => {
       if (!userId) throw new Error("Sign in to change your avatar.");
+      if (!canUseAccountIdentity) {
+        throw new Error("Account identity is unavailable until verification finishes.");
+      }
       await updateProfileAvatar(avatarKey);
       setLoaded((current) =>
         current?.userId === userId && current.profile
@@ -90,7 +113,7 @@ export function useLeaderboard(userId: string | null) {
           : current,
       );
     },
-    [userId],
+    [userId, canUseAccountIdentity],
   );
 
   // Category and daily rounds go to different server calls but share the one
@@ -207,6 +230,7 @@ export function useLeaderboard(userId: string | null) {
     ready,
     profile,
     join,
+    saveDisplayName: join,
     updateAvatar,
     publish,
     publishDaily,

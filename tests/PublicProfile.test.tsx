@@ -28,6 +28,7 @@ const labels = Object.fromEntries(
 
 const profile: PublicPlayerProfile = {
   player: { id: "player-1", displayName: "Cambo", avatarKey: "hermes" },
+  isQa: false,
   relationship: "self",
   showcase: {
     featuredBadgeKey: "space-05",
@@ -79,6 +80,7 @@ function renderProfile(
       error=""
       actionBusy={false}
       actionMessage=""
+      socialCompetitionBlocked={false}
       matchHistory={null}
       matchHistoryLoading={false}
       onAddFriend={vi.fn()}
@@ -119,6 +121,50 @@ describe("public player profile", () => {
     expect(screen.queryByText("Head to head")).not.toBeInTheDocument();
   });
 
+  it("marks QA profiles and removes competitive social actions", () => {
+    renderProfile({ isQa: true, relationship: "friend" });
+
+    expect(screen.getByText("QA")).toBeInTheDocument();
+    expect(
+      screen.getByText(/results are not ranked and social competition is disabled/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Challenge" })).toBeNull();
+    expect(screen.queryByText("Head to head")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Subject ranks" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Achievements" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Personal bests" })).toBeNull();
+  });
+
+  it("removes competition actions when the signed-in viewer is QA", () => {
+    render(
+      <PublicProfileScreen
+        profile={{ ...profile, relationship: "friend" }}
+        labels={labels}
+        themeMode="dark"
+        loading={false}
+        unavailable={false}
+        error=""
+        actionBusy={false}
+        actionMessage=""
+        socialCompetitionBlocked
+        matchHistory={null}
+        matchHistoryLoading={false}
+        onAddFriend={vi.fn()}
+        onOpenFriends={vi.fn()}
+        onChallenge={vi.fn()}
+        onManage={vi.fn()}
+        onSignIn={vi.fn()}
+        onShare={vi.fn()}
+        onBack={vi.fn()}
+        headingRef={createRef<HTMLHeadingElement>()}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Challenge" })).toBeNull();
+    expect(screen.queryByText("Head to head")).toBeNull();
+    expect(screen.getByRole("button", { name: "Share profile" })).toBeInTheDocument();
+  });
+
   it("uses a generic unavailable state for blocked or missing profiles", () => {
     render(
       <PublicProfileScreen
@@ -130,6 +176,7 @@ describe("public player profile", () => {
         error=""
         actionBusy={false}
         actionMessage=""
+        socialCompetitionBlocked={false}
         matchHistory={null}
         matchHistoryLoading={false}
         onAddFriend={vi.fn()}

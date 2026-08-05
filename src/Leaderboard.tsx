@@ -381,3 +381,93 @@ export function JoinLeaderboardForm({
     </form>
   );
 }
+
+export function ProfileDisplayNameForm({
+  currentName = "",
+  onSave,
+  onCancel,
+}: {
+  currentName?: string;
+  onSave: (name: string) => Promise<unknown>;
+  onCancel?: () => void;
+}) {
+  const [name, setName] = useState(currentName);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const editing = Boolean(currentName);
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    if (busy) return;
+
+    const invalid = displayNameError(name);
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    setMessage("");
+    try {
+      await onSave(name);
+      setMessage(editing ? "Display name updated." : "Display name created.");
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Could not save that display name.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form className="join-form profile-display-name-form" onSubmit={handleSubmit}>
+      <label htmlFor="profile-display-name">
+        {editing ? "Change display name" : "Create display name"}
+      </label>
+      <div className="join-row">
+        <input
+          id="profile-display-name"
+          className="join-input"
+          type="text"
+          value={name}
+          minLength={2}
+          maxLength={24}
+          autoComplete="off"
+          onChange={(event) => {
+            setName(event.target.value);
+            setError(null);
+            setMessage("");
+          }}
+          disabled={busy}
+        />
+        <button className="primary-button" type="submit" disabled={busy}>
+          {busy ? "Saving…" : "Save display name"}
+        </button>
+        {onCancel && (
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={onCancel}
+            disabled={busy}
+          >
+            Cancel
+          </button>
+        )}
+      </div>
+      <p className="join-note">
+        2–24 characters. Use letters, numbers, spaces, hyphens or underscores.
+      </p>
+      {error && <p className="join-error" role="alert">{error}</p>}
+      {message && (
+        <p className="profile-avatar-message" role="status">
+          {message}
+        </p>
+      )}
+    </form>
+  );
+}

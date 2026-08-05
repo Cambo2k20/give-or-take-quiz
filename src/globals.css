@@ -46,6 +46,174 @@
   --wide: 880px;
 }
 
+/* QA identity is a server-derived account status, not a cosmetic unlock. */
+.qa-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  min-height: 20px;
+  padding: 2px 7px;
+  border: 1px solid color-mix(in srgb, var(--accent) 64%, var(--line));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 24%, var(--surface));
+  color: var(--accent-ink);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.qa-mode-banner {
+  position: sticky;
+  top: 8px;
+  z-index: 30;
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  margin: 8px auto 0;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 54%, var(--line));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 94%, var(--accent-wash));
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 850;
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(12px);
+}
+
+.home-header-account-identity,
+.profile-name-row,
+.public-profile-name-row,
+.qa-account-status,
+.qa-account-type {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-header-account-identity {
+  min-width: 0;
+}
+
+.profile-name-row,
+.public-profile-name-row {
+  flex-wrap: wrap;
+}
+
+.profile-name-row h1,
+.public-profile-name-row h1 {
+  margin-right: 2px;
+}
+
+.profile-name-edit {
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  color: var(--accent-ink);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.profile-name-edit:hover,
+.profile-name-edit:focus-visible {
+  border-color: var(--accent);
+}
+
+.profile-display-name-card {
+  margin-top: 18px;
+}
+
+.profile-display-name-form {
+  margin-top: 14px;
+}
+
+.qa-profile-hero {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.qa-profile-facts {
+  justify-self: end;
+}
+
+.qa-profile-actions {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.qa-profile-actions .profile-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.qa-profile-actions .profile-section-action {
+  margin-top: auto;
+}
+
+.qa-public-profile-note {
+  display: flex;
+  justify-content: center;
+}
+
+.capability-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--bad);
+}
+
+.capability-error p {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .qa-profile-hero,
+  .qa-profile-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .qa-profile-facts {
+    justify-self: stretch;
+  }
+
+  .capability-error {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 560px) {
+  .home-header-account-identity .qa-status-badge {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    min-width: 24px;
+    min-height: 17px;
+    padding: 1px 5px;
+    font-size: 8px;
+  }
+
+  .qa-mode-banner {
+    top: 6px;
+    max-width: calc(100% - 24px);
+    font-size: 11px;
+  }
+}
+
 @media (min-width: 721px) {
   :root {
     --content: min(600px, 82vw);
@@ -8685,7 +8853,7 @@ h1[tabindex="-1"]:focus {
 
 .home-header-redesign .home-header-account.has-label {
   width: auto;
-  max-width: min(180px, 25vw);
+  max-width: min(230px, 32vw);
   padding-right: 12px;
   gap: 8px;
   justify-content: flex-start;

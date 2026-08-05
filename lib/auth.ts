@@ -71,6 +71,15 @@ export async function currentUser(): Promise<AuthUser | null> {
   return toAuthUser(data.session?.user);
 }
 
+/** Returns only the signed-in caller's server-assigned QA capability. */
+export async function currentQaAccountCapability(): Promise<boolean> {
+  if (!supabase) return false;
+
+  const { data, error } = await supabase.rpc("get_qa_account_capability");
+  if (error) throw new Error(error.message);
+  return data === true;
+}
+
 /**
  * Creates an account. With email confirmation switched on, Supabase returns a
  * user with no session, which is the signal that a confirmation mail is on its

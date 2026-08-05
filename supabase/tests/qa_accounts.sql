@@ -43,7 +43,6 @@ values
 insert into public.profiles (id, display_name)
 values
   (:'ordinary_id', 'QA Capability Ordinary'),
-  (:'qa_id', 'QA Capability Tester'),
   (:'friend_id', 'QA Capability Friend');
 
 -- The ordinary caller gets five valid Classic guesses from the committed bank.
@@ -83,8 +82,35 @@ select pg_temp.assert_raises(
 reset role;
 insert into private.qa_accounts (user_id) values (:'qa_id');
 
+set local role authenticated;
+select set_config('request.jwt.claim.sub', :'qa_id', true);
+insert into public.profiles (id, display_name)
+values (:'qa_id', 'QA Capability Tester');
+update public.profiles
+set display_name = 'QA Identity Tester', avatar_key = 'hermes'
+where id = :'qa_id';
+update public.profiles
+set display_name = 'QA Must Not Rename Friend'
+where id = :'friend_id';
+select pg_temp.assert_true(
+  (select display_name = 'QA Identity Tester' and avatar_key = 'hermes'
+   from public.profiles where id = :'qa_id')
+  and (select display_name = 'QA Capability Friend'
+       from public.profiles where id = :'friend_id'),
+  'QA callers can create and update only their own account identity'
+);
+select pg_temp.assert_true(
+  public.get_public_qa_profile_status(:'qa_id') = true,
+  'the QA public profile receives a server-derived QA marker'
+);
+
+reset role;
+
 -- Seed historical rows only as the database owner. They model a QA account
 -- marked after prior score data existed, which exercises leaderboard defense.
+insert into public.daily_sets (puzzle_date)
+values (current_date)
+on conflict (puzzle_date) do nothing;
 insert into public.game_rounds (player_id, mode, total_score, question_count)
 values
   (:'qa_id', 'space', 5000, 5),
@@ -92,11 +118,27 @@ values
 insert into public.game_rounds (player_id, mode, total_score, question_count, puzzle_date, is_official)
 values (:'qa_id', 'daily', 5000, 5, current_date, true);
 
+-- Phase 2 is scoreless rather than simulated. Capture the derived state from
+-- those owner-seeded historical rows so rejected browser submissions can be
+-- proved not to move progression, achievements, or challenge state.
+select coalesce(sum(xp), 0)::bigint as qa_xp_before
+from public.player_progress where player_id = :'qa_id' \gset
+select coalesce(sum(progress), 0)::bigint as qa_achievement_progress_before
+from public.player_achievements where player_id = :'qa_id' \gset
+select count(*)::bigint as qa_challenges_before
+from public.game_challenges
+where challenger_id = :'qa_id' or recipient_id = :'qa_id' \gset
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub', :'ordinary_id', true);
 select pg_temp.assert_true(
   public.get_qa_account_capability() = false,
   'an ordinary caller cannot discover another account capability through the self-only RPC'
+);
+select pg_temp.assert_true(
+  public.get_public_qa_profile_status(:'qa_id') = true
+  and public.get_public_qa_profile_status(gen_random_uuid()) = false,
+  'the public marker identifies one known QA profile without listing the allowlist'
 );
 
 reset role;
@@ -148,6 +190,19 @@ select pg_temp.assert_true(
     where r.player_id = :'qa_id'
   ),
   'rejected QA submissions create no round_answers'
+);
+select pg_temp.assert_true(
+  (select coalesce(sum(xp), 0) from public.player_progress
+   where player_id = :'qa_id') = :'qa_xp_before'::bigint
+  and (select coalesce(sum(progress), 0) from public.player_achievements
+       where player_id = :'qa_id') = :'qa_achievement_progress_before'::bigint,
+  'rejected QA submissions create no progression or achievement progress'
+);
+select pg_temp.assert_true(
+  (select count(*) from public.game_challenges
+   where challenger_id = :'qa_id' or recipient_id = :'qa_id')
+    = :'qa_challenges_before'::bigint,
+  'rejected QA submissions create no challenge state'
 );
 select pg_temp.assert_true(
   not exists (select 1 from public.leaderboard where player_id = :'qa_id')

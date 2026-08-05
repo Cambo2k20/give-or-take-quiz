@@ -147,7 +147,7 @@ export function SurvivalRound({
 
 type SurvivalOverProps = {
   survived: number;
-  best: number;
+  best: number | null;
   /** The question that ended it, and what was guessed. */
   question: Question | null;
   guess: number;
@@ -178,7 +178,7 @@ export function SurvivalOver({
   progressRibbon,
   challengeCallout,
 }: SurvivalOverProps) {
-  const isBest = survived >= best && survived > 0;
+  const isBest = best !== null && survived >= best && survived > 0;
 
   return (
     <section className="results-screen">
@@ -199,11 +199,13 @@ export function SurvivalOver({
 
         {challengeCallout ?? (
           <div className="result-summary">
-            <p>
-              {isBest
-                ? "That is your longest run yet."
-                : `Your best run is ${formatPoints(best)}.`}
-            </p>
+            {best !== null && (
+              <p>
+                {isBest
+                  ? "That is your longest run yet."
+                  : `Your best run is ${formatPoints(best)}.`}
+              </p>
+            )}
             <div className="result-actions">
               <button className="primary-button" type="button" onClick={onRunAgain}>
                 Run it back

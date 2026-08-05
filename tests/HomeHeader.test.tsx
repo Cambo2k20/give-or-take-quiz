@@ -94,6 +94,15 @@ describe("HomeHeader", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows the permanent QA marker beside the account identity", () => {
+    renderHeader({ isQa: true });
+
+    expect(screen.getByText("QA")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Profile, Cambo" }),
+    ).toBeInTheDocument();
+  });
+
   it("keeps global navigation when leaderboard data is unavailable", async () => {
     const user = userEvent.setup();
     const callbacks = renderHeader({ leaderboardEnabled: false });

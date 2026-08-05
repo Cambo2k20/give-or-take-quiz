@@ -77,6 +77,7 @@ describe("public profile mapping", () => {
     });
 
     expect(mapped.player.displayName).toBe("Cambo");
+    expect(mapped.isQa).toBe(false);
     expect(mapped.player.avatarKey).toBe("event-horizon");
     expect(mapped.showcase.profileThemeId).toBeNull();
     expect(mapped.earnedAchievements[0].tier).toBe("gold");
@@ -90,13 +91,19 @@ describe("public profile mapping", () => {
 
 describe("public profile RPCs", () => {
   it("loads a signed-out-safe profile through the public RPC", async () => {
-    rpc.mockResolvedValue({ data: serverProfile, error: null });
+    rpc
+      .mockResolvedValueOnce({ data: serverProfile, error: null })
+      .mockResolvedValueOnce({ data: true, error: null });
 
     await expect(fetchPublicPlayerProfile("player-1")).resolves.toMatchObject({
       player: { id: "player-1", displayName: "Cambo" },
+      isQa: true,
       relationship: "friend",
     });
     expect(rpc).toHaveBeenCalledWith("get_public_player_profile", {
+      p_player_id: "player-1",
+    });
+    expect(rpc).toHaveBeenCalledWith("get_public_qa_profile_status", {
       p_player_id: "player-1",
     });
   });

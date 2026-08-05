@@ -15,6 +15,7 @@ import { BACKGROUND_THEMES, type BackgroundThemeId } from "../lib/themes";
 import type { QuestionCategory } from "../lib/types";
 import { ProfileAvatarArtwork } from "./Progress";
 import { RankBadgeArtwork } from "./RankBadgeArtwork";
+import { QaStatusBadge } from "./QaStatus";
 import { formatPoints } from "./questionText";
 import type { Theme } from "./theme";
 import { ThemeArtwork } from "./themes/ThemeArtwork";
@@ -104,10 +105,13 @@ function ProfileHero({
         <ProfileAvatarArtwork avatarKey={profile.player.avatarKey} />
       </span>
       <div className="public-profile-identity">
-        <p className="eyebrow">Player profile</p>
-        <h1 ref={headingRef} tabIndex={headingRef ? -1 : undefined}>
-          {profile.player.displayName}
-        </h1>
+        <p className="eyebrow">{profile.isQa ? "QA profile" : "Player profile"}</p>
+        <div className="public-profile-name-row">
+          <h1 ref={headingRef} tabIndex={headingRef ? -1 : undefined}>
+            {profile.player.displayName}
+          </h1>
+          {profile.isQa && <QaStatusBadge />}
+        </div>
         <p>
           {title}
           {category ? ` · ${labels[category].title}` : ""}
@@ -129,6 +133,7 @@ function ProfileHero({
 function ProfileActions({
   profile,
   busy,
+  socialCompetitionBlocked,
   onAddFriend,
   onOpenFriends,
   onChallenge,
@@ -138,6 +143,7 @@ function ProfileActions({
 }: {
   profile: PublicPlayerProfile;
   busy: boolean;
+  socialCompetitionBlocked: boolean;
   onAddFriend: () => void;
   onOpenFriends: () => void;
   onChallenge: () => void;
@@ -146,6 +152,15 @@ function ProfileActions({
   onShare: () => void;
 }) {
   const relationship = profile.relationship;
+  if (profile.isQa || socialCompetitionBlocked) {
+    return (
+      <div className="public-profile-actions">
+        <button className="secondary-button" type="button" onClick={onShare}>
+          Share profile
+        </button>
+      </div>
+    );
+  }
   return (
     <div className="public-profile-actions">
       {relationship === "self" && (
@@ -199,6 +214,7 @@ export function PublicProfileScreen({
   error,
   actionBusy,
   actionMessage,
+  socialCompetitionBlocked,
   matchHistory,
   matchHistoryLoading,
   onAddFriend,
@@ -218,6 +234,7 @@ export function PublicProfileScreen({
   error: string;
   actionBusy: boolean;
   actionMessage: string;
+  socialCompetitionBlocked: boolean;
   matchHistory: FriendMatchHistory | null;
   matchHistoryLoading: boolean;
   onAddFriend: () => void;
@@ -278,6 +295,7 @@ export function PublicProfileScreen({
       <ProfileActions
         profile={profile}
         busy={actionBusy}
+        socialCompetitionBlocked={socialCompetitionBlocked}
         onAddFriend={onAddFriend}
         onOpenFriends={onOpenFriends}
         onChallenge={onChallenge}
@@ -285,12 +303,19 @@ export function PublicProfileScreen({
         onSignIn={onSignIn}
         onShare={onShare}
       />
+      {profile.isQa && (
+        <p className="public-profile-status qa-public-profile-note" role="status">
+          QA account · Results are not ranked and social competition is disabled.
+        </p>
+      )}
       {(actionMessage || error) && (
         <p className="public-profile-status" role="status">
           {actionMessage || error}
         </p>
       )}
 
+      {!profile.isQa && (
+        <>
       <section className="public-profile-section" aria-labelledby="public-ranks-title">
         <div className="public-profile-section-heading">
           <div>
@@ -405,7 +430,12 @@ export function PublicProfileScreen({
         )}
       </section>
 
-      {profile.relationship === "friend" && (
+        </>
+      )}
+
+      {!profile.isQa &&
+        !socialCompetitionBlocked &&
+        profile.relationship === "friend" && (
         <section className="public-profile-section" aria-labelledby="head-to-head-title">
           <div className="public-profile-section-heading">
             <div>

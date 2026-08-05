@@ -76,6 +76,7 @@ import {
   MascotGamePreference,
   ProfileDashboard,
   ProfileAvatarArtwork,
+  QaProfileDashboard,
   ProgressRibbon,
   RankPanel,
   ResultProgressCard,
@@ -86,7 +87,10 @@ import { useProgress } from "./useProgress";
 import { EstimatePanel } from "./EstimatePanel";
 import { QuestionCardShell } from "./QuestionCardShell";
 import { DailyHero } from "./DailyHero";
-import { JoinLeaderboardForm } from "./Leaderboard";
+import {
+  JoinLeaderboardForm,
+  ProfileDisplayNameForm,
+} from "./Leaderboard";
 import type { SubmittedDailyRound } from "../lib/leaderboard";
 import {
   formatPoints,
@@ -146,6 +150,7 @@ import {
   PublicProfileEditorState,
   PublicProfileScreen,
 } from "./PublicProfile";
+import { QaModeBanner, QaStatusBadge } from "./QaStatus";
 
 type Phase =
   | "category"
@@ -224,6 +229,65 @@ function AchievementShimmer() {
       aria-hidden="true"
     />
   );
+}
+
+function QaScorelessCallout() {
+  return (
+    <div className="board-callout" data-qa-scoreless="true">
+      <p className="board-status" role="status">
+        <strong>QA play</strong> — this result is not saved, ranked, shared with
+        challenges, or counted toward progress.
+      </p>
+    </div>
+  );
+}
+
+function AccountCapabilityNotice({
+  authStatus,
+  qaStatus,
+  email,
+  emailConfirmed,
+  onRetry,
+}: {
+  authStatus: "loading" | "signed-out" | "signed-in" | "error";
+  qaStatus: "idle" | "loading" | "qa" | "not-qa" | "error";
+  email: string | null;
+  emailConfirmed: boolean;
+  onRetry: () => void;
+}) {
+  if (authStatus === "loading") {
+    return <p className="board-status" role="status">Checking sign-in…</p>;
+  }
+  if (authStatus === "error") {
+    return (
+      <p className="board-status is-error" role="alert">
+        Sign-in status could not be verified. Results will not be saved.
+      </p>
+    );
+  }
+  if (qaStatus === "loading") {
+    return (
+      <p className="board-status" role="status">
+        Checking account capability… Results are not saved while this check is
+        in progress.
+      </p>
+    );
+  }
+  if (qaStatus === "error") {
+    return (
+      <div className="capability-error" role="alert">
+        <p>
+          Account capability could not be verified. Results are not saved until
+          the check succeeds.
+        </p>
+        <button className="secondary-button" type="button" onClick={onRetry}>
+          Retry capability check
+        </button>
+      </div>
+    );
+  }
+  if (!emailConfirmed) return <ConfirmEmailNotice email={email} />;
+  return null;
 }
 
 /**
@@ -402,11 +466,21 @@ export default function Game() {
   } | null>(null);
   const focusHeadingRef = useRef<HTMLHeadingElement>(null);
   const auth = useAuth();
-  const leaderboard = useLeaderboard(auth.user?.id ?? null);
-  // Progression is derived on the server from recorded rounds, so it only
-  // exists for a player who has a name to record them against.
-  const progress = useProgress(leaderboard.profile?.id ?? null);
-  const social = useSocial(leaderboard.profile?.id ?? null);
+  const canUseAccountIdentity = auth.canUseAccountIdentity;
+  const canSubmitCompetitiveScores = auth.canSubmitCompetitiveScores;
+  const canUseSocialCompetition = auth.canUseSocialCompetition;
+  const canPersistLocalScores = auth.canPersistLocalScores;
+  const leaderboard = useLeaderboard(
+    auth.user?.id ?? null,
+    canUseAccountIdentity,
+  );
+  // Identity is safe for QA. Real progression and social competition are not.
+  const progress = useProgress(
+    canSubmitCompetitiveScores ? leaderboard.profile?.id ?? null : null,
+  );
+  const social = useSocial(
+    canUseSocialCompetition ? leaderboard.profile?.id ?? null : null,
+  );
   const publicProfile = usePublicProfile(targetPlayerId);
   const { refresh: refreshProgress } = progress;
   const { refresh: refreshSocial } = social;
@@ -536,6 +610,7 @@ export default function Game() {
     (result) => accuracyTier(result.points).id === "bullseye",
   ).length;
   const isNewPersonalBest =
+    canPersistLocalScores &&
     !dailyDate &&
     !activeChallenge &&
     totalScore > 0 &&
@@ -571,7 +646,7 @@ export default function Game() {
     loadDailyBoard,
     loadSurvivalBoard,
   } = leaderboard;
-  const canPublish = auth.canUseLeaderboard;
+  const canPublish = canSubmitCompetitiveScores;
   const playerId = player?.id ?? null;
   const activeDailyHistorySync =
     playerId && dailyHistorySync?.playerId === playerId
@@ -595,6 +670,7 @@ export default function Game() {
       !targetChallengeId ||
       activeChallenge ||
       auth.status !== "signed-in" ||
+      !canUseSocialCompetition ||
       !player
     ) {
       return;
@@ -606,7 +682,13 @@ export default function Game() {
     return () => {
       cancelled = true;
     };
-  }, [targetChallengeId, activeChallenge, auth.status, player]);
+  }, [
+    targetChallengeId,
+    activeChallenge,
+    auth.status,
+    canUseSocialCompetition,
+    player,
+  ]);
 
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
@@ -796,7 +878,14 @@ export default function Game() {
   // A daily goes to its own per-day board, never a category one: two days are
   // two different puzzles, so their scores must not rank together.
   useEffect(() => {
-    if (activeChallenge || phase !== "results" || publishedRef.current) return;
+    if (
+      auth.isQa ||
+      activeChallenge ||
+      phase !== "results" ||
+      publishedRef.current
+    ) {
+      return;
+    }
     if (!player || !canPublish || results.length === 0) return;
     publishedRef.current = true;
     const guesses = results.map((result) => ({
@@ -828,12 +917,20 @@ export default function Game() {
     dailyDate,
     refreshProgress,
     activeChallenge,
+    auth.isQa,
   ]);
 
   // A finished run posts the whole sequence, fatal guess included: the server
   // re-judges every one and refuses a run that did not actually end in a miss.
   useEffect(() => {
-    if (activeChallenge || phase !== "survival-over" || publishedRef.current) return;
+    if (
+      auth.isQa ||
+      activeChallenge ||
+      phase !== "survival-over" ||
+      publishedRef.current
+    ) {
+      return;
+    }
     if (!player || !canPublish || survivalGuesses.length === 0) return;
     publishedRef.current = true;
     void publishSurvival(
@@ -852,10 +949,17 @@ export default function Game() {
     publishSurvival,
     refreshProgress,
     activeChallenge,
+    auth.isQa,
   ]);
 
   const submitFinishedChallenge = useCallback(async () => {
-    if (!activeChallenge || challengePublishedRef.current) return;
+    if (
+      !canUseSocialCompetition ||
+      !activeChallenge ||
+      challengePublishedRef.current
+    ) {
+      return;
+    }
     const guesses = (
       activeChallenge.format === "survival" ? survivalGuesses : results
     ).map((result) => ({
@@ -890,6 +994,7 @@ export default function Game() {
     survivalGuesses,
     refreshSocial,
     refreshProgress,
+    canUseSocialCompetition,
   ]);
 
   useEffect(() => {
@@ -908,6 +1013,7 @@ export default function Game() {
   }, [activeChallenge, phase, submitFinishedChallenge]);
 
   async function joinAndPublishSurvival(name: string) {
+    if (!canSubmitCompetitiveScores) return;
     await leaderboard.join(name);
     publishedRef.current = true;
     const recorded = await publishSurvival(
@@ -920,6 +1026,7 @@ export default function Game() {
   }
 
   async function joinAndPublish(name: string) {
+    if (!canSubmitCompetitiveScores) return;
     await leaderboard.join(name);
     publishedRef.current = true;
     const guesses = results.map((result) => ({
@@ -1222,13 +1329,15 @@ export default function Game() {
     // which the server accepts as a completed run.
     if (!alive || !next) {
       const survived = alive ? survivalGuesses.length : survivalGuesses.length - 1;
-      const updated = recordSurvivalRun(
-        formatRecords,
-        Math.max(0, survived),
-        mode,
-      );
-      setFormatRecords(updated);
-      writeFormatRecords(updated);
+      if (canPersistLocalScores) {
+        const updated = recordSurvivalRun(
+          formatRecords,
+          Math.max(0, survived),
+          mode,
+        );
+        setFormatRecords(updated);
+        writeFormatRecords(updated);
+      }
       setPhase("survival-over");
       return;
     }
@@ -1255,6 +1364,7 @@ export default function Game() {
   }
 
   async function playChallenge(challenge: ChallengeSummary) {
+    if (!canUseSocialCompetition) return;
     setChallengeOpenError("");
     const deck = await social.loadChallengeDeck(challenge.id);
     setShareStatus("");
@@ -1272,6 +1382,7 @@ export default function Game() {
   }
 
   function requestPlayChallenge(challenge: ChallengeSummary) {
+    if (!canUseSocialCompetition) return;
     void playChallenge(challenge).catch((caught) => {
       setChallengeOpenError(
         caught instanceof Error ? caught.message : "This challenge is unavailable.",
@@ -1281,6 +1392,7 @@ export default function Game() {
   }
 
   function backToFriends() {
+    if (!canUseSocialCompetition) return;
     setActiveChallenge(null);
     setChallengeSubmit({ status: "idle" });
     setPhase("friends");
@@ -1288,7 +1400,7 @@ export default function Game() {
   }
 
   async function startRematch() {
-    if (!activeChallenge) return;
+    if (!canUseSocialCompetition || !activeChallenge) return;
     setChallengeSubmit({ status: "sending" });
     try {
       const id = await social.createChallenge(
@@ -1347,7 +1459,7 @@ export default function Game() {
       // the streak and score show up without waiting on the network; the
       // publish effect below corrects this once the server has the final say
       // on which attempt is actually official.
-      if (dailyDate) {
+      if (dailyDate && canPersistLocalScores) {
         const updated = recordLocalDailyResult(
           dailyProgress,
           dailyDate,
@@ -1357,7 +1469,7 @@ export default function Game() {
         );
         setDailyProgress(updated);
         writeDailyProgress(updated);
-      } else {
+      } else if (canPersistLocalScores) {
         const updated = {
           ...bestScores,
           [mode]: Math.max(bestScores[mode], totalScore),
@@ -1465,6 +1577,7 @@ export default function Game() {
         mode={theme}
         variant="backdrop"
       />
+      {auth.isQa && <QaModeBanner />}
       {todaysDaily ? (
         <HomeHeader
           musicControls={<BackgroundMusicPlayer placement="header" />}
@@ -1484,6 +1597,7 @@ export default function Game() {
             ) : undefined
           }
           socialUnreadCount={social.unreadCount}
+          isQa={auth.isQa}
           soundEffectsEnabled={soundEffectsEnabled}
           theme={theme}
           onHome={goHome}
@@ -1584,8 +1698,12 @@ export default function Game() {
           {todaysDaily && (
             <DailyHero
               set={todaysDaily}
-              streak={streak}
-              today={shownDailyProgress.dates[today]}
+              streak={canPersistLocalScores ? streak : 0}
+              today={
+                canPersistLocalScores
+                  ? shownDailyProgress.dates[today]
+                  : undefined
+              }
               rank={shownDailyRank}
               boardEnabled={leaderboard.enabled}
               archiveCount={archiveDates.length}
@@ -1672,12 +1790,15 @@ export default function Game() {
                   <span className="mode-note">
                     {modeNote(MIXED_MODE.mode, heroFormat)}
                   </span>
-                  {heroFormat === "classic" && bestScores.mixed > 0 && (
+                  {canPersistLocalScores &&
+                    heroFormat === "classic" &&
+                    bestScores.mixed > 0 && (
                     <span className="mode-best">
                       Best {formatPoints(bestScores.mixed)}
                     </span>
                   )}
-                  {heroFormat === "survival" &&
+                  {canPersistLocalScores &&
+                    heroFormat === "survival" &&
                     (formatRecords.survivalBestByMode?.mixed ?? 0) > 0 && (
                       <span className="mode-best">
                         Most rounds{" "}
@@ -1736,12 +1857,16 @@ export default function Game() {
                           <span className="mode-note">
                             {modeNote(detail.mode, heroFormat)}
                           </span>
-                          {heroFormat === "classic" && best > 0 && (
+                          {canPersistLocalScores &&
+                            heroFormat === "classic" &&
+                            best > 0 && (
                             <span className="mode-best">
                               Best {formatPoints(best)}
                             </span>
                           )}
-                          {heroFormat === "survival" && survivalBest > 0 && (
+                          {canPersistLocalScores &&
+                            heroFormat === "survival" &&
+                            survivalBest > 0 && (
                             <span className="mode-best">
                               Most rounds {formatPoints(survivalBest)}
                             </span>
@@ -1759,9 +1884,13 @@ export default function Game() {
               {formatPoints(questionCount("mixed"))} sourced questions, bundled with the app
             </span>
             <span>
-              {heroFormat === "survival"
-                ? "Survival records stay on this device"
-                : "Best scores stay on this device"}
+              {canPersistLocalScores
+                ? heroFormat === "survival"
+                  ? "Survival records stay on this device"
+                  : "Best scores stay on this device"
+                : auth.isQa
+                  ? "QA results are not saved"
+                  : "Score saving is paused"}
             </span>
           </div>
         </section>
@@ -1923,7 +2052,7 @@ export default function Game() {
                 animated
                 className="results-celebration-mascot"
               />
-              {!activeChallenge && (
+              {!activeChallenge && canPersistLocalScores && (
                 <div
                   className={`result-best-callout${
                     isNewPersonalBest ? " is-new-best" : ""
@@ -2036,7 +2165,7 @@ export default function Game() {
             {!activeChallenge &&
               leaderboard.enabled &&
               leaderboard.ready &&
-              auth.canUseLeaderboard &&
+              canSubmitCompetitiveScores &&
               player && (
                 <div className="result-board-summary">
                   <div className="board-status" role="status">
@@ -2078,10 +2207,13 @@ export default function Game() {
               )}
           </ResultProgressCard>
 
+          {!activeChallenge && auth.isQa && <QaScorelessCallout />}
+
           {!activeChallenge &&
             leaderboard.enabled &&
             leaderboard.ready &&
-            (!auth.canUseLeaderboard || !player) && (
+            !auth.isQa &&
+            (!canSubmitCompetitiveScores || !player) && (
             <div className="board-callout">
               {auth.status === "signed-out" ? (
                 <>
@@ -2091,8 +2223,14 @@ export default function Game() {
                   </p>
                   <AuthPanel compact />
                 </>
-              ) : !auth.canUseLeaderboard ? (
-                <ConfirmEmailNotice email={auth.user?.email ?? null} />
+              ) : !canUseAccountIdentity ? (
+                <AccountCapabilityNotice
+                  authStatus={auth.status}
+                  qaStatus={auth.qaStatus}
+                  email={auth.user?.email ?? null}
+                  emailConfirmed={Boolean(auth.user?.emailConfirmed)}
+                  onRetry={auth.retryQaCapability}
+                />
               ) : !player ? (
                 <JoinLeaderboardForm onJoin={joinAndPublish} />
               ) : (
@@ -2224,6 +2362,9 @@ export default function Game() {
           error={publicProfile.error}
           actionBusy={profileActionBusy}
           actionMessage={profileActionMessage}
+          socialCompetitionBlocked={
+            auth.status === "signed-in" && !canUseSocialCompetition
+          }
           matchHistory={profileMatchHistory}
           matchHistoryLoading={profileMatchHistoryLoading}
           onAddFriend={() => void addProfileFriend()}
@@ -2300,7 +2441,7 @@ export default function Game() {
       {activePhase === "survival-over" && (
         <SurvivalOver
           survived={survivalSurvived}
-          best={formatRecords.survivalBest}
+          best={canPersistLocalScores ? formatRecords.survivalBest : null}
           question={
             survivalVerdictState?.survived
               ? null
@@ -2328,7 +2469,9 @@ export default function Game() {
             <ProgressRibbon change={progress.change} labels={categoryLabels} />
           }
           boardCallout={
-            !activeChallenge && leaderboard.enabled && leaderboard.ready ? (
+            !activeChallenge && auth.isQa ? (
+              <QaScorelessCallout />
+            ) : !activeChallenge && leaderboard.enabled && leaderboard.ready ? (
               <div className="board-callout">
                 {auth.status === "signed-out" ? (
                   <>
@@ -2338,8 +2481,14 @@ export default function Game() {
                     </p>
                     <AuthPanel compact />
                   </>
-                ) : !auth.canUseLeaderboard ? (
-                  <ConfirmEmailNotice email={auth.user?.email ?? null} />
+                ) : !canUseAccountIdentity ? (
+                  <AccountCapabilityNotice
+                    authStatus={auth.status}
+                    qaStatus={auth.qaStatus}
+                    email={auth.user?.email ?? null}
+                    emailConfirmed={Boolean(auth.user?.emailConfirmed)}
+                    onRetry={auth.retryQaCapability}
+                  />
                 ) : !player ? (
                   <JoinLeaderboardForm onJoin={joinAndPublishSurvival} />
                 ) : (
@@ -2380,7 +2529,9 @@ export default function Game() {
         <section className="board-screen">
           <div className="results-hero">
             <p className="eyebrow">
-              {streak > 0
+              {auth.isQa
+                ? "QA archive · results are not saved"
+                : streak > 0
                 ? `${streak}-day streak`
                 : "Play today's to start a streak"}
             </p>
@@ -2437,12 +2588,16 @@ export default function Game() {
       {activePhase === "account" && (
         <section
           className={`account-screen${
-            auth.status === "signed-in" && progress.progress
+            auth.status === "signed-in" &&
+            player &&
+            (auth.isQa || progress.progress)
               ? " account-screen-profile"
               : ""
           }`}
         >
-          {(!progress.progress || auth.status !== "signed-in") && (
+          {(!player ||
+            (!auth.isQa && !progress.progress) ||
+            auth.status !== "signed-in") && (
             <div className="results-hero">
               <p className="eyebrow">
                 {auth.status === "signed-in" ? "Your account" : "Optional"}
@@ -2451,14 +2606,34 @@ export default function Game() {
                 {auth.status === "signed-in" ? "Account" : "Sign in"}
               </h1>
               <p className="account-lede">
-                You never need an account to play. Signing in only puts your
-                scores on the leaderboard under a name of your choosing.
+                You never need an account to play. Signing in gives you a
+                profile identity; eligible accounts can also publish scores.
               </p>
             </div>
           )}
 
           {auth.recovering ? (
             <NewPasswordForm onDone={auth.endRecovery} />
+          ) : auth.status === "signed-in" && auth.isQa && player ? (
+            <QaProfileDashboard
+              displayName={player.displayName}
+              avatarKey={player.avatarKey}
+              email={auth.user?.email ?? null}
+              emailConfirmed={Boolean(auth.user?.emailConfirmed)}
+              onSelectAvatar={updateAvatar}
+              onChangeDisplayName={leaderboard.saveDisplayName}
+              onViewPublicProfile={() => {
+                profileReturnPhaseRef.current = "account";
+                openPlayerProfile(player.id, "account");
+              }}
+              mascotInGames={mascotInGames}
+              onMascotInGamesChange={updateMascotInGames}
+              onSignOut={() => {
+                void signOut();
+                setPhase("category");
+              }}
+              headingRef={focusHeadingRef}
+            />
           ) : auth.status === "signed-in" &&
             progress.progress &&
             player ? (
@@ -2473,6 +2648,7 @@ export default function Game() {
               equippedId={bgTheme}
               onEquip={toggleBackgroundTheme}
               onSelectAvatar={updateAvatar}
+              onChangeDisplayName={leaderboard.saveDisplayName}
               onOpenRanks={openRanks}
               onOpenAchievements={() => setPhase("achievements")}
               onOpenUnlocks={() => setPhase("unlocks")}
@@ -2506,7 +2682,7 @@ export default function Game() {
                   <dd>{auth.user?.email ?? "unknown"}</dd>
                 </div>
                 <div>
-                  <dt>Leaderboard name</dt>
+                  <dt>Display name</dt>
                   <dd>{player?.displayName ?? "Not chosen yet"}</dd>
                 </div>
                 <div>
@@ -2515,12 +2691,28 @@ export default function Game() {
                 </div>
               </dl>
 
-              {!auth.canUseLeaderboard && (
-                <ConfirmEmailNotice email={auth.user?.email ?? null} />
-              )}
+              {auth.isQa ? (
+                <div className="board-status qa-account-status" role="status">
+                  <QaStatusBadge />
+                  <span>
+                    QA account identity is enabled. Scores, progression and
+                    challenges remain disabled.
+                  </span>
+                </div>
+              ) : !canUseAccountIdentity ? (
+                <AccountCapabilityNotice
+                  authStatus={auth.status}
+                  qaStatus={auth.qaStatus}
+                  email={auth.user?.email ?? null}
+                  emailConfirmed={Boolean(auth.user?.emailConfirmed)}
+                  onRetry={auth.retryQaCapability}
+                />
+              ) : null}
 
-              {auth.canUseLeaderboard && !player && (
-                <JoinLeaderboardForm onJoin={(name) => leaderboard.join(name)} />
+              {canUseAccountIdentity && !player && (
+                <ProfileDisplayNameForm
+                  onSave={(name) => leaderboard.saveDisplayName(name)}
+                />
               )}
 
               <button
@@ -2544,8 +2736,8 @@ export default function Game() {
 
           {!(
             auth.status === "signed-in" &&
-            progress.progress &&
-            player
+            player &&
+            (auth.isQa || progress.progress)
           ) && (
             <MascotGamePreference
               enabled={mascotInGames}
@@ -2565,7 +2757,7 @@ export default function Game() {
         </section>
       )}
 
-      {activePhase === "friends" && player && (
+      {activePhase === "friends" && player && canUseSocialCompetition && (
         <FriendsScreen
           social={social}
           modeLabels={MODE_LABELS}
