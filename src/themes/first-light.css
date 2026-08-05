@@ -1,0 +1,236 @@
+.first-light {
+  --svg-artwork-bg: var(--artwork-first-light-base);
+  --svg-artwork-vignette-inner: var(
+    --artwork-first-light-vignette-inner
+  );
+  --svg-artwork-vignette-middle: var(
+    --artwork-first-light-vignette-middle
+  );
+  --svg-artwork-vignette-outer: var(
+    --artwork-first-light-vignette-outer
+  );
+  --svg-artwork-veil: var(--artwork-first-light-veil);
+  --svg-artwork-lock-ink: var(--artwork-first-light-lock-ink);
+  --svg-artwork-lock-bg: var(--artwork-first-light-lock-bg);
+  container: first-light / size;
+}
+
+.first-light__scene {
+  opacity: 1;
+  transition: opacity 180ms ease;
+}
+
+.first-light__hero--phone,
+.first-light__hero--desktop,
+.first-light__phone-foreground {
+  display: none;
+}
+
+.first-light__hero-pose--b,
+.first-light__herd-pose--b,
+.first-light__ptero-pose--b {
+  opacity: 0;
+}
+
+.first-light--preview .first-light__herd-travel {
+  transform: translate3d(-220px, 0, 0);
+}
+
+.first-light--preview .first-light__pterosaurs {
+  opacity: 0.64;
+  transform: translate3d(720px, 0, 0);
+}
+
+.first-light--backdrop .first-light__hero-travel--desktop {
+  animation: first-light-desktop-cross 110s linear -55s infinite;
+}
+
+.first-light--backdrop .first-light__hero-travel--phone {
+  animation: first-light-phone-cross 80s linear -40s infinite;
+}
+
+.first-light--backdrop .first-light__hero-pose--a {
+  animation: first-light-step-a 3.2s ease-in-out infinite;
+}
+
+.first-light--backdrop .first-light__hero-pose--b {
+  animation: first-light-step-b 3.2s ease-in-out infinite;
+}
+
+.first-light--backdrop .first-light__herd-travel {
+  animation: first-light-herd-cross 228s linear -80s infinite;
+}
+
+.first-light--backdrop .first-light__herd-pose--a {
+  animation: first-light-step-a 5.4s ease-in-out infinite;
+}
+
+.first-light--backdrop .first-light__herd-pose--b {
+  animation: first-light-step-b 5.4s ease-in-out infinite;
+}
+
+.first-light--backdrop .first-light__pterosaurs {
+  animation: first-light-ptero-cross 54s linear -35s infinite;
+}
+
+.first-light--backdrop .first-light__ptero-pose--a {
+  animation: first-light-step-a 0.9s ease-in-out infinite;
+}
+
+.first-light--backdrop .first-light__ptero-pose--b {
+  animation: first-light-step-b 0.9s ease-in-out infinite;
+}
+
+.first-light--backdrop
+  :where(
+    .first-light__hero-travel,
+    .first-light__herd-travel,
+    .first-light__pterosaurs
+  ) {
+  will-change: transform, opacity;
+}
+
+.first-light.is-locked .first-light__scene {
+  opacity: 0.38;
+}
+
+@keyframes first-light-desktop-cross {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-2220px, 0, 0);
+  }
+}
+
+@keyframes first-light-phone-cross {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-860px, 0, 0);
+  }
+}
+
+@keyframes first-light-herd-cross {
+  from {
+    transform: translate3d(720px, 0, 0);
+  }
+  to {
+    transform: translate3d(-1900px, 0, 0);
+  }
+}
+
+@keyframes first-light-ptero-cross {
+  0%,
+  62% {
+    opacity: 0;
+    transform: translate3d(1180px, 0, 0);
+  }
+  64%,
+  92% {
+    opacity: 0.9;
+  }
+  96%,
+  100% {
+    opacity: 0;
+    transform: translate3d(-360px, 0, 0);
+  }
+}
+
+@keyframes first-light-step-a {
+  0%,
+  44% {
+    opacity: 1;
+  }
+  50%,
+  94% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes first-light-step-b {
+  0%,
+  44% {
+    opacity: 0;
+  }
+  50%,
+  94% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@container first-light (max-aspect-ratio: 3 / 4) {
+  .first-light__hero--wide,
+  .first-light__hero--desktop {
+    display: none;
+  }
+
+  .first-light__hero--phone,
+  .first-light__phone-foreground {
+    display: block;
+  }
+}
+
+@container first-light (min-aspect-ratio: 4 / 3) {
+  .first-light__hero--wide,
+  .first-light__hero--phone,
+  .first-light__phone-foreground {
+    display: none;
+  }
+
+  .first-light__hero--desktop {
+    display: block;
+  }
+}
+
+@media (max-width: 600px) {
+  .first-light__pterosaurs,
+  .first-light__herd-depth--far,
+  .first-light__mist--near {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .first-light *,
+  .first-light::before,
+  .first-light::after {
+    animation: none !important;
+  }
+
+  .first-light__hero-pose--a,
+  .first-light__herd-pose--a,
+  .first-light__ptero-pose--a {
+    opacity: 1;
+  }
+
+  .first-light__hero-pose--b,
+  .first-light__herd-pose--b,
+  .first-light__ptero-pose--b {
+    opacity: 0;
+  }
+
+  .first-light__hero-travel--desktop {
+    transform: translate3d(-1110px, 0, 0);
+  }
+
+  .first-light__hero-travel--phone {
+    transform: translate3d(-425px, 0, 0);
+  }
+
+  .first-light__herd-travel {
+    transform: translate3d(-220px, 0, 0);
+  }
+
+  .first-light__pterosaurs {
+    opacity: 0.64;
+    transform: translate3d(720px, 0, 0);
+  }
+}

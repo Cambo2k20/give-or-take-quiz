@@ -32,6 +32,10 @@ const moonlitLibraryStyles = readFileSync(
   resolve("src/themes/moonlit-library.css"),
   "utf8",
 );
+const firstLightStyles = readFileSync(
+  resolve("src/themes/first-light.css"),
+  "utf8",
+);
 
 describe("theme artwork registry", () => {
   it("has exactly one auto-discovered artwork component per theme", () => {
@@ -98,6 +102,7 @@ describe("theme artwork registry", () => {
       deepSpaceStyles,
       auroraDriftStyles,
       moonlitLibraryStyles,
+      firstLightStyles,
     ]) {
       expect(css).toContain("@media (prefers-reduced-motion: reduce)");
       expect(css).toMatch(/animation:\s*none(?:\s*!important)?/);
@@ -113,6 +118,7 @@ describe("theme artwork registry", () => {
         deepSpaceStyles,
         auroraDriftStyles,
         moonlitLibraryStyles,
+        firstLightStyles,
       ].join("\n"),
     ).not.toContain("backdrop-filter");
   });
@@ -124,6 +130,7 @@ describe("theme artwork registry", () => {
       frontRowStyles,
       auroraDriftStyles,
       moonlitLibraryStyles,
+      firstLightStyles,
     ]) {
       const selectors = [...css.matchAll(/([^{}]+)\{[^{}]*will-change:/g)].map(
         (match) => match[1],
@@ -236,6 +243,71 @@ describe("Moonlit Library artwork", () => {
     expect(moonlitLibraryStyles).toContain(
       "animation-play-state: paused",
     );
+  });
+});
+
+describe("First Light SVG artwork", () => {
+  it("uses the approved bottom-anchored scene and every supplied silhouette asset", () => {
+    const { container } = render(
+      <ThemeArtwork
+        themeId="first-light"
+        mode="dark"
+        variant="backdrop"
+      />,
+    );
+
+    const svg = container.querySelector(".first-light__scene");
+    expect(svg).toHaveAttribute("viewBox", "0 0 1600 900");
+    expect(svg).toHaveAttribute(
+      "preserveAspectRatio",
+      "xMidYMax slice",
+    );
+    expect(
+      container.querySelectorAll("mask[data-first-light-asset]"),
+    ).toHaveLength(18);
+    expect(container.querySelectorAll(".first-light__hero")).toHaveLength(3);
+    expect(
+      container.querySelectorAll(".first-light__foreground rect[mask]"),
+    ).toHaveLength(10);
+    expect(
+      container.querySelectorAll(".first-light__category-foliage"),
+    ).toHaveLength(2);
+
+    const ridge = container.querySelector(".first-light__ridge");
+    expect(ridge).toHaveAttribute("x", "-1150");
+    expect(ridge).toHaveAttribute("opacity", "0.92");
+  });
+
+  it("keeps motion transform-and-opacity-only with a complete reduced-motion frame", () => {
+    expect(firstLightStyles).not.toContain("filter:");
+    expect(firstLightStyles.match(/will-change:/g)).toHaveLength(1);
+    expect(firstLightStyles).toContain(
+      "first-light-desktop-cross 110s",
+    );
+    expect(firstLightStyles).toContain("first-light-phone-cross 80s");
+    expect(firstLightStyles).toContain(
+      "@media (prefers-reduced-motion: reduce)",
+    );
+    expect(firstLightStyles).toMatch(
+      /\.first-light \*[\s\S]*animation:\s*none !important/,
+    );
+  });
+
+  it("renders a locked square preview with the real scene", () => {
+    const { container } = render(
+      <ThemeArtwork
+        themeId="first-light"
+        mode="dark"
+        variant="preview"
+        locked
+      />,
+    );
+
+    expect(container.querySelector(".first-light")).toHaveClass(
+      "svg-theme-artwork--preview",
+      "is-locked",
+    );
+    expect(container.querySelector(".svg-theme-artwork__lock")).not.toBeNull();
   });
 });
 

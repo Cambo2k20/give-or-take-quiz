@@ -173,6 +173,12 @@ describe("background theme mode contract", () => {
     ).toEqual({ category: "history", rank: 5 });
   });
 
+  it("gates First Light at Dinosaurs rank 5", () => {
+    expect(
+      BACKGROUND_THEMES.find((theme) => theme.id === "first-light")?.gate,
+    ).toEqual({ category: "dinosaurs", rank: 5 });
+  });
+
   it("defines every shipped theme as dark-only for now", () => {
     for (const theme of BACKGROUND_THEMES) {
       expect(supportedModesForTheme(theme), theme.id).toEqual(["dark"]);
