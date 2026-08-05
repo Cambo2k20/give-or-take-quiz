@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { authApi, fromApi } = vi.hoisted(() => ({
+const { authApi, fromApi, rpc } = vi.hoisted(() => ({
   authApi: {
     getSession: vi.fn(),
     signUp: vi.fn(),
@@ -12,18 +12,21 @@ const { authApi, fromApi } = vi.hoisted(() => ({
     onAuthStateChange: vi.fn(),
   },
   fromApi: { upsert: vi.fn() },
+  rpc: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase", () => ({
   supabase: {
     auth: authApi,
     from: () => ({ upsert: fromApi.upsert }),
+    rpc,
   },
   leaderboardEnabled: true,
 }));
 
 const {
   currentUser,
+  currentQaAccountCapability,
   emailError,
   onAuthChange,
   passwordError,
@@ -51,6 +54,7 @@ const unconfirmedUser = {
 beforeEach(() => {
   for (const fn of Object.values(authApi)) fn.mockReset();
   fromApi.upsert.mockReset();
+  rpc.mockReset();
 });
 
 describe("credential validation", () => {
@@ -208,6 +212,15 @@ describe("currentUser", () => {
   });
 });
 
+describe("currentQaAccountCapability", () => {
+  it("uses the self-only QA capability RPC", async () => {
+    rpc.mockResolvedValue({ data: true, error: null });
+
+    await expect(currentQaAccountCapability()).resolves.toBe(true);
+    expect(rpc).toHaveBeenCalledWith("get_qa_account_capability");
+  });
+});
+
 describe("onAuthChange", () => {
   it("forwards the user and event, and unsubscribes when told to", () => {
     const unsubscribe = vi.fn();
@@ -235,12 +248,12 @@ describe("onAuthChange", () => {
   });
 });
 
-describe("leaderboard identity requires a confirmed account", () => {
+describe("profile identity requires a confirmed account", () => {
   it("refuses to claim a name while signed out", async () => {
     authApi.getSession.mockResolvedValue({ data: { session: null } });
 
     await expect(joinLeaderboard("Cartographer")).rejects.toThrow(
-      "Sign in to claim a name on the leaderboard.",
+      "Sign in to create an account identity.",
     );
     expect(fromApi.upsert).not.toHaveBeenCalled();
   });

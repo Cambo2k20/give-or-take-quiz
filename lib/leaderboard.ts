@@ -160,11 +160,13 @@ export async function currentProfile(): Promise<PlayerProfile | null> {
 }
 
 /**
- * Claims a display name for the signed-in account. Requires a confirmed
+ * Creates or changes the display name for the signed-in account. Requires a confirmed
  * address: the row level security policy on profiles enforces the same rule,
  * so this check only exists to give a clearer message than a policy violation.
  */
-export async function joinLeaderboard(name: string): Promise<PlayerProfile> {
+export async function saveProfileDisplayName(
+  name: string,
+): Promise<PlayerProfile> {
   const supabaseClient = client();
   const displayName = name.trim();
 
@@ -176,7 +178,7 @@ export async function joinLeaderboard(name: string): Promise<PlayerProfile> {
   const userId = user?.id;
 
   if (!userId) {
-    throw new Error("Sign in to claim a name on the leaderboard.");
+    throw new Error("Sign in to create an account identity.");
   }
 
   if (!(user?.email_confirmed_at ?? user?.confirmed_at)) {
@@ -201,6 +203,9 @@ export async function joinLeaderboard(name: string): Promise<PlayerProfile> {
     avatarKey: DEFAULT_PROFILE_AVATAR,
   };
 }
+
+/** Compatibility name for score-result flows that create identity on demand. */
+export const joinLeaderboard = saveProfileDisplayName;
 
 /** Saves one of the built-in profile avatars on the signed-in player's row. */
 export async function updateProfileAvatar(

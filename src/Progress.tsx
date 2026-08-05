@@ -39,12 +39,14 @@ import mjolnirAvatarUrl from "./assets/avatars/thunder-hammer.jpg";
 import valkyrieHelmAvatarUrl from "./assets/avatars/valkyrie-helm.jpg";
 import volcanoAvatarUrl from "./assets/avatars/volcano.png";
 import { MascotPose } from "./mascot/MascotPose";
+import { ProfileDisplayNameForm } from "./Leaderboard";
+import { QaStatusBadge } from "./QaStatus";
 import { formatPoints } from "./questionText";
 import { RankBadgeArtwork } from "./RankBadgeArtwork";
 import type { Theme } from "./theme";
 import { ThemeArtwork } from "./themes/ThemeArtwork";
 
-const BUILT_IN_AVATAR_OPTIONS = [
+export const BUILT_IN_AVATAR_OPTIONS = [
   {
     key: DEFAULT_PROFILE_AVATAR,
     name: "Event Horizon",
@@ -247,6 +249,7 @@ type ProfileDashboardProps = {
   equippedId: BackgroundThemeId | null;
   onEquip: (themeId: BackgroundThemeId) => void;
   onSelectAvatar: (avatarKey: ProfileAvatarKey) => Promise<void>;
+  onChangeDisplayName: (name: string) => Promise<unknown>;
   onOpenRanks: (category?: QuestionCategory) => void;
   onOpenAchievements: () => void;
   onOpenUnlocks: () => void;
@@ -345,6 +348,7 @@ export function ProfileDashboard({
   equippedId,
   onEquip,
   onSelectAvatar,
+  onChangeDisplayName,
   onOpenRanks,
   onOpenAchievements,
   onOpenUnlocks,
@@ -361,6 +365,7 @@ export function ProfileDashboard({
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [avatarSaving, setAvatarSaving] = useState(false);
   const [avatarMessage, setAvatarMessage] = useState("");
+  const [nameEditorOpen, setNameEditorOpen] = useState(false);
   const [mascotSectionHighlighted, setMascotSectionHighlighted] =
     useState(false);
   const mascotSectionRef = useRef<HTMLElement>(null);
@@ -470,9 +475,18 @@ export function ProfileDashboard({
             />
           </button>
           <div>
-            <h1 id="profile-name" ref={headingRef} tabIndex={-1}>
-              {displayName}
-            </h1>
+            <div className="profile-name-row">
+              <h1 id="profile-name" ref={headingRef} tabIndex={-1}>
+                {displayName}
+              </h1>
+              <button
+                className="profile-name-edit"
+                type="button"
+                onClick={() => setNameEditorOpen((open) => !open)}
+              >
+                Change display name
+              </button>
+            </div>
             <p>
               {highest
                 ? `${highest.title} · highest rank in ${labels[highest.category].title}`
@@ -505,6 +519,19 @@ export function ProfileDashboard({
           </button>
         </div>
       </section>
+
+      {nameEditorOpen && (
+        <section className="profile-section profile-display-name-card">
+          <ProfileDisplayNameForm
+            currentName={displayName}
+            onSave={async (name) => {
+              await onChangeDisplayName(name);
+              setNameEditorOpen(false);
+            }}
+            onCancel={() => setNameEditorOpen(false)}
+          />
+        </section>
+      )}
 
       {avatarPickerOpen && (
         <section
@@ -795,6 +822,228 @@ export function ProfileDashboard({
         companion
         sectionRef={mascotSectionRef}
         highlighted={mascotSectionHighlighted}
+      />
+    </div>
+  );
+}
+
+export function QaProfileDashboard({
+  displayName,
+  avatarKey,
+  email,
+  emailConfirmed,
+  onSelectAvatar,
+  onChangeDisplayName,
+  onViewPublicProfile,
+  mascotInGames,
+  onMascotInGamesChange,
+  onSignOut,
+  headingRef,
+}: {
+  displayName: string;
+  avatarKey: ProfileAvatarKey;
+  email: string | null;
+  emailConfirmed: boolean;
+  onSelectAvatar: (avatarKey: ProfileAvatarKey) => Promise<void>;
+  onChangeDisplayName: (name: string) => Promise<unknown>;
+  onViewPublicProfile: () => void;
+  mascotInGames: boolean;
+  onMascotInGamesChange: (enabled: boolean) => void;
+  onSignOut: () => void;
+  headingRef: RefObject<HTMLHeadingElement | null>;
+}) {
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
+  const [avatarSaving, setAvatarSaving] = useState(false);
+  const [avatarMessage, setAvatarMessage] = useState("");
+  const [nameEditorOpen, setNameEditorOpen] = useState(false);
+  const currentAvatar =
+    BUILT_IN_AVATAR_OPTIONS.find((option) => option.key === avatarKey) ??
+    BUILT_IN_AVATAR_OPTIONS[0];
+
+  async function selectAvatar(nextAvatar: BuiltInProfileAvatarKey) {
+    if (nextAvatar === avatarKey || avatarSaving) return;
+    setAvatarSaving(true);
+    setAvatarMessage("");
+    try {
+      await onSelectAvatar(nextAvatar);
+      setAvatarMessage("Avatar updated.");
+    } catch (error) {
+      setAvatarMessage(
+        error instanceof Error ? error.message : "Could not update your avatar.",
+      );
+    } finally {
+      setAvatarSaving(false);
+    }
+  }
+
+  return (
+    <div className="profile-dashboard qa-profile-dashboard">
+      <section className="profile-hero qa-profile-hero" aria-labelledby="profile-name">
+        <span className="profile-hero-sheen" aria-hidden="true" />
+        <div className="profile-identity">
+          <button
+            className="profile-avatar"
+            type="button"
+            onClick={() => {
+              setAvatarPickerOpen((open) => !open);
+              setAvatarMessage("");
+            }}
+            aria-label={`Change avatar, currently ${currentAvatar.name}`}
+            aria-expanded={avatarPickerOpen}
+            aria-controls="qa-profile-avatar-picker"
+          >
+            <ProfileAvatarArtwork
+              avatarKey={avatarKey}
+              className="profile-avatar-image"
+            />
+          </button>
+          <div>
+            <div className="profile-name-row">
+              <h1 id="profile-name" ref={headingRef} tabIndex={-1}>
+                {displayName}
+              </h1>
+              <QaStatusBadge />
+            </div>
+            <p>QA account · Scoreless play</p>
+          </div>
+        </div>
+        <div className="profile-facts qa-profile-facts">
+          <span>Account identity active</span>
+          <span>Competitive results disabled</span>
+          <span>{emailConfirmed ? "Email confirmed" : "Email not confirmed"}</span>
+        </div>
+      </section>
+
+      {avatarPickerOpen && (
+        <section
+          className="profile-avatar-picker"
+          id="qa-profile-avatar-picker"
+          aria-labelledby="qa-profile-avatar-picker-title"
+        >
+          <div className="profile-avatar-picker-head">
+            <div>
+              <p className="eyebrow">Profile icon</p>
+              <h2 id="qa-profile-avatar-picker-title">Choose your avatar</h2>
+            </div>
+            <button
+              type="button"
+              className="profile-avatar-picker-close"
+              onClick={() => setAvatarPickerOpen(false)}
+            >
+              Close
+            </button>
+          </div>
+          <p className="profile-avatar-picker-lede">
+            Built-in artwork is available now. Rank badges arrive with simulated
+            QA progression in Phase 3.
+          </p>
+          <div className="profile-avatar-options">
+            {BUILT_IN_AVATAR_OPTIONS.map((option) => {
+              const selected = option.key === avatarKey;
+              return (
+                <button
+                  key={option.key}
+                  type="button"
+                  className={`profile-avatar-option${
+                    selected ? " is-selected" : ""
+                  }`}
+                  onClick={() => void selectAvatar(option.key)}
+                  aria-pressed={selected}
+                  disabled={avatarSaving}
+                >
+                  <span className="profile-avatar-option-artwork">
+                    <ProfileAvatarArtwork avatarKey={option.key} />
+                  </span>
+                  <span className="profile-avatar-option-copy">
+                    <strong>{option.name}</strong>
+                    <span>{option.detail}</span>
+                  </span>
+                  <span className="profile-avatar-option-state">
+                    {selected ? "Selected" : "Choose"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <p
+            className={`profile-avatar-message${
+              avatarMessage && !avatarMessage.endsWith("updated.")
+                ? " is-error"
+                : ""
+            }`}
+            role="status"
+          >
+            {avatarSaving ? "Saving avatar…" : avatarMessage}
+          </p>
+        </section>
+      )}
+
+      <div className="qa-profile-actions">
+        <section className="profile-section">
+          <p className="eyebrow">Account identity</p>
+          <h2>Display name</h2>
+          <p>
+            Your QA status is assigned separately and cannot be changed through
+            your name.
+          </p>
+          <button
+            className="profile-section-action"
+            type="button"
+            onClick={() => setNameEditorOpen((open) => !open)}
+          >
+            Change display name
+          </button>
+          {nameEditorOpen && (
+            <ProfileDisplayNameForm
+              currentName={displayName}
+              onSave={async (name) => {
+                await onChangeDisplayName(name);
+                setNameEditorOpen(false);
+              }}
+              onCancel={() => setNameEditorOpen(false)}
+            />
+          )}
+        </section>
+
+        <section className="profile-section">
+          <p className="eyebrow">Public identity</p>
+          <h2>Public profile</h2>
+          <p>
+            Your name, avatar and permanent QA marker are public. Competitive
+            ranks and challenge actions remain disabled.
+          </p>
+          <button
+            className="profile-section-action"
+            type="button"
+            onClick={onViewPublicProfile}
+          >
+            View public profile
+          </button>
+        </section>
+      </div>
+
+      <section className="profile-account-strip" aria-label="Account details">
+        <dl>
+          <div>
+            <dt>Signed in as</dt>
+            <dd>{email ?? "Unknown"}</dd>
+          </div>
+          <div>
+            <dt>Display name</dt>
+            <dd>{displayName}</dd>
+          </div>
+          <div>
+            <dt>Account type</dt>
+            <dd className="qa-account-type"><QaStatusBadge /> Scoreless</dd>
+          </div>
+        </dl>
+        <button type="button" onClick={onSignOut}>Sign out</button>
+      </section>
+
+      <MascotGamePreference
+        enabled={mascotInGames}
+        onChange={onMascotInGamesChange}
+        companion
       />
     </div>
   );
