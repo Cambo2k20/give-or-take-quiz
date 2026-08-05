@@ -6,7 +6,6 @@ import dailyQuizIcon from "./assets/home/daily-quiz.png";
 import dailyStreakIcon from "./assets/home/daily-streak.png";
 import sunriseDecoration from "./assets/home/sunrise.png";
 import { readableDate } from "./Daily";
-import { WarmupSliderMascot } from "./mascot/WarmupSliderMascot";
 import { formatPoints } from "./questionText";
 
 const ArchiveIcon = () => (
@@ -191,26 +190,9 @@ export function DailyHero({
           </p>
         </>
       ) : (
-        <>
-          <div className="home-daily-slider-preview" aria-hidden="true">
-            <WarmupSliderMascot
-              className="home-daily-mascot"
-              position={0.46}
-              railCenter={50}
-              railThickness={14}
-              thumbSize={28}
-              scale={0.5}
-            />
-            <span className="home-daily-slider-rail">
-              <span />
-            </span>
-            <span className="home-daily-slider-thumb" />
-          </div>
-
-          <button className="primary-button" type="button" onClick={onPlay}>
-            Play today's Daily
-          </button>
-        </>
+        <button className="primary-button" type="button" onClick={onPlay}>
+          Play today's Daily
+        </button>
       )}
     </section>
   );

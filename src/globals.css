@@ -218,6 +218,19 @@
 .qa-simulation-primary-actions button,
 .qa-rank-presets button {
   min-height: 44px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.qa-simulation-primary-actions button:hover,
+.qa-rank-presets button:hover {
+  background: var(--sunk);
+  border-color: var(--accent);
 }
 
 .qa-rank-presets {
@@ -1775,6 +1788,20 @@ h1[tabindex="-1"]:focus {
 .question-card-artwork svg {
   position: absolute;
   overflow: visible;
+}
+
+.question-card-artwork-mask {
+  position: absolute;
+  overflow: visible;
+  background-color: currentColor;
+  mask-image: var(--art-url);
+  -webkit-mask-image: var(--art-url);
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-position: center;
+  mask-size: contain;
+  -webkit-mask-size: contain;
 }
 
 .question-card-artwork-primary {
@@ -9433,53 +9460,6 @@ h1[tabindex="-1"]:focus {
   font-size: 14px;
 }
 
-.home-daily-slider-preview {
-  position: relative;
-  z-index: 2;
-  height: 96px;
-  margin-top: 10px;
-}
-
-.home-daily-slider-rail {
-  position: absolute;
-  z-index: 1;
-  top: 43px;
-  left: 0;
-  right: 0;
-  height: 14px;
-  overflow: hidden;
-  border: 2px solid color-mix(in srgb, var(--line-strong) 72%, #17365d);
-  border-radius: 999px;
-  background: linear-gradient(100deg, #3d90af, #a47832);
-  box-shadow:
-    0 3px 0 color-mix(in srgb, var(--bg) 52%, transparent),
-    0 0 0 2px var(--surface),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45);
-}
-
-.home-daily-slider-rail > span {
-  display: block;
-  width: 46%;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #ffd052, #ff874d 56%, #f05d91);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
-}
-
-.home-daily-slider-thumb {
-  position: absolute;
-  z-index: 1;
-  top: 37px;
-  left: 46%;
-  width: 26px;
-  height: 26px;
-  border: 4px solid #071d38;
-  border-radius: 50%;
-  background: radial-gradient(circle at 32% 26%, #ffe59a 0 18%, #ff951c);
-  box-shadow: 0 3px 0 color-mix(in srgb, var(--bg) 52%, transparent);
-  transform: translateX(-50%);
-}
-
 .home-daily-hero > .primary-button {
   min-height: 60px;
   margin-top: 8px;
@@ -9796,23 +9776,6 @@ h1[tabindex="-1"]:focus {
 
   .home-daily-hero .daily-hero-lede {
     font-size: 13px;
-  }
-
-  .home-daily-slider-preview {
-    height: 82px;
-    margin-top: 6px;
-  }
-
-  .home-daily-slider-rail {
-    top: 39px;
-  }
-
-  .home-daily-slider-thumb {
-    top: 33px;
-  }
-
-  .home-daily-mascot {
-    transform: translateY(-4px);
   }
 
   .home-daily-hero > .primary-button {

@@ -1,0 +1,300 @@
+{
+  "dinosaurs": [
+    {
+      "slug": "ankylosaurus",
+      "label": "Ankylosaurus",
+      "file": "ankylosaurus.webp"
+    },
+    {
+      "slug": "brachiosaurus",
+      "label": "Brachiosaurus",
+      "file": "brachiosaurus.webp"
+    },
+    {
+      "slug": "diplodocus",
+      "label": "Diplodocus",
+      "file": "diplodocus.webp"
+    },
+    {
+      "slug": "parasaurolophus",
+      "label": "Parasaurolophus",
+      "file": "parasaurolophus.webp"
+    },
+    {
+      "slug": "pteranodon",
+      "label": "Pteranodon",
+      "file": "pteranodon.webp"
+    },
+    {
+      "slug": "spinosaurus",
+      "label": "Spinosaurus",
+      "file": "spinosaurus.webp"
+    },
+    {
+      "slug": "stegosaurus",
+      "label": "Stegosaurus",
+      "file": "stegosaurus.webp"
+    },
+    {
+      "slug": "triceratops",
+      "label": "Triceratops",
+      "file": "triceratops.webp"
+    },
+    {
+      "slug": "tyrannosaurus-rex",
+      "label": "Tyrannosaurus Rex",
+      "file": "tyrannosaurus-rex.webp"
+    },
+    {
+      "slug": "velociraptor",
+      "label": "Velociraptor",
+      "file": "velociraptor.webp"
+    }
+  ],
+  "history": [
+    {
+      "slug": "ancient-scroll",
+      "label": "Ancient Scroll",
+      "file": "ancient-scroll.webp"
+    },
+    {
+      "slug": "egyptian-pyramid",
+      "label": "Egyptian Pyramid",
+      "file": "egyptian-pyramid.webp"
+    },
+    {
+      "slug": "greek-temple",
+      "label": "Greek Temple",
+      "file": "greek-temple.webp"
+    },
+    {
+      "slug": "greek-vase",
+      "label": "Greek Vase",
+      "file": "greek-vase.webp"
+    },
+    {
+      "slug": "roman-coin",
+      "label": "Roman Coin",
+      "file": "roman-coin.webp"
+    },
+    {
+      "slug": "roman-emperor-coin",
+      "label": "Roman Emperor Coin",
+      "file": "roman-emperor-coin.webp"
+    },
+    {
+      "slug": "roman-helmet",
+      "label": "Roman Helmet",
+      "file": "roman-helmet.webp"
+    },
+    {
+      "slug": "spartan-helmet",
+      "label": "Spartan Helmet",
+      "file": "spartan-helmet.webp"
+    },
+    {
+      "slug": "spartan-shield",
+      "label": "Spartan Shield",
+      "file": "spartan-shield.webp"
+    },
+    {
+      "slug": "sphinx",
+      "label": "Sphinx",
+      "file": "sphinx.webp"
+    }
+  ],
+  "geography": [
+    {
+      "slug": "christ-the-redeemer",
+      "label": "Christ the Redeemer",
+      "file": "christ-the-redeemer.webp"
+    },
+    {
+      "slug": "coastal-cliffs",
+      "label": "Coastal Cliffs",
+      "file": "coastal-cliffs.webp"
+    },
+    {
+      "slug": "compass",
+      "label": "Compass",
+      "file": "compass.webp"
+    },
+    {
+      "slug": "desert",
+      "label": "Desert",
+      "file": "desert.webp"
+    },
+    {
+      "slug": "easter-island",
+      "label": "Easter Island",
+      "file": "easter-island.webp"
+    },
+    {
+      "slug": "eiffel-tower",
+      "label": "Eiffel Tower",
+      "file": "eiffel-tower.webp"
+    },
+    {
+      "slug": "giant-s-causeway",
+      "label": "Giant's Causeway",
+      "file": "giant-s-causeway.webp"
+    },
+    {
+      "slug": "globe",
+      "label": "Globe",
+      "file": "globe.webp"
+    },
+    {
+      "slug": "great-wall-of-china",
+      "label": "Great Wall of China",
+      "file": "great-wall-of-china.webp"
+    },
+    {
+      "slug": "machu-picchu",
+      "label": "Machu Picchu",
+      "file": "machu-picchu.webp"
+    },
+    {
+      "slug": "mount-fuji",
+      "label": "Mount Fuji",
+      "file": "mount-fuji.webp"
+    },
+    {
+      "slug": "northern-lights",
+      "label": "Northern Lights",
+      "file": "northern-lights.webp"
+    },
+    {
+      "slug": "pyramids-of-giza",
+      "label": "Pyramids of Giza",
+      "file": "pyramids-of-giza.webp"
+    },
+    {
+      "slug": "statue-of-liberty",
+      "label": "Statue of Liberty",
+      "file": "statue-of-liberty.webp"
+    },
+    {
+      "slug": "stonehenge",
+      "label": "Stonehenge",
+      "file": "stonehenge.webp"
+    },
+    {
+      "slug": "sydney-opera-house",
+      "label": "Sydney Opera House",
+      "file": "sydney-opera-house.webp"
+    },
+    {
+      "slug": "taj-mahal",
+      "label": "Taj Mahal",
+      "file": "taj-mahal.webp"
+    },
+    {
+      "slug": "venice",
+      "label": "Venice",
+      "file": "venice.webp"
+    },
+    {
+      "slug": "volcano",
+      "label": "Volcano",
+      "file": "volcano.webp"
+    },
+    {
+      "slug": "waterfall",
+      "label": "Waterfall",
+      "file": "waterfall.webp"
+    }
+  ],
+  "space": [
+    {
+      "slug": "space-01",
+      "label": null,
+      "file": "space-01.webp"
+    },
+    {
+      "slug": "space-02",
+      "label": null,
+      "file": "space-02.webp"
+    },
+    {
+      "slug": "space-03",
+      "label": null,
+      "file": "space-03.webp"
+    },
+    {
+      "slug": "space-04",
+      "label": null,
+      "file": "space-04.webp"
+    },
+    {
+      "slug": "space-05",
+      "label": null,
+      "file": "space-05.webp"
+    },
+    {
+      "slug": "space-06",
+      "label": null,
+      "file": "space-06.webp"
+    },
+    {
+      "slug": "space-07",
+      "label": null,
+      "file": "space-07.webp"
+    },
+    {
+      "slug": "space-08",
+      "label": null,
+      "file": "space-08.webp"
+    },
+    {
+      "slug": "space-09",
+      "label": null,
+      "file": "space-09.webp"
+    },
+    {
+      "slug": "space-10",
+      "label": null,
+      "file": "space-10.webp"
+    },
+    {
+      "slug": "space-11",
+      "label": null,
+      "file": "space-11.webp"
+    },
+    {
+      "slug": "space-12",
+      "label": null,
+      "file": "space-12.webp"
+    },
+    {
+      "slug": "space-13",
+      "label": null,
+      "file": "space-13.webp"
+    },
+    {
+      "slug": "space-14",
+      "label": null,
+      "file": "space-14.webp"
+    },
+    {
+      "slug": "space-15",
+      "label": null,
+      "file": "space-15.webp"
+    },
+    {
+      "slug": "space-16",
+      "label": null,
+      "file": "space-16.webp"
+    },
+    {
+      "slug": "space-17",
+      "label": null,
+      "file": "space-17.webp"
+    },
+    {
+      "slug": "space-18",
+      "label": null,
+      "file": "space-18.webp"
+    }
+  ]
+}
