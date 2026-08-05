@@ -76,7 +76,6 @@ import {
   MascotGamePreference,
   ProfileDashboard,
   ProfileAvatarArtwork,
-  QaProfileDashboard,
   ProgressRibbon,
   RankPanel,
   ResultProgressCard,
@@ -84,6 +83,8 @@ import {
   hasEarnedTitle,
 } from "./Progress";
 import { useProgress } from "./useProgress";
+import { useQaSimulation } from "./useQaSimulation";
+import { QaSimulationControls } from "./QaSimulationControls";
 import { EstimatePanel } from "./EstimatePanel";
 import { QuestionCardShell } from "./QuestionCardShell";
 import { DailyHero } from "./DailyHero";
@@ -474,9 +475,12 @@ export default function Game() {
     auth.user?.id ?? null,
     canUseAccountIdentity,
   );
-  // Identity is safe for QA. Real progression and social competition are not.
+  const qaSimulation = useQaSimulation(auth.user?.id ?? null, auth.isQa);
+  // QA accounts load the server-derived simulation. Ordinary accounts keep
+  // loading only their real competitive progression.
   const progress = useProgress(
-    canSubmitCompetitiveScores ? leaderboard.profile?.id ?? null : null,
+    canUseAccountIdentity ? leaderboard.profile?.id ?? null : null,
+    auth.isQa,
   );
   const social = useSocial(
     canUseSocialCompetition ? leaderboard.profile?.id ?? null : null,
@@ -2614,29 +2618,7 @@ export default function Game() {
 
           {auth.recovering ? (
             <NewPasswordForm onDone={auth.endRecovery} />
-          ) : auth.status === "signed-in" && auth.isQa && player ? (
-            <QaProfileDashboard
-              displayName={player.displayName}
-              avatarKey={player.avatarKey}
-              email={auth.user?.email ?? null}
-              emailConfirmed={Boolean(auth.user?.emailConfirmed)}
-              onSelectAvatar={updateAvatar}
-              onChangeDisplayName={leaderboard.saveDisplayName}
-              onViewPublicProfile={() => {
-                profileReturnPhaseRef.current = "account";
-                openPlayerProfile(player.id, "account");
-              }}
-              mascotInGames={mascotInGames}
-              onMascotInGamesChange={updateMascotInGames}
-              onSignOut={() => {
-                void signOut();
-                setPhase("category");
-              }}
-              headingRef={focusHeadingRef}
-            />
-          ) : auth.status === "signed-in" &&
-            progress.progress &&
-            player ? (
+          ) : auth.status === "signed-in" && progress.progress && player ? (
             <ProfileDashboard
               progress={progress.progress}
               labels={categoryLabels}
@@ -2668,6 +2650,20 @@ export default function Game() {
               friendCount={social.dashboard.friends.length}
               activeChallengeCount={social.dashboard.activeChallenges.length}
               socialUnreadCount={social.unreadCount}
+              isQa={auth.isQa}
+              simulationPanel={auth.isQa ? (
+                <QaSimulationControls
+                  simulation={qaSimulation.simulation}
+                  status={qaSimulation.status}
+                  error={qaSimulation.error}
+                  labels={categoryLabels}
+                  onSave={async (simulation) => {
+                    await qaSimulation.save(simulation);
+                    await progress.reload();
+                  }}
+                  onRetry={qaSimulation.retry}
+                />
+              ) : undefined}
               onSignOut={() => {
                 void signOut();
                 setPhase("category");

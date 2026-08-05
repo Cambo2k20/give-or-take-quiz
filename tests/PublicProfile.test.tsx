@@ -126,12 +126,16 @@ describe("public player profile", () => {
 
     expect(screen.getByText("QA")).toBeInTheDocument();
     expect(
-      screen.getByText(/results are not ranked and social competition is disabled/i),
+      screen.getByText(/progress, badges and achievements shown here are simulated/i),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Challenge" })).toBeNull();
     expect(screen.queryByText("Head to head")).toBeNull();
-    expect(screen.queryByRole("heading", { name: "Subject ranks" })).toBeNull();
-    expect(screen.queryByRole("heading", { name: "Achievements" })).toBeNull();
+    expect(
+      screen.getByRole("heading", { name: "Subject ranks" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Achievements" }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Personal bests" })).toBeNull();
   });
 

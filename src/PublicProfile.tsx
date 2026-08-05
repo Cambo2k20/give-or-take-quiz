@@ -118,7 +118,7 @@ function ProfileHero({
         </p>
       </div>
       <div className="public-profile-xp">
-        <span>Total XP</span>
+        <span>{profile.isQa ? "Simulated XP" : "Total XP"}</span>
         <strong>{formatPoints(profile.totalXp)}</strong>
       </div>
       {badgeKey && (
@@ -305,7 +305,8 @@ export function PublicProfileScreen({
       />
       {profile.isQa && (
         <p className="public-profile-status qa-public-profile-note" role="status">
-          QA account · Results are not ranked and social competition is disabled.
+          QA account · Progress, badges and achievements shown here are simulated.
+          Results are not ranked and social competition is disabled.
         </p>
       )}
       {(actionMessage || error) && (
@@ -314,15 +315,15 @@ export function PublicProfileScreen({
         </p>
       )}
 
-      {!profile.isQa && (
-        <>
       <section className="public-profile-section" aria-labelledby="public-ranks-title">
         <div className="public-profile-section-heading">
           <div>
             <p className="eyebrow">Progress</p>
             <h2 id="public-ranks-title">Subject ranks</h2>
           </div>
-          <span>{profile.earnedBadges.length} badges earned</span>
+          <span>
+            {profile.earnedBadges.length} {profile.isQa ? "simulated" : "earned"}
+          </span>
         </div>
         <ul className="public-profile-ranks">
           {profile.categoryRanks.map((rank) => {
@@ -340,7 +341,9 @@ export function PublicProfileScreen({
                 </span>
                 <span>
                   <strong>{labels[rank.category].title}</strong>
-                  <small>{rank.title}</small>
+                  <small>
+                    {rank.title}{rank.simulated ? " · Simulated" : ""}
+                  </small>
                 </span>
                 <b>{rank.rank}</b>
               </li>
@@ -355,7 +358,10 @@ export function PublicProfileScreen({
             <p className="eyebrow">Showcase</p>
             <h2 id="public-achievements-title">Achievements</h2>
           </div>
-          <span>{profile.earnedAchievements.length} earned</span>
+          <span>
+            {profile.earnedAchievements.length}{" "}
+            {profile.isQa ? "simulated" : "earned"}
+          </span>
         </div>
         {achievements.length ? (
           <ul className="public-profile-achievements">
@@ -364,7 +370,10 @@ export function PublicProfileScreen({
                 <span className="public-achievement-medal" aria-hidden="true" />
                 <span>
                   <strong>{achievement.name}</strong>
-                  <small>{achievement.description}</small>
+                  <small>
+                    {achievement.description}
+                    {achievement.simulated ? " · Simulated" : ""}
+                  </small>
                 </span>
                 {profile.showcase.pinnedAchievementIds.includes(achievement.id) && (
                   <span className="public-achievement-pinned">Pinned</span>
@@ -386,6 +395,7 @@ export function PublicProfileScreen({
         )}
       </section>
 
+      {!profile.isQa && (
       <section className="public-profile-section" aria-labelledby="public-bests-title">
         <div className="public-profile-section-heading">
           <div>
@@ -429,8 +439,6 @@ export function PublicProfileScreen({
           <p className="public-profile-empty">No Classic scores yet.</p>
         )}
       </section>
-
-        </>
       )}
 
       {!profile.isQa &&

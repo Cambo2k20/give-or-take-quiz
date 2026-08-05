@@ -13,7 +13,7 @@ import { leaderboardEnabled } from "../lib/supabase";
  * again when a round has been recorded, because those are the only two moments
  * it can have changed.
  */
-export function useProgress(playerId: string | null) {
+export function useProgress(playerId: string | null, qaSimulation = false) {
   // Keyed by account so a previous sign-in's ranks are never shown to the
   // next one, exactly as useLeaderboard keys its profile.
   const [loaded, setLoaded] = useState<{
@@ -46,7 +46,7 @@ export function useProgress(playerId: string | null) {
     }
     let cancelled = false;
 
-    fetchProgress(playerId)
+    fetchProgress(playerId, qaSimulation)
       .then((found) => {
         if (cancelled) return;
         baseline.current = found;
@@ -61,7 +61,7 @@ export function useProgress(playerId: string | null) {
     return () => {
       cancelled = true;
     };
-  }, [playerId]);
+  }, [playerId, qaSimulation]);
 
   /**
    * Re-reads after a round and reports what moved. Returns the change so a
@@ -71,7 +71,7 @@ export function useProgress(playerId: string | null) {
     if (!leaderboardEnabled || !playerId) return null;
 
     try {
-      const found = await fetchProgress(playerId);
+      const found = await fetchProgress(playerId, qaSimulation);
       const moved = diffProgress(baseline.current, found);
       baseline.current = found;
       setLoaded({ playerId, progress: found });
@@ -81,7 +81,21 @@ export function useProgress(playerId: string | null) {
       // A failed refresh leaves the last good snapshot in place.
       return null;
     }
-  }, [playerId]);
+  }, [playerId, qaSimulation]);
+
+  const reload = useCallback(async (): Promise<PlayerProgress | null> => {
+    if (!leaderboardEnabled || !playerId) return null;
+
+    try {
+      const found = await fetchProgress(playerId, qaSimulation);
+      baseline.current = found;
+      setLoaded({ playerId, progress: found });
+      setLastChange(null);
+      return found;
+    } catch {
+      return null;
+    }
+  }, [playerId, qaSimulation]);
 
   const clearChange = useCallback(() => setLastChange(null), []);
 
@@ -91,6 +105,7 @@ export function useProgress(playerId: string | null) {
     /** Rank-ups and achievements earned by the round just recorded. */
     change,
     refresh,
+    reload,
     clearChange,
   };
 }

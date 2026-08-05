@@ -28,6 +28,7 @@ export type CategoryRank = {
   nextRankXp: number;
   /** 0..1 through the current rank, for a progress bar. */
   fraction: number;
+  simulated?: boolean;
 };
 
 export type Achievement = {
@@ -38,6 +39,7 @@ export type Achievement = {
   progress: number;
   threshold: number;
   earned: boolean;
+  simulated?: boolean;
 };
 
 export const BADGE_RANK_FLOORS = RANK_FLOORS;
@@ -60,6 +62,7 @@ export type PlayerProgress = {
   badgeCatalogueAvailable: boolean;
   /** Summed across subjects — the one headline number for the account screen. */
   totalXp: number;
+  isSimulated?: boolean;
 };
 
 function client() {
@@ -80,6 +83,7 @@ const EMPTY: PlayerProgress = {
   badges: [],
   badgeCatalogueAvailable: false,
   totalXp: 0,
+  isSimulated: false,
 };
 
 /**
@@ -87,33 +91,84 @@ const EMPTY: PlayerProgress = {
  * stay separate; the small public badge catalogue is optional so a rollout
  * or network failure there cannot hide ordinary XP.
  */
-export async function fetchProgress(playerId: string): Promise<PlayerProgress> {
+export async function fetchProgress(
+  playerId: string,
+  qaSimulation = false,
+): Promise<PlayerProgress> {
   const supabaseClient = client();
 
-  const [progress, achievements, badgeCatalogue] = await Promise.all([
-    supabaseClient
-      .from("player_progress")
-      .select(
-        "category, xp, rank, title, questions_answered, perfect_answers, rank_floor_xp, next_rank_xp",
-      )
-      .eq("player_id", playerId),
-    supabaseClient
-      .from("player_achievements")
-      .select(
-        "achievement_id, name, description, tier, progress, threshold, earned, sort_order",
-      )
-      .eq("player_id", playerId)
-      .order("sort_order"),
-    supabaseClient
-      .from("rank_titles")
-      .select("category, rank_floor, title, badge_key"),
-  ]);
+  type ProgressRow = {
+    category: QuestionCategory;
+    xp: number;
+    rank: number;
+    title: string;
+    questions_answered: number;
+    perfect_answers: number;
+    rank_floor_xp: number;
+    next_rank_xp: number;
+    simulated?: boolean;
+  };
+  type AchievementRow = {
+    achievement_id: string;
+    name: string;
+    description: string;
+    tier: Achievement["tier"];
+    progress: number;
+    threshold: number;
+    earned: boolean;
+    sort_order: number;
+    simulated?: boolean;
+  };
 
-  if (progress.error) throw new Error(progress.error.message);
-  if (achievements.error) throw new Error(achievements.error.message);
+  let progressData: ProgressRow[];
+  let achievementData: AchievementRow[];
+  let isSimulated = false;
+
+  if (qaSimulation) {
+    const { data, error } = await supabaseClient.rpc(
+      "get_qa_simulated_progress",
+    );
+    if (error) throw new Error(error.message);
+    const row = data as {
+      categories?: unknown;
+      achievements?: unknown;
+      is_simulated?: unknown;
+    } | null;
+    progressData = Array.isArray(row?.categories)
+      ? (row.categories as ProgressRow[])
+      : [];
+    achievementData = Array.isArray(row?.achievements)
+      ? (row.achievements as AchievementRow[])
+      : [];
+    isSimulated = row?.is_simulated === true;
+  } else {
+    const [progress, achievements] = await Promise.all([
+      supabaseClient
+        .from("player_progress")
+        .select(
+          "category, xp, rank, title, questions_answered, perfect_answers, rank_floor_xp, next_rank_xp",
+        )
+        .eq("player_id", playerId),
+      supabaseClient
+        .from("player_achievements")
+        .select(
+          "achievement_id, name, description, tier, progress, threshold, earned, sort_order",
+        )
+        .eq("player_id", playerId)
+        .order("sort_order"),
+    ]);
+    if (progress.error) throw new Error(progress.error.message);
+    if (achievements.error) throw new Error(achievements.error.message);
+    progressData = (progress.data ?? []) as ProgressRow[];
+    achievementData = (achievements.data ?? []) as AchievementRow[];
+  }
+
+  const badgeCatalogue = await supabaseClient
+    .from("rank_titles")
+    .select("category, rank_floor, title, badge_key");
 
   const byCategory = new Map(
-    (progress.data ?? []).map((row) => [row.category as QuestionCategory, row]),
+    progressData.map((row) => [row.category as QuestionCategory, row]),
   );
 
   // Ordered by the playable registry rather than by whatever the view returned, so the
@@ -135,6 +190,7 @@ export async function fetchProgress(playerId: string): Promise<PlayerProgress> {
       rankFloorXp,
       nextRankXp,
       fraction: rankFraction(xp, rankFloorXp, nextRankXp),
+      simulated: row?.simulated === true || isSimulated,
     };
   });
 
@@ -210,7 +266,7 @@ export async function fetchProgress(playerId: string): Promise<PlayerProgress> {
 
   return {
     categories,
-    achievements: (achievements.data ?? []).map((row) => ({
+    achievements: achievementData.map((row) => ({
       id: row.achievement_id,
       name: row.name,
       description: row.description,
@@ -218,10 +274,12 @@ export async function fetchProgress(playerId: string): Promise<PlayerProgress> {
       progress: row.progress,
       threshold: row.threshold,
       earned: row.earned,
+      simulated: row.simulated === true ? true : undefined,
     })),
     badges,
     badgeCatalogueAvailable,
     totalXp: categories.reduce((sum, entry) => sum + entry.xp, 0),
+    isSimulated,
   };
 }
 

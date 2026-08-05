@@ -219,13 +219,9 @@ export async function updateProfileAvatar(
     throw new Error("Sign in to change your avatar.");
   }
 
-  const { error } = await supabaseClient
-    .from("profiles")
-    .update({
-      avatar_key: avatarKey,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", userId);
+  const { error } = await supabaseClient.rpc("update_profile_avatar", {
+    p_avatar_key: avatarKey,
+  });
 
   if (error) throw new Error(error.message);
 }
