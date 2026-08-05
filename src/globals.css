@@ -46,6 +46,13 @@
   --wide: 880px;
 }
 
+@media (min-width: 721px) {
+  :root {
+    --content: min(600px, 82vw);
+    --wide: min(760px, 84vw);
+  }
+}
+
 :root[data-theme="dark"] {
   --bg: #171310;
   --surface: #201a16;
@@ -1128,6 +1135,16 @@ h1[tabindex="-1"]:focus {
 
 .mode-grid > .mode-card:last-child:nth-child(3n + 1) {
   grid-column: 2;
+}
+
+@media (min-width: 1024px) {
+  .mode-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .mode-grid > .mode-card:last-child:nth-child(3n + 1) {
+    grid-column: auto;
+  }
 }
 
 .mode-card {
@@ -6726,6 +6743,126 @@ h1[tabindex="-1"]:focus {
   }
 }
 
+@media (min-width: 721px) and (max-width: 850px) {
+  .board-titlebar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .board-titlebar .board-formats,
+  .board-category-filter,
+  .rank-subject-select {
+    width: 100%;
+  }
+
+  .board-titlebar .board-format {
+    flex: 1;
+  }
+
+  .board-category-filter {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .board-category-filter select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .board-standing {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+  }
+
+  .board-standing-progress {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .board-list li {
+    grid-template-columns: 34px minmax(0, 1fr) 94px;
+    grid-template-areas:
+      "rank name best"
+      ". category category"
+      ". details details";
+  }
+
+  .board-list-head {
+    display: none;
+  }
+
+  .board-list .board-rank { grid-area: rank; }
+  .board-list .board-name { grid-area: name; }
+  .board-list .board-category { grid-area: category; }
+  .board-list .board-best { grid-area: best; }
+
+  .board-table-survival .board-survival-row {
+    grid-template-columns: 34px minmax(0, 1fr) 94px;
+    grid-template-areas:
+      "rank name best"
+      ". attempts attempts";
+  }
+
+  .board-table-survival .board-rounds {
+    grid-area: attempts;
+    display: block;
+    text-align: left;
+  }
+
+  .board-detail-set {
+    grid-area: details;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+  }
+
+  .board-detail-set > span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: left;
+  }
+
+  .profile-dashboard-grid,
+  .profile-account-strip,
+  .rank-overview-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-account-strip {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .profile-account-strip dl {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-account-strip > button {
+    width: 100%;
+  }
+
+  .rank-overview-toolbar {
+    grid-template-areas:
+      "title"
+      "picker"
+      "total";
+    align-items: stretch;
+  }
+
+  .rank-total-compact {
+    min-width: 0;
+    justify-content: space-between;
+    padding: 10px 0 0;
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+}
+
 @media (max-width: 420px) {
   .category-picker {
     padding: 12px;
@@ -7229,7 +7366,7 @@ h1[tabindex="-1"]:focus {
 }
 
 .challenge-setup {
-  max-width: 640px;
+  width: min(100%, var(--content));
   margin-inline: auto;
 }
 
@@ -8049,7 +8186,6 @@ h1[tabindex="-1"]:focus {
 @media (max-width: 850px) {
   .public-profile-screen,
   .public-profile-editor {
-    width: calc(100% - 32px);
     padding-top: 18px;
   }
 
@@ -8458,7 +8594,7 @@ h1[tabindex="-1"]:focus {
 /* ── Claude homepage flow redesign ───────────────────────────────────────── */
 
 .home-header.home-header-redesign {
-  width: min(calc(100% - 64px), 900px);
+  width: min(calc(100% - 48px), var(--wide));
   min-height: 64px;
   margin-top: 22px;
   margin-bottom: 20px;
@@ -8785,6 +8921,19 @@ h1[tabindex="-1"]:focus {
   }
 }
 
+@media (min-width: 721px) and (max-width: 960px) {
+  .home-header.home-header-redesign {
+    width: min(calc(100% - 48px), var(--wide));
+  }
+}
+
+@media (max-width: 720px) {
+  .public-profile-screen,
+  .public-profile-editor {
+    width: calc(100% - 32px);
+  }
+}
+
 @media (max-width: 560px) {
   .home-header-redesign .home-header-account.has-label {
     width: 44px;
@@ -8800,13 +8949,13 @@ h1[tabindex="-1"]:focus {
 }
 
 .home-flow-redesign {
-  width: min(100%, 880px);
+  width: min(100%, var(--wide));
   padding: 48px 32px 90px;
   justify-content: flex-start;
 }
 
 .home-flow-redesign .home-daily-hero {
-  width: min(100%, 640px);
+  width: min(100%, var(--content));
   margin: 0 auto;
   padding: 22px 24px 26px;
   border-radius: 28px;
@@ -9019,7 +9168,7 @@ h1[tabindex="-1"]:focus {
 }
 
 .home-flow-section {
-  width: min(100%, 640px);
+  width: min(100%, var(--content));
   margin-inline: auto;
 }
 
@@ -9222,13 +9371,19 @@ h1[tabindex="-1"]:focus {
   animation: home-thread-pulse 3.2s ease-in-out infinite;
 }
 
-@media (min-width: 721px) {
+@media (min-width: 1024px) {
   .home-flow-redesign .mode-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .home-flow-redesign .mode-grid > .mode-card:last-child:nth-child(3n + 1) {
     grid-column: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .home-flow-redesign .mode-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
