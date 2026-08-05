@@ -204,6 +204,7 @@ function defaultProgress() {
     progress: fixture,
     change: null,
     refresh: vi.fn().mockResolvedValue(null),
+    reload: vi.fn().mockResolvedValue(null),
     clearChange: vi.fn(),
   };
 }
@@ -491,6 +492,7 @@ describe("progression screens", () => {
       progress: progressAtRank("population", 30, "Sage of the Census"),
       change: null,
       refresh: vi.fn().mockResolvedValue(null),
+      reload: vi.fn().mockResolvedValue(null),
       clearChange: vi.fn(),
     });
 
@@ -518,6 +520,7 @@ describe("progression screens", () => {
       },
       change: null,
       refresh: vi.fn().mockResolvedValue(null),
+      reload: vi.fn().mockResolvedValue(null),
       clearChange: vi.fn(),
     });
 
@@ -591,6 +594,7 @@ describe("progression screens", () => {
       },
       change: null,
       refresh: vi.fn().mockResolvedValue(null),
+      reload: vi.fn().mockResolvedValue(null),
       clearChange: vi.fn(),
     });
 
@@ -620,6 +624,7 @@ describe("progression screens", () => {
       },
       change: null,
       refresh: vi.fn().mockResolvedValue(null),
+      reload: vi.fn().mockResolvedValue(null),
       clearChange: vi.fn(),
     });
 
@@ -652,6 +657,7 @@ describe("progression screens", () => {
       },
       change: null,
       refresh: vi.fn().mockResolvedValue(null),
+      reload: vi.fn().mockResolvedValue(null),
       clearChange: vi.fn(),
     });
 
@@ -692,6 +698,7 @@ describe("progression screens", () => {
       },
       change: null,
       refresh: vi.fn().mockResolvedValue(null),
+      reload: vi.fn().mockResolvedValue(null),
       clearChange: vi.fn(),
     });
 
