@@ -340,6 +340,12 @@ describe("First Light SVG artwork", () => {
       "@container first-light (max-aspect-ratio: 4 / 3) and (min-width: 601px)",
     );
     expect(firstLightStyles).toContain(
+      "@container first-light (min-width: 721px) and (min-aspect-ratio: 3 / 4) and (max-aspect-ratio: 4 / 3)",
+    );
+    expect(firstLightStyles).toMatch(
+      /min-width: 721px[\s\S]*\.first-light\.svg-theme-artwork--backdrop \.first-light__hero--wide[\s\S]*display:\s*none/,
+    );
+    expect(firstLightStyles).toContain(
       ".first-light__category-foliage--left",
     );
     expect(firstLightStyles).toContain(".first-light__phone-edge--right");

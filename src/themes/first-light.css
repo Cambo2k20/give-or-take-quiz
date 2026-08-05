@@ -392,6 +392,12 @@
   }
 }
 
+@container first-light (min-width: 721px) and (min-aspect-ratio: 3 / 4) and (max-aspect-ratio: 4 / 3) {
+  .first-light.svg-theme-artwork--backdrop .first-light__hero--wide {
+    display: none;
+  }
+}
+
 @container first-light (min-aspect-ratio: 4 / 3) {
   .first-light__hero--wide,
   .first-light__hero--phone,
