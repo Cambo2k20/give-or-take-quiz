@@ -133,35 +133,55 @@ export function HomeHeader({
           <span className="home-header-wordmark-text">Give or Take</span>
         </button>
 
-        <button
-          className={`home-header-account${signedIn ? " has-label" : ""}`}
-          type="button"
-          onClick={onOpenAccount}
-          title={accountLabel}
-          aria-label={
-            accountLabel === "Sign in"
-              ? "Profile, sign in"
-              : `Profile, ${accountLabel}`
-          }
-        >
-          <span className="home-header-account-avatar">
-            {profileAvatar ?? <ProfileIcon />}
-            {socialUnreadCount > 0 && (
-              <span
-                className="home-header-social-badge"
-                aria-label={`${socialUnreadCount} unread friend updates`}
-              >
-                {socialUnreadCount > 9 ? "9+" : socialUnreadCount}
+        <div className="home-header-account-cluster">
+          <button
+            className="home-header-control home-header-board"
+            type="button"
+            onClick={onOpenLeaderboard}
+            aria-label="Leaderboard"
+            aria-current={leaderboardActive ? "page" : undefined}
+            title={
+              leaderboardEnabled
+                ? undefined
+                : "Leaderboard data is unavailable in this local setup"
+            }
+          >
+            <LeaderboardIcon />
+            <span>Board</span>
+          </button>
+
+          <button
+            className={`home-header-account${signedIn ? " has-label" : ""}`}
+            type="button"
+            onClick={onOpenAccount}
+            title={accountLabel}
+            aria-label={
+              accountLabel === "Sign in"
+                ? "Profile, sign in"
+                : `Profile, ${accountLabel}`
+            }
+          >
+            <span className="home-header-account-avatar">
+              {profileAvatar ?? <ProfileIcon />}
+              {socialUnreadCount > 0 && (
+                <span
+                  className="home-header-social-badge"
+                  aria-label={`${socialUnreadCount} unread friend updates`}
+                >
+                  {socialUnreadCount > 9 ? "9+" : socialUnreadCount}
+                </span>
+              )}
+            </span>
+            {signedIn && (
+              <span className="home-header-account-identity">
+                <span className="home-header-account-label">
+                  {accountLabel}
+                </span>
+                {isQa && <QaStatusBadge />}
               </span>
             )}
-          </span>
-          {signedIn && (
-            <span className="home-header-account-identity">
-              <span className="home-header-account-label">{accountLabel}</span>
-              {isQa && <QaStatusBadge />}
-            </span>
-          )}
-        </button>
+          </button>
+        </div>
       </div>
 
       <div
@@ -184,22 +204,6 @@ export function HomeHeader({
         >
           <SoundIcon enabled={soundEffectsEnabled} />
           <span>Sound</span>
-        </button>
-
-        <button
-          className="home-header-control home-header-board"
-          type="button"
-          onClick={onOpenLeaderboard}
-          aria-label="Leaderboard"
-          aria-current={leaderboardActive ? "page" : undefined}
-          title={
-            leaderboardEnabled
-              ? undefined
-              : "Leaderboard data is unavailable in this local setup"
-          }
-        >
-          <LeaderboardIcon />
-          <span>Board</span>
         </button>
 
         <button

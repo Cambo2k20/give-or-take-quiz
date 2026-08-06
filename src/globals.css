@@ -9003,8 +9003,21 @@ h1[tabindex="-1"]:focus {
   );
 }
 
-.home-header-redesign .home-header-account {
+.home-header-redesign .home-header-account-cluster {
   grid-area: account;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  justify-self: end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.home-header-redesign .home-header-account-cluster .home-header-board {
+  flex: none;
+}
+
+.home-header-redesign .home-header-account {
   position: relative;
   width: 44px;
   min-width: 44px;
@@ -9014,7 +9027,6 @@ h1[tabindex="-1"]:focus {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  justify-self: end;
   overflow: visible;
   border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line));
   border-radius: 50%;
@@ -9085,10 +9097,10 @@ h1[tabindex="-1"]:focus {
 
 .home-header-redesign .home-header-toolbar {
   grid-area: toolbar;
-  width: min(100%, 272px);
+  width: min(100%, 204px);
   min-width: 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   justify-self: start;
 }
@@ -9217,14 +9229,13 @@ h1[tabindex="-1"]:focus {
   }
 
   .home-header-redesign .home-header-balance {
-    display: block;
-    width: 100%;
-    height: 44px;
+    display: none;
   }
 
   .home-header-redesign .home-header-wordmark {
     grid-area: auto;
     grid-column: 2;
+    grid-row: 1;
     gap: 8px;
     font-size: clamp(21px, 6vw, 23px);
   }
@@ -9234,9 +9245,29 @@ h1[tabindex="-1"]:focus {
     height: 34px;
   }
 
-  .home-header-redesign .home-header-account {
-    grid-area: auto;
+  /* Board splits off from the account to the opposite (left) edge on mobile,
+     so it no longer crowds the avatar next to the wordmark. */
+  .home-header-redesign .home-header-account-cluster {
+    display: contents;
+  }
+
+  .home-header-redesign .home-header-account-cluster .home-header-board {
+    grid-column: 1;
+    justify-self: start;
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  .home-header-redesign .home-header-account-cluster .home-header-board span {
+    display: none;
+  }
+
+  .home-header-redesign .home-header-account-cluster .home-header-account {
     grid-column: 3;
+    justify-self: end;
   }
 
   .mode-rank {
@@ -9245,7 +9276,7 @@ h1[tabindex="-1"]:focus {
 
   .home-header-redesign .home-header-toolbar {
     width: 100%;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
     padding-top: 8px;
     border-top: 1px solid color-mix(in srgb, var(--accent) 20%, var(--line));
