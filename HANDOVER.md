@@ -23,36 +23,21 @@ nothing is scheduled for today (§1).
 
 ---
 
-## 1. The Daily schedule is empty — the live outage
+## 1. The Daily schedule — covered to 13 Dec 2026
 
-`data/daily-sets.json` holds 32 sets, 26 Jul – 26 Aug 2026. Nothing has been
-scheduled since, so production has had no Daily from 27 Aug. Issue #76 has
-said so every night since then.
+`data/daily-sets.json` ran out on 26 Aug 2026, so production had no Daily from
+27 Aug (issue #76). PR #77 made the app handle an empty schedule. PR #78 added
+21 sets, **23 Nov – 13 Dec 2026** (105 daily-only questions written by Claude,
+each checked against the cited page), and its seed was applied to production
+on 21 Nov 2026: 53 sets, 265 links, 105 questions reserved, 0 played questions
+re-reserved.
 
-What changed on this branch: the app now handles an empty schedule. The shared
-header stays, and the home screen shows "No Daily today" with a route to the
-archive. Before, it fell back to an old header without the sound toggle, and
-the archive was unreachable.
-
-What still has to happen, in order:
-
-1. Author and review new sets in Question Lab (see
-   `docs/QUESTION_PIPELINE.md`; its Daily pool lives in browser storage on
-   the Windows machine). Aim for at least 21 days so the runway issue closes.
-2. Export them into `data/daily-sets.json`. Date the first set for the day it
-   will actually ship, not for today.
-3. `npm run validate:data` — zero errors.
-4. `npm run build:daily-sql` — regenerates `supabase/seed-daily.sql`.
-5. Apply the seed: `npx supabase db query --linked -f supabase/seed-daily.sql`.
-   This is data, not schema, so `db query` is correct (§6.2). Without it the
-   client still plays the new sets, but `submit_daily_round` rejects every
-   signed-in submission with "no daily was published for <date>".
-   Re-running the seed is safe. It used to set `is_daily = true` on every
-   scheduled question, which made all 160 retired ones daily-only again until
-   the nightly job ran. In that window `submit_round` rejected rounds dealt from
-   the bundled bank. Fixed on this branch: the seed now leaves `is_daily` alone
-   on existing rows, and reserves only questions dated today or later.
-6. Commit, PR, merge. Merging deploys.
+Next batch: schedule from 14 Dec, at least 21 days ahead. Question Lab is the
+normal route (`docs/QUESTION_PIPELINE.md`). Then `npm run validate:data`,
+`npm run build:daily-sql`, apply `supabase/seed-daily.sql` (data, so `db
+query` is correct, §6.2), merge. Re-running the seed is safe: it leaves
+`is_daily` alone on existing rows and reserves only questions dated today or
+later. Without the seed, `submit_daily_round` rejects signed-in submissions.
 
 The repo is **public**: anything committed in `data/daily-sets.json` can be
 read before its date. Issue #21 tracks the real fix, which is blocked on a
@@ -60,21 +45,18 @@ product decision (§4).
 
 ---
 
-## 2. Two migrations are probably not applied to production
+## 2. Migrations — production matches the repo
 
-`supabase/migrations/20260806010120_add_dinosaurs_questions.sql` (42
-questions) and `20260806011021_add_movies-space_questions.sql` (36). None of
-their 78 IDs appear in a snapshot the nightly job regenerated from production
-on 20 Nov. That is an inference; nothing has queried Supabase directly.
-
-1. `npx supabase migration list` — confirm.
-2. Apply them with the usual migration route, then fix local filenames to the
-   stamped versions (§6.1).
-3. `npm run generate:questions`, `npm run validate:question-sync`, commit.
+On 21 Nov 2026 `20260806010120_add_dinosaurs_questions` and
+`20260806011021_add_movies-space_questions` (78 questions) were applied to
+production with `schema_migrations` rows under their local versions, so
+`supabase migration list` shows local and remote aligned (54 each).
+`lib/questions.generated.ts` was regenerated from production afterwards (790
+regular questions; `validate:question-sync` passes).
 
 ---
 
-## 3. Nightly retirement job — fixed on this branch
+## 3. Nightly retirement job — fixed in PR #77
 
 `.github/workflows/retire-expired-dailies.yml` decided whether to open its pull
 request with `gh pr view "$branch"`. That also matches closed and merged pull
@@ -82,7 +64,7 @@ requests, so once #47 merged on 2 Aug the job logged "Existing pull request
 updated." every night and never opened a new one. Its branch
 `automation/retire-expired-dailies` kept being force-pushed with no PR.
 
-This branch:
+PR #77:
 
 - checks for an **open** pull request only;
 - brings in the snapshot that job generated on 20 Nov (`9afec21`): 110 retired
