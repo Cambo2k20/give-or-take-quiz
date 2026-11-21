@@ -39,7 +39,10 @@ function streakLabel(streak: number) {
 }
 
 type DailyHeroProps = {
-  set: DailySet;
+  /** Null when nothing is scheduled for today: the hero says so and points at the archive. */
+  set: DailySet | null;
+  /** The ISO date the hero is about; today's, whether or not a set exists for it. */
+  date: string;
   streak: number;
   today: DailyDateProgress | undefined;
   rank: number | null;
@@ -56,6 +59,7 @@ type DailyHeroProps = {
 
 export function DailyHero({
   set,
+  date,
   streak,
   today,
   rank,
@@ -68,12 +72,15 @@ export function DailyHero({
   onShare,
   shareStatus,
 }: DailyHeroProps) {
-  const score = today?.officialScore ?? null;
+  const score = set ? (today?.officialScore ?? null) : null;
   const played = score !== null;
+  const hasArchive = archiveCount > 0;
 
   return (
     <section
-      className={`daily-hero home-daily-hero${played ? " is-played" : ""}`}
+      className={`daily-hero home-daily-hero${played ? " is-played" : ""}${
+        set ? "" : " is-unscheduled"
+      }`}
       aria-labelledby="daily-hero-heading"
     >
       <span
@@ -92,7 +99,7 @@ export function DailyHero({
           {streakLabel(streak)}
         </span>
 
-        {archiveCount > 0 && (
+        {set && hasArchive && (
           <button
             className="home-daily-archive"
             type="button"
@@ -112,21 +119,43 @@ export function DailyHero({
             style={iconMask(dailyQuizIcon)}
           />
         </span>
-        <time className="daily-hero-date" dateTime={set.date}>
-          {readableDate(set.date)}
+        <time className="daily-hero-date" dateTime={date}>
+          {readableDate(date)}
         </time>
         <h2 id="daily-hero-heading" className="daily-hero-heading">
-          {played ? "Today's score" : "Today's Daily Quiz"}
+          {!set
+            ? "No Daily today"
+            : played
+              ? "Today's score"
+              : "Today's Daily Quiz"}
         </h2>
-        {!played && (
+        {!set ? (
           <p className="daily-hero-lede">
-            {set.questions.length} questions · ~2 min · {subjectCount(set)}{" "}
-            subjects
+            {hasArchive
+              ? "Today's puzzle isn't scheduled yet. Past dailies are still open for practice."
+              : "Today's puzzle isn't scheduled yet. Check back soon."}
           </p>
+        ) : (
+          !played && (
+            <p className="daily-hero-lede">
+              {set.questions.length} questions · ~2 min · {subjectCount(set)}{" "}
+              subjects
+            </p>
+          )
         )}
       </div>
 
-      {played ? (
+      {!set ? (
+        hasArchive && (
+          <button
+            className="primary-button"
+            type="button"
+            onClick={onOpenArchive}
+          >
+            Browse past dailies
+          </button>
+        )
+      ) : played ? (
         <>
           <div className="daily-hero-score">
             <strong>{formatPoints(score)}</strong>

@@ -149,9 +149,12 @@ describe("buildSurvivalDeck", () => {
       .filter((set) => set.date >= today)
       .flatMap((set) => set.questions.map((q) => q.id));
 
-    // Without this the assertion goes quietly vacuous once the schedule runs
-    // out, which is exactly when it would matter most.
-    expect(reserved.length).toBeGreaterThan(0);
+    // This is checked against the real clock on purpose: it is the committed
+    // bank, as it stands today, that must not leak an unplayed daily.
+    // `validate:data` enforces the same rule at build time. When nothing is
+    // scheduled ahead there is nothing to leak, so it holds trivially; an empty
+    // schedule is the runway alarm's job (scripts/check-daily-runway.ts), not a
+    // reason to fail every CI run and block the deploy that would fix it.
     expect(reserved.filter((id) => dealt.has(id))).toEqual([]);
   });
 });

@@ -69,7 +69,6 @@ import type { BackgroundThemeId } from "../lib/themes";
 import { ThemeArtwork } from "./themes/ThemeArtwork";
 import { DailyArchive, readableDate } from "./Daily";
 import { HomeHeader } from "./HomeHeader";
-import { BrandMark } from "./BrandMark";
 import { BackgroundMusicPlayer } from "./BackgroundMusicPlayer";
 import {
   AchievementPanel,
@@ -1582,149 +1581,66 @@ export default function Game() {
         variant="backdrop"
       />
       {auth.isQa && <QaModeBanner />}
-      {todaysDaily ? (
-        <HomeHeader
-          musicControls={<BackgroundMusicPlayer placement="header" />}
-          leaderboardEnabled={leaderboard.enabled}
-          leaderboardActive={activePhase === "leaderboard"}
-          accountLabel={
-            auth.status === "signed-in"
-              ? (player?.displayName ?? auth.user?.email ?? "Account")
-              : "Sign in"
-          }
-          profileAvatar={
-            player ? (
-              <ProfileAvatarArtwork
-                avatarKey={player.avatarKey}
-                className="home-header-avatar-artwork"
-              />
-            ) : undefined
-          }
-          socialUnreadCount={social.unreadCount}
-          isQa={auth.isQa}
-          soundEffectsEnabled={soundEffectsEnabled}
-          theme={theme}
-          onHome={goHome}
-          onOpenLeaderboard={openLeaderboard}
-          onOpenAccount={() => setPhase("account")}
-          onToggleSoundEffects={toggleSoundEffects}
-          onToggleTheme={toggleTheme}
-        />
-      ) : (
-        <>
-          <BackgroundMusicPlayer />
-          <header className="site-header">
-        <button
-          className="wordmark"
-          type="button"
-          onClick={goHome}
-          aria-label="Give or Take home"
-        >
-          <BrandMark />
-          <span>Give or Take</span>
-        </button>
-        <div className="header-side">
-          {activePhase === "playing" && (
-            <p className="score-chip">
-              {dailyDate ? "Daily" : MODE_LABELS[mode]} ·{" "}
-              <strong>{formatPoints(totalScore)}</strong>
-            </p>
-          )}
-          {activePhase === "survival" && (
-            <p className="score-chip">
-              Survival · <strong>{formatPoints(survivalSurvived)} in</strong>
-            </p>
-          )}
-          {leaderboard.enabled &&
-            activePhase !== "playing" &&
-            activePhase !== "survival" && (
-            <>
-              <button
-                className="board-button"
-                type="button"
-                onClick={openLeaderboard}
-              >
-                Leaderboard
-              </button>
-              {auth.status === "signed-in" ? (
-                <button
-                  className="board-button"
-                  type="button"
-                  onClick={() => setPhase("account")}
-                >
-                  {player?.displayName ?? auth.user?.email ?? "Account"}
-                </button>
-              ) : (
-                <button
-                  className="board-button"
-                  type="button"
-                  onClick={() => setPhase("account")}
-                >
-                  Sign in
-                </button>
-              )}
-            </>
-          )}
-          <button
-            className="theme-toggle"
-            type="button"
-            onClick={toggleTheme}
-            aria-label={
-              theme === "dark"
-                ? "Switch to light mode"
-                : "Switch to dark mode"
-            }
-          >
-            {theme === "dark" ? (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <circle cx="12" cy="12" r="4.5" />
-                <path
-                  d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"
-                  strokeLinecap="round"
-                />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <path
-                  d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            )}
-          </button>
-        </div>
-          </header>
-        </>
-      )}
+      <HomeHeader
+        musicControls={<BackgroundMusicPlayer placement="header" />}
+        leaderboardEnabled={leaderboard.enabled}
+        leaderboardActive={activePhase === "leaderboard"}
+        accountLabel={
+          auth.status === "signed-in"
+            ? (player?.displayName ?? auth.user?.email ?? "Account")
+            : "Sign in"
+        }
+        profileAvatar={
+          player ? (
+            <ProfileAvatarArtwork
+              avatarKey={player.avatarKey}
+              className="home-header-avatar-artwork"
+            />
+          ) : undefined
+        }
+        socialUnreadCount={social.unreadCount}
+        isQa={auth.isQa}
+        soundEffectsEnabled={soundEffectsEnabled}
+        theme={theme}
+        onHome={goHome}
+        onOpenLeaderboard={openLeaderboard}
+        onOpenAccount={() => setPhase("account")}
+        onToggleSoundEffects={toggleSoundEffects}
+        onToggleTheme={toggleTheme}
+      />
 
       {activePhase === "category" && (
         <section className="category-screen home-flow-redesign">
-          {todaysDaily && (
-            <DailyHero
-              set={todaysDaily}
-              streak={canPersistLocalScores ? streak : 0}
-              today={
-                canPersistLocalScores
-                  ? shownDailyProgress.dates[today]
-                  : undefined
-              }
-              rank={shownDailyRank}
-              boardEnabled={leaderboard.enabled}
-              archiveCount={archiveDates.length}
-              onPlay={() => startDaily(todaysDaily.date)}
-              onReplay={() => startDaily(todaysDaily.date)}
-              onOpenBoard={() => openLeaderboard("daily")}
-              onOpenArchive={() => setPhase("daily-archive")}
-              onShare={() =>
-                void shareDailyScore(
-                  todaysDaily.date,
-                  shownDailyProgress.dates[today]?.officialScore ?? 0,
-                  shownDailyProgress.dates[today]?.officialPoints ?? [],
-                )
-              }
-              shareStatus={shareStatus}
-            />
-          )}
+          <DailyHero
+            set={todaysDaily}
+            date={todaysDaily?.date ?? today}
+            streak={canPersistLocalScores ? streak : 0}
+            today={
+              canPersistLocalScores
+                ? shownDailyProgress.dates[today]
+                : undefined
+            }
+            rank={shownDailyRank}
+            boardEnabled={leaderboard.enabled}
+            archiveCount={archiveDates.length}
+            onPlay={() => {
+              if (todaysDaily) startDaily(todaysDaily.date);
+            }}
+            onReplay={() => {
+              if (todaysDaily) startDaily(todaysDaily.date);
+            }}
+            onOpenBoard={() => openLeaderboard("daily")}
+            onOpenArchive={() => setPhase("daily-archive")}
+            onShare={() => {
+              if (!todaysDaily) return;
+              void shareDailyScore(
+                todaysDaily.date,
+                shownDailyProgress.dates[today]?.officialScore ?? 0,
+                shownDailyProgress.dates[today]?.officialPoints ?? [],
+              );
+            }}
+            shareStatus={shareStatus}
+          />
 
           <section className="home-flow-section home-game-modes" aria-labelledby="home-game-modes-heading">
             <span className="home-flow-thread is-first" aria-hidden="true" />
@@ -2537,7 +2453,9 @@ export default function Game() {
                 ? "QA archive · results are not saved"
                 : streak > 0
                 ? `${streak}-day streak`
-                : "Play today's to start a streak"}
+                : todaysDaily
+                ? "Play today's to start a streak"
+                : "No Daily scheduled today"}
             </p>
             <h1 ref={focusHeadingRef} tabIndex={-1}>
               Past dailies

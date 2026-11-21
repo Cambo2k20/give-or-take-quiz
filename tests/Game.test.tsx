@@ -298,6 +298,46 @@ describe("Game", () => {
       expect(screen.getAllByRole("button", { name: /^play$/i })).toHaveLength(2);
       expect(set.date >= earlier.date).toBe(true);
     });
+
+    it("keeps the shared header and the archive when nothing is scheduled today", async () => {
+      // The day after the last published set: the schedule has run out, as it
+      // did in production from 27 Aug 2026.
+      const last = dailySets[dailySets.length - 1];
+      if (!last) throw new Error("data/daily-sets.json has no sets to test with");
+      const [year, month, day] = last.date.split("-").map(Number);
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      vi.setSystemTime(new Date(year, month - 1, day + 1, 9));
+
+      const user = userEvent.setup();
+      render(<Game />);
+
+      expect(
+        screen.getByRole("heading", { name: "No Daily today" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /play today's daily/i }),
+      ).not.toBeInTheDocument();
+      // The same header as any other day, not a stripped-down fallback.
+      expect(document.querySelector(".site-header")).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /^Profile, / }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /sound effects$/i }),
+      ).toBeInTheDocument();
+
+      await user.click(
+        screen.getByRole("button", { name: /browse past dailies/i }),
+      );
+
+      expect(
+        await screen.findByRole("heading", { name: /past dailies/i }),
+      ).toBeInTheDocument();
+      expect(screen.getByText("No Daily scheduled today")).toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: /^play$/i })).toHaveLength(
+        dailySets.length,
+      );
+    });
   });
 
   it("copies the result when Web Share is unavailable, then returns to categories", async () => {
