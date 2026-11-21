@@ -150,8 +150,13 @@ jobs:
           git commit -m "Refresh the offline bank after retiring expired dailies"
           git push --force origin "$branch"
 
-          if gh pr view "$branch" --json number >/dev/null 2>&1; then
-            echo "Existing pull request updated."
+          # Only an open pull request picks up the force-push above.
+          # `gh pr view "$branch"` also matches closed and merged ones, so after
+          # #47 merged this reported "updated" every night while none was open.
+          open_pr=$(gh pr list --head "$branch" --base main --state open \
+            --json number --jq '.[0].number // empty')
+          if [ -n "$open_pr" ]; then
+            echo "Existing pull request #$open_pr updated."
           else
             cat > "$RUNNER_TEMP/pr-body.md" <<'BODY'
           Expired daily questions have rejoined the category pool, and

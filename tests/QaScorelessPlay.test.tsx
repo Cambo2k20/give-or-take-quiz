@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/formats", async () => {
   const actual = await vi.importActual<typeof import("@/lib/formats")>(
@@ -182,6 +182,7 @@ vi.mock("@/src/useLeaderboard", () => ({
 import Game from "@/src/Game";
 import { readBestScores, writeBestScores } from "@/lib/game";
 import {
+  dailySets,
   readDailyProgress,
   todayIso,
   writeDailyProgress,
@@ -254,6 +255,10 @@ describe("QA scoreless play", () => {
     api.progressPlayerIds.length = 0;
     api.socialPlayerIds.length = 0;
     window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("keeps a real QA identity in the header and account screen", async () => {
@@ -385,6 +390,13 @@ describe("QA scoreless play", () => {
   });
 
   it("keeps QA Daily scoreless locally and remotely", async () => {
+    // Pin "today" to a published set so the test does not depend on the real
+    // schedule still covering the real date.
+    const set = dailySets[0];
+    if (!set) throw new Error("data/daily-sets.json has no sets to test with");
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date(`${set.date}T09:00:00`));
+
     await playDailyRound();
 
     expect(await screen.findByText(/QA play/i)).toBeInTheDocument();

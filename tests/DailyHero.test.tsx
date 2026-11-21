@@ -45,6 +45,7 @@ function renderHero(overrides: Partial<ComponentProps<typeof DailyHero>> = {}) {
   render(
     <DailyHero
       set={fixtureSet()}
+      date="2026-07-28"
       streak={0}
       today={undefined}
       rank={null}
@@ -173,6 +174,57 @@ describe("DailyHero", () => {
       expect(
         screen.queryByRole("button", { name: /play today's daily/i }),
       ).not.toBeInTheDocument();
+    });
+  });
+
+  describe("when nothing is scheduled for today", () => {
+    it("says so and sends the player to the archive instead", async () => {
+      const user = userEvent.setup();
+      const onOpenArchive = vi.fn();
+      const { onPlay } = renderHero({
+        set: null,
+        date: "2026-11-21",
+        archiveCount: 32,
+        onOpenArchive,
+      });
+
+      expect(
+        screen.getByRole("heading", { name: "No Daily today" }),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/isn't scheduled yet/i)).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /play today's daily/i }),
+      ).not.toBeInTheDocument();
+      // One route to the archive, not a chip and a button side by side.
+      expect(
+        screen.queryByRole("button", { name: "Past dailies" }),
+      ).not.toBeInTheDocument();
+
+      await user.click(
+        screen.getByRole("button", { name: /browse past dailies/i }),
+      );
+      expect(onOpenArchive).toHaveBeenCalledOnce();
+      expect(onPlay).not.toHaveBeenCalled();
+    });
+
+    it("ignores progress for the day, since there is no puzzle to have played", () => {
+      renderHero({
+        set: null,
+        date: "2026-11-21",
+        today: { officialScore: 4200, practiceBest: null, attemptCount: 1 },
+      });
+
+      expect(screen.queryByText("4,200")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /share result/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("offers no archive action when there is no archive", () => {
+      renderHero({ set: null, date: "2026-11-21", archiveCount: 0 });
+
+      expect(screen.getByText(/check back soon/i)).toBeInTheDocument();
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
     });
   });
 });

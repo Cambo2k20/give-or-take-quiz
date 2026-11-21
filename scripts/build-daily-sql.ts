@@ -8,6 +8,14 @@ import type { DailySchedule, Question } from "../lib/types";
  * by hand, so it is regenerated into one idempotent seed script rather than an
  * ever-growing pile of migrations. Run this after editing the JSON, then apply
  * the SQL to the database so the server can rescore daily rounds.
+ *
+ * Re-running it must not undo retirement. The schedule keeps every past set, so
+ * an upsert that forced `is_daily = true` would pull every already-retired
+ * daily back out of category play until the nightly job retired it again, and
+ * submit_round would reject rounds dealt from the bundled bank in the meantime.
+ * So the upsert leaves `is_daily` alone on existing rows, and a closing update
+ * reserves only what is scheduled for today or later -- the exact complement
+ * of retire_expired_daily_questions(), which retires once every date is past.
  */
 
 const SOURCE = new URL("../data/daily-sets.json", import.meta.url);
@@ -73,8 +81,7 @@ on conflict (id) do update set
   reference_year = excluded.reference_year,
   source_title   = excluded.source_title,
   source_url     = excluded.source_url,
-  explanation    = excluded.explanation,
-  is_daily       = true;`,
+  explanation    = excluded.explanation;`,
 
   `insert into public.daily_sets (puzzle_date) values
 ${dates.map((d) => `  (${lit(d)})`).join(",\n")}
@@ -93,6 +100,19 @@ ${schedule.sets
     ),
   )
   .join(",\n")};`,
+
+  `-- A question already in the bank that is now scheduled ahead must be
+-- daily-only. Anything whose dates have all passed keeps what retirement
+-- decided: this never sets is_daily back to true for it.
+update public.questions q
+set is_daily = true
+where not q.is_daily
+  and exists (
+    select 1
+    from public.daily_set_questions d
+    where d.question_id = q.id
+      and d.puzzle_date >= current_date
+  );`,
 
   "commit;",
 ];
