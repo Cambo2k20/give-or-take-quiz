@@ -182,8 +182,7 @@ on conflict (id) do update set
   reference_year = excluded.reference_year,
   source_title   = excluded.source_title,
   source_url     = excluded.source_url,
-  explanation    = excluded.explanation,
-  is_daily       = true;
+  explanation    = excluded.explanation;
 
 insert into public.daily_sets (puzzle_date) values
   ('2026-07-26'),
@@ -384,5 +383,18 @@ insert into public.daily_set_questions (puzzle_date, question_id, asked_order) v
   ('2026-08-26', 'daily-human-cervical-vertebrae', 3),
   ('2026-08-26', 'daily-danyang-kunshan-bridge-length', 4),
   ('2026-08-26', 'daily-gutenberg-bible-completed', 5);
+
+-- A question already in the bank that is now scheduled ahead must be
+-- daily-only. Anything whose dates have all passed keeps what retirement
+-- decided: this never sets is_daily back to true for it.
+update public.questions q
+set is_daily = true
+where not q.is_daily
+  and exists (
+    select 1
+    from public.daily_set_questions d
+    where d.question_id = q.id
+      and d.puzzle_date >= current_date
+  );
 
 commit;

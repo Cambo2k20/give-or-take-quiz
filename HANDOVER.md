@@ -47,6 +47,11 @@ What still has to happen, in order:
    This is data, not schema, so `db query` is correct (§6.2). Without it the
    client still plays the new sets, but `submit_daily_round` rejects every
    signed-in submission with "no daily was published for <date>".
+   Re-running the seed is safe. It used to set `is_daily = true` on every
+   scheduled question, which made all 160 retired ones daily-only again until
+   the nightly job ran. In that window `submit_round` rejected rounds dealt from
+   the bundled bank. Fixed on this branch: the seed now leaves `is_daily` alone
+   on existing rows, and reserves only questions dated today or later.
 6. Commit, PR, merge. Merging deploys.
 
 The repo is **public**: anything committed in `data/daily-sets.json` can be
