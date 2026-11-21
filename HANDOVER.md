@@ -23,16 +23,16 @@ nothing is scheduled for today (§1).
 
 ---
 
-## 1. The Daily schedule — covered to 13 Dec 2026
+## 1. The Daily schedule — covered to 11 Dec 2026
 
 `data/daily-sets.json` ran out on 26 Aug 2026, so production had no Daily from
 27 Aug (issue #76). PR #77 made the app handle an empty schedule. PR #78 added
-21 sets, **23 Nov – 13 Dec 2026** (105 daily-only questions written by Claude,
+21 sets, **21 Nov – 11 Dec 2026** (105 daily-only questions written by Claude,
 each checked against the cited page), and its seed was applied to production
 on 21 Nov 2026: 53 sets, 265 links, 105 questions reserved, 0 played questions
 re-reserved.
 
-Next batch: schedule from 14 Dec, at least 21 days ahead. Question Lab is the
+Next batch: schedule from 12 Dec, at least 21 days ahead. Question Lab is the
 normal route (`docs/QUESTION_PIPELINE.md`). Then `npm run validate:data`,
 `npm run build:daily-sql`, apply `supabase/seed-daily.sql` (data, so `db
 query` is correct, §6.2), merge. Re-running the seed is safe: it leaves
