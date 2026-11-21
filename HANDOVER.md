@@ -23,36 +23,21 @@ nothing is scheduled for today (§1).
 
 ---
 
-## 1. The Daily schedule — 21 new sets waiting on the seed
+## 1. The Daily schedule — covered to 13 Dec 2026
 
-`data/daily-sets.json` held 32 sets, 26 Jul – 26 Aug 2026, so production had
-no Daily from 27 Aug (issue #76). PR #77 (merged) made the app handle an empty
-schedule: shared header kept, "No Daily today" with a route to the archive.
+`data/daily-sets.json` ran out on 26 Aug 2026, so production had no Daily from
+27 Aug (issue #76). PR #77 made the app handle an empty schedule. PR #78 added
+21 sets, **23 Nov – 13 Dec 2026** (105 daily-only questions written by Claude,
+each checked against the cited page), and its seed was applied to production
+on 21 Nov 2026: 53 sets, 265 links, 105 questions reserved, 0 played questions
+re-reserved.
 
-The Daily-sets PR adds 21 sets, **23 Nov – 13 Dec 2026**: 105 new daily-only
-questions, written by Claude, each checked against the cited page (NASA, NOAA,
-NPS, the Smithsonian zoo, San Diego Zoo, the Natural History Museum, Wikipedia).
-Population figures come from Wikipedia's tables of the UN World Population
-Prospects 2024 (mid-2023) and the 2020 US census, because the UN data API needs
-a key and Census QuickFacts blocks scripts. Review them before seeding.
-
-What still has to happen, in order:
-
-1. If the seed will not be applied by the first date, re-date the new sets so
-   the first one is the day you apply it (here N days later):
-   `node -e 'const f="data/daily-sets.json",fs=require("fs"),d=JSON.parse(fs.readFileSync(f));const N=Number(process.argv[1]);for(const s of d.sets)if(s.date>="2026-11-23"){const t=new Date(s.date+"T00:00:00Z");t.setUTCDate(t.getUTCDate()+N);s.date=t.toISOString().slice(0,10)}fs.writeFileSync(f,JSON.stringify(d,null,2)+"\n")' N`
-2. `npm run validate:data` — zero errors.
-3. `npm run build:daily-sql` — regenerates `supabase/seed-daily.sql`.
-4. Apply the seed: `npx supabase db query --linked -f supabase/seed-daily.sql`.
-   This is data, not schema, so `db query` is correct (§6.2). Without it the
-   client still plays the new sets, but `submit_daily_round` rejects every
-   signed-in submission with "no daily was published for <date>".
-   Re-running the seed is safe: since PR #77 it leaves `is_daily` alone on
-   existing rows and reserves only questions dated today or later.
-5. Merge the Daily-sets PR. Merging deploys.
-
-For the next batch, Question Lab remains the normal route (see
-`docs/QUESTION_PIPELINE.md`); schedule at least 21 days ahead.
+Next batch: schedule from 14 Dec, at least 21 days ahead. Question Lab is the
+normal route (`docs/QUESTION_PIPELINE.md`). Then `npm run validate:data`,
+`npm run build:daily-sql`, apply `supabase/seed-daily.sql` (data, so `db
+query` is correct, §6.2), merge. Re-running the seed is safe: it leaves
+`is_daily` alone on existing rows and reserves only questions dated today or
+later. Without the seed, `submit_daily_round` rejects signed-in submissions.
 
 The repo is **public**: anything committed in `data/daily-sets.json` can be
 read before its date. Issue #21 tracks the real fix, which is blocked on a
@@ -60,17 +45,14 @@ product decision (§4).
 
 ---
 
-## 2. Two migrations are probably not applied to production
+## 2. Migrations — production matches the repo
 
-`supabase/migrations/20260806010120_add_dinosaurs_questions.sql` (42
-questions) and `20260806011021_add_movies-space_questions.sql` (36). None of
-their 78 IDs appear in a snapshot the nightly job regenerated from production
-on 20 Nov. That is an inference; nothing has queried Supabase directly.
-
-1. `npx supabase migration list` — confirm.
-2. Apply them with the usual migration route, then fix local filenames to the
-   stamped versions (§6.1).
-3. `npm run generate:questions`, `npm run validate:question-sync`, commit.
+On 21 Nov 2026 `20260806010120_add_dinosaurs_questions` and
+`20260806011021_add_movies-space_questions` (78 questions) were applied to
+production with `schema_migrations` rows under their local versions, so
+`supabase migration list` shows local and remote aligned (54 each).
+`lib/questions.generated.ts` was regenerated from production afterwards (790
+regular questions; `validate:question-sync` passes).
 
 ---
 
