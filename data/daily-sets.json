@@ -2889,6 +2889,1908 @@
           "explanation": "The Gutenberg Bible was completed around 1455."
         }
       ]
+    },
+    {
+      "date": "2026-11-23",
+      "questions": [
+        {
+          "id": "daily-orca-maximum-length",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "Up to how long can an orca grow, in metres?",
+          "answer": 9.8,
+          "min": 1.6,
+          "max": 31,
+          "scale": "linear",
+          "unit": "metre",
+          "source": {
+            "title": "NOAA Fisheries — Killer Whale",
+            "url": "https://www.fisheries.noaa.gov/species/killer-whale"
+          },
+          "explanation": "NOAA gives killer whales a length of up to 32 feet, about 9.8 metres."
+        },
+        {
+          "id": "daily-mississippi-river-length",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How long is the Mississippi River, in kilometres?",
+          "answer": 3782,
+          "min": 0,
+          "max": 4900,
+          "scale": "linear",
+          "unit": "kilometre",
+          "source": {
+            "title": "National Park Service — Mississippi River Facts",
+            "url": "https://www.nps.gov/miss/riverfacts.htm"
+          },
+          "explanation": "The park service gives the Mississippi's length as 2,350 miles, about 3,780 kilometres, the second longest river in North America."
+        },
+        {
+          "id": "daily-napoleon-coronation-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was Napoleon crowned Emperor of the French at Notre-Dame?",
+          "answer": 1804,
+          "min": 1750,
+          "max": 1950,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Coronation of Napoleon",
+            "url": "https://en.wikipedia.org/wiki/Coronation_of_Napoleon"
+          },
+          "explanation": "Napoleon was crowned emperor in Notre-Dame de Paris on 2 December 1804."
+        },
+        {
+          "id": "daily-tungsten-melting-point",
+          "category": "science",
+          "measure": "physics",
+          "subtype": "temperature",
+          "prompt": "At what temperature does tungsten melt, in degrees Celsius?",
+          "answer": 3422,
+          "min": 0,
+          "max": 4300,
+          "scale": "linear",
+          "unit": "celsius",
+          "source": {
+            "title": "Wikipedia — Tungsten",
+            "url": "https://en.wikipedia.org/wiki/Tungsten"
+          },
+          "explanation": "Tungsten melts at 3,422 degrees Celsius, the highest melting point of all known elements."
+        },
+        {
+          "id": "daily-jupiter-day-length",
+          "category": "space",
+          "measure": "physics",
+          "subtype": "duration",
+          "prompt": "How long is one day on Jupiter, the time it takes to spin once, in hours?",
+          "answer": 9.9,
+          "min": 0,
+          "max": 13,
+          "scale": "linear",
+          "unit": "hour",
+          "source": {
+            "title": "NASA Science — Jupiter Facts",
+            "url": "https://science.nasa.gov/jupiter/jupiter-facts/"
+          },
+          "explanation": "Jupiter has the shortest day in the Solar System: it spins once every 9.9 hours."
+        }
+      ]
+    },
+    {
+      "date": "2026-11-24",
+      "questions": [
+        {
+          "id": "daily-velociraptor-length",
+          "category": "dinosaurs",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How long was Velociraptor from snout to tail, in metres?",
+          "answer": 1.8,
+          "min": 0.23,
+          "max": 11,
+          "scale": "linear",
+          "unit": "metre",
+          "source": {
+            "title": "Natural History Museum — Velociraptor, Dino Directory",
+            "url": "https://www.nhm.ac.uk/discover/dino-directory/velociraptor.html"
+          },
+          "explanation": "The Natural History Museum gives Velociraptor a length of 1.8 metres and a weight of about 7 kilograms."
+        },
+        {
+          "id": "daily-double-six-domino-set-size",
+          "category": "games",
+          "measure": "quantity",
+          "subtype": "count",
+          "prompt": "How many tiles are in a traditional European double-six domino set?",
+          "answer": 28,
+          "min": 0,
+          "max": 39,
+          "scale": "linear",
+          "unit": "count",
+          "source": {
+            "title": "Wikipedia — Dominoes",
+            "url": "https://en.wikipedia.org/wiki/Dominoes"
+          },
+          "explanation": "A traditional European domino set has 28 tiles, each end marked with pips or left blank."
+        },
+        {
+          "id": "daily-average-ocean-depth",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "What is the average depth of the ocean, in metres?",
+          "answer": 3682,
+          "min": 0,
+          "max": 5200,
+          "scale": "linear",
+          "unit": "metre",
+          "source": {
+            "title": "NOAA Ocean Service — How deep is the ocean?",
+            "url": "https://oceanservice.noaa.gov/facts/oceandepth.html"
+          },
+          "explanation": "NOAA puts the average depth of the ocean at 3,682 metres, or 12,080 feet."
+        },
+        {
+          "id": "daily-battle-of-agincourt-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was the Battle of Agincourt fought?",
+          "answer": 1415,
+          "min": 1025,
+          "max": 1525,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Battle of Agincourt",
+            "url": "https://en.wikipedia.org/wiki/Battle_of_Agincourt"
+          },
+          "explanation": "The English victory at Agincourt in the Hundred Years' War came on 25 October 1415."
+        },
+        {
+          "id": "daily-jazz-singer-release-year",
+          "category": "movies",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was The Jazz Singer, the first feature-length film with synchronised singing and speech, released?",
+          "answer": 1927,
+          "min": 1910,
+          "max": 1980,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — The Jazz Singer",
+            "url": "https://en.wikipedia.org/wiki/The_Jazz_Singer"
+          },
+          "explanation": "The Jazz Singer was released on 6 October 1927."
+        }
+      ]
+    },
+    {
+      "date": "2026-11-25",
+      "questions": [
+        {
+          "id": "daily-turkey-population-2023",
+          "category": "population",
+          "measure": "population",
+          "subtype": "country",
+          "prompt": "What was the estimated population of Turkey in 2023?",
+          "answer": 87270501,
+          "min": 10000000,
+          "max": 110000000,
+          "scale": "linear",
+          "unit": "people",
+          "referenceYear": "2023 midyear estimate",
+          "source": {
+            "title": "Wikipedia — List of countries by population (United Nations), World Population Prospects 2024",
+            "url": "https://en.wikipedia.org/wiki/List_of_countries_by_population_(United_Nations)"
+          },
+          "explanation": "The UN's World Population Prospects 2024 puts Turkey's mid-2023 population at about 87.3 million."
+        },
+        {
+          "id": "daily-ethanol-boiling-point",
+          "category": "science",
+          "measure": "physics",
+          "subtype": "temperature",
+          "prompt": "At what temperature does pure ethanol boil at normal pressure, in degrees Celsius?",
+          "answer": 78.2,
+          "min": 30,
+          "max": 330,
+          "scale": "linear",
+          "unit": "celsius",
+          "source": {
+            "title": "Wikipedia — Ethanol",
+            "url": "https://en.wikipedia.org/wiki/Ethanol"
+          },
+          "explanation": "Ethanol boils at about 78.2 degrees Celsius, well below water's 100."
+        },
+        {
+          "id": "daily-venus-year-length",
+          "category": "space",
+          "measure": "physics",
+          "subtype": "duration",
+          "prompt": "How many Earth days does Venus take to orbit the Sun once?",
+          "answer": 225,
+          "min": 18,
+          "max": 600,
+          "scale": "log",
+          "unit": "day",
+          "source": {
+            "title": "NASA Science — Venus Facts",
+            "url": "https://science.nasa.gov/venus/venus-facts/"
+          },
+          "explanation": "A year on Venus lasts 225 Earth days, shorter than its 243-day rotation."
+        },
+        {
+          "id": "daily-vehicle-assembly-building-height",
+          "category": "technology",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How tall is NASA's Vehicle Assembly Building at Kennedy Space Center, in metres?",
+          "answer": 160,
+          "min": 0,
+          "max": 200,
+          "scale": "linear",
+          "unit": "metre",
+          "source": {
+            "title": "Wikipedia — Vehicle Assembly Building",
+            "url": "https://en.wikipedia.org/wiki/Vehicle_Assembly_Building"
+          },
+          "explanation": "The Vehicle Assembly Building, completed in 1966, stands 526 feet, about 160 metres, tall."
+        },
+        {
+          "id": "daily-atlantic-sturgeon-lifespan",
+          "category": "animals",
+          "measure": "physics",
+          "subtype": "duration",
+          "prompt": "Up to how many years can an Atlantic sturgeon live?",
+          "answer": 60,
+          "min": 1.6,
+          "max": 170,
+          "scale": "log",
+          "unit": "duration-year",
+          "source": {
+            "title": "NOAA Fisheries — Atlantic Sturgeon",
+            "url": "https://www.fisheries.noaa.gov/species/atlantic-sturgeon"
+          },
+          "explanation": "Atlantic sturgeon can live up to 60 years and grow up to 14 feet long."
+        }
+      ]
+    },
+    {
+      "date": "2026-11-26",
+      "questions": [
+        {
+          "id": "daily-death-valley-record-temperature",
+          "category": "geography",
+          "measure": "physics",
+          "subtype": "temperature",
+          "prompt": "What is the world-record highest air temperature, recorded in Death Valley in 1913, in degrees Celsius?",
+          "answer": 57,
+          "min": 40,
+          "max": 100,
+          "scale": "linear",
+          "unit": "celsius",
+          "source": {
+            "title": "National Park Service — Death Valley Weather and Climate",
+            "url": "https://www.nps.gov/deva/learn/nature/weather-and-climate.htm"
+          },
+          "explanation": "Furnace Creek recorded 134 degrees Fahrenheit, about 57 Celsius, on 10 July 1913."
+        },
+        {
+          "id": "daily-storming-of-the-bastille-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did Parisians storm the Bastille?",
+          "answer": 1789,
+          "min": 1745,
+          "max": 1945,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Storming of the Bastille",
+            "url": "https://en.wikipedia.org/wiki/Storming_of_the_Bastille"
+          },
+          "explanation": "The Bastille was stormed on 14 July 1789, an opening act of the French Revolution."
+        },
+        {
+          "id": "daily-first-academy-awards-year",
+          "category": "movies",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was the first Academy Awards ceremony held?",
+          "answer": 1929,
+          "min": 1880,
+          "max": 1950,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — 1st Academy Awards",
+            "url": "https://en.wikipedia.org/wiki/1st_Academy_Awards"
+          },
+          "explanation": "The 1st Academy Awards ceremony took place on 16 May 1929 in Hollywood."
+        },
+        {
+          "id": "daily-iran-population-2023",
+          "category": "population",
+          "measure": "population",
+          "subtype": "country",
+          "prompt": "What was the estimated population of Iran in 2023?",
+          "answer": 90608707,
+          "min": 10000000,
+          "max": 400000000,
+          "scale": "linear",
+          "unit": "people",
+          "referenceYear": "2023 midyear estimate",
+          "source": {
+            "title": "Wikipedia — List of countries by population (United Nations), World Population Prospects 2024",
+            "url": "https://en.wikipedia.org/wiki/List_of_countries_by_population_(United_Nations)"
+          },
+          "explanation": "The UN's World Population Prospects 2024 puts Iran's mid-2023 population at about 90.6 million."
+        },
+        {
+          "id": "daily-newton-principia-year",
+          "category": "science",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did Isaac Newton publish his Principia?",
+          "answer": 1687,
+          "min": 1375,
+          "max": 1775,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Philosophiæ Naturalis Principia Mathematica",
+            "url": "https://en.wikipedia.org/wiki/Philosophi%C3%A6_Naturalis_Principia_Mathematica"
+          },
+          "explanation": "Newton's Principia, which set out his laws of motion and universal gravitation, was published in 1687."
+        }
+      ]
+    },
+    {
+      "date": "2026-11-27",
+      "questions": [
+        {
+          "id": "daily-uranus-year-length",
+          "category": "space",
+          "measure": "physics",
+          "subtype": "duration",
+          "prompt": "About how many Earth years does Uranus take to orbit the Sun?",
+          "answer": 84,
+          "min": 0,
+          "max": 110,
+          "scale": "linear",
+          "unit": "duration-year",
+          "source": {
+            "title": "NASA Science — Uranus Facts",
+            "url": "https://science.nasa.gov/uranus/facts/"
+          },
+          "explanation": "Uranus completes one orbit of the Sun in about 84 Earth years."
+        },
+        {
+          "id": "daily-hong-kong-zhuhai-macau-bridge-length",
+          "category": "technology",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How long is the Hong Kong–Zhuhai–Macau bridge-and-tunnel crossing, in kilometres?",
+          "answer": 55,
+          "min": 15,
+          "max": 1600,
+          "scale": "log",
+          "unit": "kilometre",
+          "source": {
+            "title": "Wikipedia — Hong Kong–Zhuhai–Macau Bridge",
+            "url": "https://en.wikipedia.org/wiki/Hong_Kong%E2%80%93Zhuhai%E2%80%93Macau_Bridge"
+          },
+          "explanation": "The bridge-tunnel system across the Pearl River estuary is 55 kilometres long."
+        },
+        {
+          "id": "daily-beluga-average-weight",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "mass",
+          "prompt": "What does an adult beluga whale weigh on average, in kilograms?",
+          "answer": 1429,
+          "min": 680,
+          "max": 69000,
+          "scale": "log",
+          "unit": "kilogram",
+          "source": {
+            "title": "NOAA Fisheries — Beluga Whale",
+            "url": "https://www.fisheries.noaa.gov/species/beluga-whale"
+          },
+          "explanation": "NOAA puts a beluga's average weight at 3,150 pounds, about 1,430 kilograms."
+        },
+        {
+          "id": "daily-iguanodon-length",
+          "category": "dinosaurs",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How long was Iguanodon, in metres?",
+          "answer": 10,
+          "min": 0,
+          "max": 36,
+          "scale": "linear",
+          "unit": "metre",
+          "source": {
+            "title": "Natural History Museum — Iguanodon, Dino Directory",
+            "url": "https://www.nhm.ac.uk/discover/dino-directory/iguanodon.html"
+          },
+          "explanation": "The Natural History Museum gives Iguanodon a length of 10 metres."
+        },
+        {
+          "id": "daily-rubiks-cube-invention-year",
+          "category": "games",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did Ernő Rubik invent the Rubik's Cube?",
+          "answer": 1974,
+          "min": 1890,
+          "max": 2000,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Rubik's Cube",
+            "url": "https://en.wikipedia.org/wiki/Rubik%27s_Cube"
+          },
+          "explanation": "Hungarian sculptor and architecture professor Ernő Rubik invented the Cube in 1974."
+        }
+      ]
+    },
+    {
+      "date": "2026-11-28",
+      "questions": [
+        {
+          "id": "daily-godzilla-original-release-year",
+          "category": "movies",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was the original Japanese Godzilla film released?",
+          "answer": 1954,
+          "min": 1935,
+          "max": 2015,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Godzilla (1954 film)",
+            "url": "https://en.wikipedia.org/wiki/Godzilla_(1954_film)"
+          },
+          "explanation": "Godzilla premiered in Japan in late 1954."
+        },
+        {
+          "id": "daily-thailand-population-2023",
+          "category": "population",
+          "measure": "population",
+          "subtype": "country",
+          "prompt": "What was the estimated population of Thailand in 2023?",
+          "answer": 71702435,
+          "min": 32000000,
+          "max": 180000000,
+          "scale": "linear",
+          "unit": "people",
+          "referenceYear": "2023 midyear estimate",
+          "source": {
+            "title": "Wikipedia — List of countries by population (United Nations), World Population Prospects 2024",
+            "url": "https://en.wikipedia.org/wiki/List_of_countries_by_population_(United_Nations)"
+          },
+          "explanation": "The UN's World Population Prospects 2024 puts Thailand's mid-2023 population at about 71.7 million."
+        },
+        {
+          "id": "daily-marie-curie-first-nobel-year",
+          "category": "science",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did Marie Curie win her first Nobel Prize, in physics?",
+          "answer": 1903,
+          "min": 1885,
+          "max": 1995,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Marie Curie",
+            "url": "https://en.wikipedia.org/wiki/Marie_Curie"
+          },
+          "explanation": "Marie Curie shared the 1903 Nobel Prize in Physics; she won a second Nobel, in chemistry, in 1911."
+        },
+        {
+          "id": "daily-mercury-daytime-temperature",
+          "category": "space",
+          "measure": "physics",
+          "subtype": "temperature",
+          "prompt": "How hot can Mercury's surface get during the day, in degrees Celsius?",
+          "answer": 430,
+          "min": 260,
+          "max": 1100,
+          "scale": "linear",
+          "unit": "celsius",
+          "source": {
+            "title": "NASA Science — Mercury Facts",
+            "url": "https://science.nasa.gov/mercury/facts/"
+          },
+          "explanation": "Daytime temperatures on Mercury can reach 430 degrees Celsius, then fall to about -180 at night."
+        },
+        {
+          "id": "daily-gateway-arch-height",
+          "category": "technology",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How tall is the Gateway Arch in St. Louis, in metres?",
+          "answer": 192,
+          "min": 57,
+          "max": 540,
+          "scale": "linear",
+          "unit": "metre",
+          "source": {
+            "title": "National Park Service — Gateway Arch Fact Sheet",
+            "url": "https://www.nps.gov/jeff/planyourvisit/gateway-arch-fact-sheet.htm"
+          },
+          "explanation": "The Gateway Arch is 630 feet, about 192 metres, tall, and exactly as wide as it is high."
+        }
+      ]
+    },
+    {
+      "date": "2026-11-29",
+      "questions": [
+        {
+          "id": "daily-right-whale-maximum-weight",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "mass",
+          "prompt": "Up to how much can a North Atlantic right whale weigh, in tonnes?",
+          "answer": 63.5,
+          "min": 20,
+          "max": 220,
+          "scale": "linear",
+          "unit": "tonne",
+          "source": {
+            "title": "NOAA Fisheries — North Atlantic Right Whale",
+            "url": "https://www.fisheries.noaa.gov/species/north-atlantic-right-whale"
+          },
+          "explanation": "North Atlantic right whales weigh up to 140,000 pounds, about 63.5 tonnes."
+        },
+        {
+          "id": "daily-coelophysis-length",
+          "category": "dinosaurs",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How long was the Late Triassic predator Coelophysis, in metres?",
+          "answer": 2,
+          "min": 0,
+          "max": 7.2,
+          "scale": "linear",
+          "unit": "metre",
+          "source": {
+            "title": "Natural History Museum — Coelophysis, Dino Directory",
+            "url": "https://www.nhm.ac.uk/discover/dino-directory/coelophysis.html"
+          },
+          "explanation": "The Natural History Museum gives Coelophysis a length of 2 metres and a weight of 27 kilograms."
+        },
+        {
+          "id": "daily-first-fifa-video-game-year",
+          "category": "games",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was FIFA International Soccer, the first game in EA's FIFA series, released?",
+          "answer": 1993,
+          "min": 1976,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — FIFA International Soccer",
+            "url": "https://en.wikipedia.org/wiki/FIFA_International_Soccer"
+          },
+          "explanation": "FIFA International Soccer, the first game in the series, came out in 1993."
+        },
+        {
+          "id": "daily-mount-rainier-elevation",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How high does Mount Rainier rise above sea level, in metres?",
+          "answer": 4392,
+          "min": 2500,
+          "max": 11000,
+          "scale": "linear",
+          "unit": "metre",
+          "source": {
+            "title": "National Park Service — Mount Rainier National Park",
+            "url": "https://www.nps.gov/mora/index.htm"
+          },
+          "explanation": "Mount Rainier ascends to 14,410 feet, about 4,392 metres, above sea level."
+        },
+        {
+          "id": "daily-joan-of-arc-death-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was Joan of Arc burned at the stake in Rouen?",
+          "answer": 1431,
+          "min": 1215,
+          "max": 1515,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Joan of Arc",
+            "url": "https://en.wikipedia.org/wiki/Joan_of_Arc"
+          },
+          "explanation": "Joan of Arc was executed at Rouen on 30 May 1431, aged about 19."
+        }
+      ]
+    },
+    {
+      "date": "2026-11-30",
+      "questions": [
+        {
+          "id": "daily-origin-of-species-year",
+          "category": "science",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did Charles Darwin publish On the Origin of Species?",
+          "answer": 1859,
+          "min": 1825,
+          "max": 2025,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — On the Origin of Species",
+            "url": "https://en.wikipedia.org/wiki/On_the_Origin_of_Species"
+          },
+          "explanation": "On the Origin of Species was published on 24 November 1859."
+        },
+        {
+          "id": "daily-neptune-distance-from-sun",
+          "category": "space",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "What is Neptune's average distance from the Sun, in kilometres?",
+          "answer": 4500000000,
+          "min": 1900000000,
+          "max": 380000000000,
+          "scale": "log",
+          "unit": "kilometre",
+          "source": {
+            "title": "NASA Science — Neptune Facts",
+            "url": "https://science.nasa.gov/neptune/neptune-facts/"
+          },
+          "explanation": "Neptune orbits at an average of about 4.5 billion kilometres from the Sun, or 30 astronomical units."
+        },
+        {
+          "id": "daily-mount-rushmore-carving-years",
+          "category": "technology",
+          "measure": "physics",
+          "subtype": "duration",
+          "prompt": "About how many years did it take to carve Mount Rushmore?",
+          "answer": 14,
+          "min": 0,
+          "max": 50,
+          "scale": "linear",
+          "unit": "duration-year",
+          "source": {
+            "title": "National Park Service — Mount Rushmore Carving History",
+            "url": "https://www.nps.gov/moru/learn/historyculture/carving-history.htm"
+          },
+          "explanation": "Carving ran from 4 October 1927 to 31 October 1941, about 14 years."
+        },
+        {
+          "id": "daily-cassowary-running-speed",
+          "category": "animals",
+          "measure": "physics",
+          "subtype": "speed",
+          "prompt": "How fast can a cassowary run through forest undergrowth, in kilometres per hour?",
+          "answer": 50,
+          "min": 0,
+          "max": 60,
+          "scale": "linear",
+          "unit": "kph",
+          "source": {
+            "title": "San Diego Zoo Wildlife Alliance — Cassowary",
+            "url": "https://animals.sandiegozoo.org/animals/cassowary"
+          },
+          "explanation": "Cassowaries can run at up to 50 kilometres per hour through dense forest underbrush."
+        },
+        {
+          "id": "daily-diplodocus-weight",
+          "category": "dinosaurs",
+          "measure": "size",
+          "subtype": "mass",
+          "prompt": "How much did Diplodocus weigh, in tonnes?",
+          "answer": 15,
+          "min": 0,
+          "max": 94,
+          "scale": "linear",
+          "unit": "tonne",
+          "source": {
+            "title": "Natural History Museum — Diplodocus, Dino Directory",
+            "url": "https://www.nhm.ac.uk/discover/dino-directory/diplodocus.html"
+          },
+          "explanation": "The Natural History Museum puts Diplodocus at 26 metres long and 15,000 kilograms."
+        }
+      ]
+    },
+    {
+      "date": "2026-12-01",
+      "questions": [
+        {
+          "id": "daily-jenga-block-count",
+          "category": "games",
+          "measure": "quantity",
+          "subtype": "count",
+          "prompt": "How many blocks make up a standard Jenga tower?",
+          "answer": 54,
+          "min": 0,
+          "max": 70,
+          "scale": "linear",
+          "unit": "count",
+          "source": {
+            "title": "Wikipedia — Jenga",
+            "url": "https://en.wikipedia.org/wiki/Jenga"
+          },
+          "explanation": "A Jenga tower is built from 54 blocks."
+        },
+        {
+          "id": "daily-k2-elevation",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How high is K2, the world's second-highest mountain, in metres?",
+          "answer": 8611,
+          "min": 7300,
+          "max": 12000,
+          "scale": "linear",
+          "unit": "metre",
+          "source": {
+            "title": "Wikipedia — K2",
+            "url": "https://en.wikipedia.org/wiki/K2"
+          },
+          "explanation": "K2 rises to 8,611 metres, second only to Mount Everest."
+        },
+        {
+          "id": "daily-battle-of-tours-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did Frankish forces defeat an Umayyad army at the Battle of Tours?",
+          "answer": 732,
+          "min": 155,
+          "max": 955,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Battle of Tours",
+            "url": "https://en.wikipedia.org/wiki/Battle_of_Tours"
+          },
+          "explanation": "The Battle of Tours was fought in October 732."
+        },
+        {
+          "id": "daily-king-kong-1933-budget",
+          "category": "movies",
+          "measure": "quantity",
+          "subtype": "money",
+          "prompt": "What was the budget of the original 1933 King Kong, in the dollars of the day?",
+          "answer": 672255,
+          "min": 120000,
+          "max": 240000000,
+          "scale": "log",
+          "unit": "usd",
+          "referenceYear": "1933",
+          "source": {
+            "title": "Wikipedia — King Kong (1933 film)",
+            "url": "https://en.wikipedia.org/wiki/King_Kong_(1933_film)"
+          },
+          "explanation": "King Kong cost about $672,255 to make in 1933."
+        },
+        {
+          "id": "daily-united-kingdom-population-2023",
+          "category": "population",
+          "measure": "population",
+          "subtype": "country",
+          "prompt": "What was the estimated population of the United Kingdom in 2023?",
+          "answer": 68682962,
+          "min": 54000000,
+          "max": 110000000,
+          "scale": "linear",
+          "unit": "people",
+          "referenceYear": "2023 midyear estimate",
+          "source": {
+            "title": "Wikipedia — List of countries by population (United Nations), World Population Prospects 2024",
+            "url": "https://en.wikipedia.org/wiki/List_of_countries_by_population_(United_Nations)"
+          },
+          "explanation": "The UN's World Population Prospects 2024 puts the United Kingdom's mid-2023 population at about 68.7 million."
+        }
+      ]
+    },
+    {
+      "date": "2026-12-02",
+      "questions": [
+        {
+          "id": "daily-alcock-and-brown-transatlantic-flight-year",
+          "category": "technology",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did Alcock and Brown make the first non-stop transatlantic flight?",
+          "answer": 1919,
+          "min": 1905,
+          "max": 1975,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Transatlantic flight of Alcock and Brown",
+            "url": "https://en.wikipedia.org/wiki/Transatlantic_flight_of_Alcock_and_Brown"
+          },
+          "explanation": "John Alcock and Arthur Brown flew non-stop across the Atlantic in June 1919."
+        },
+        {
+          "id": "daily-emu-vertical-jump",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How high can an emu jump straight up, in metres?",
+          "answer": 2.1,
+          "min": 0.44,
+          "max": 6.4,
+          "scale": "linear",
+          "unit": "metre",
+          "source": {
+            "title": "San Diego Zoo Wildlife Alliance — Emu",
+            "url": "https://animals.sandiegozoo.org/animals/emu"
+          },
+          "explanation": "Emus can jump 7 feet, about 2.1 metres, straight up."
+        },
+        {
+          "id": "daily-compsognathus-weight",
+          "category": "dinosaurs",
+          "measure": "size",
+          "subtype": "mass",
+          "prompt": "How much did the small predator Compsognathus weigh, in kilograms?",
+          "answer": 3,
+          "min": 0.012,
+          "max": 24,
+          "scale": "log",
+          "unit": "kilogram",
+          "source": {
+            "title": "Natural History Museum — Compsognathus, Dino Directory",
+            "url": "https://www.nhm.ac.uk/discover/dino-directory/compsognathus.html"
+          },
+          "explanation": "The Natural History Museum gives Compsognathus a weight of 3 kilograms and a length of 0.7 metres."
+        },
+        {
+          "id": "daily-cluedo-first-published-year",
+          "category": "games",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was the murder-mystery board game Cluedo first published?",
+          "answer": 1949,
+          "min": 1850,
+          "max": 1970,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Cluedo",
+            "url": "https://en.wikipedia.org/wiki/Cluedo"
+          },
+          "explanation": "Cluedo, sold as Clue in North America, was first published in 1949."
+        },
+        {
+          "id": "daily-madagascar-area",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "area",
+          "prompt": "What is the area of Madagascar, in square kilometres?",
+          "answer": 592796,
+          "min": 6700,
+          "max": 3400000,
+          "scale": "log",
+          "unit": "square-kilometre",
+          "source": {
+            "title": "Wikipedia — Madagascar",
+            "url": "https://en.wikipedia.org/wiki/Madagascar"
+          },
+          "explanation": "Madagascar covers about 592,800 square kilometres."
+        }
+      ]
+    },
+    {
+      "date": "2026-12-03",
+      "questions": [
+        {
+          "id": "daily-peace-of-westphalia-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was the Peace of Westphalia signed, ending the Thirty Years' War?",
+          "answer": 1648,
+          "min": 1415,
+          "max": 1715,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Peace of Westphalia",
+            "url": "https://en.wikipedia.org/wiki/Peace_of_Westphalia"
+          },
+          "explanation": "The Peace of Westphalia treaties of 1648 ended the Thirty Years' War and the Eighty Years' War."
+        },
+        {
+          "id": "daily-wizard-of-oz-running-time",
+          "category": "movies",
+          "measure": "physics",
+          "subtype": "duration",
+          "prompt": "What is the running time of The Wizard of Oz (1939), in minutes?",
+          "answer": 102,
+          "min": 45,
+          "max": 250,
+          "scale": "linear",
+          "unit": "minute",
+          "source": {
+            "title": "Wikipedia — The Wizard of Oz (1939 film)",
+            "url": "https://en.wikipedia.org/wiki/The_Wizard_of_Oz_(1939_film)"
+          },
+          "explanation": "The Wizard of Oz runs for 102 minutes."
+        },
+        {
+          "id": "daily-south-africa-population-2023",
+          "category": "population",
+          "measure": "population",
+          "subtype": "country",
+          "prompt": "What was the estimated population of South Africa in 2023?",
+          "answer": 63212384,
+          "min": 9200000,
+          "max": 85000000,
+          "scale": "linear",
+          "unit": "people",
+          "referenceYear": "2023 midyear estimate",
+          "source": {
+            "title": "Wikipedia — List of countries by population (United Nations), World Population Prospects 2024",
+            "url": "https://en.wikipedia.org/wiki/List_of_countries_by_population_(United_Nations)"
+          },
+          "explanation": "The UN's World Population Prospects 2024 puts South Africa's mid-2023 population at about 63.2 million."
+        },
+        {
+          "id": "daily-x-rays-discovery-year",
+          "category": "science",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did Wilhelm Röntgen discover X-rays?",
+          "answer": 1895,
+          "min": 1850,
+          "max": 2010,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — X-ray",
+            "url": "https://en.wikipedia.org/wiki/X-ray"
+          },
+          "explanation": "Wilhelm Conrad Röntgen discovered X-rays in 1895 and named them for their unknown nature."
+        },
+        {
+          "id": "daily-galilean-moons-discovery-year",
+          "category": "space",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did Galileo first observe Jupiter's four largest moons?",
+          "answer": 1610,
+          "min": 1470,
+          "max": 1970,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "NASA Science — Jupiter Moons",
+            "url": "https://science.nasa.gov/jupiter/jupiter-moons/"
+          },
+          "explanation": "Galileo Galilei observed Io, Europa, Ganymede and Callisto in 1610 with an early telescope."
+        }
+      ]
+    },
+    {
+      "date": "2026-12-04",
+      "questions": [
+        {
+          "id": "daily-ankylosaurus-weight",
+          "category": "dinosaurs",
+          "measure": "size",
+          "subtype": "mass",
+          "prompt": "How much did the armoured Ankylosaurus weigh, in tonnes?",
+          "answer": 8,
+          "min": 0,
+          "max": 12,
+          "scale": "linear",
+          "unit": "tonne",
+          "source": {
+            "title": "Natural History Museum — Ankylosaurus, Dino Directory",
+            "url": "https://www.nhm.ac.uk/discover/dino-directory/ankylosaurus.html"
+          },
+          "explanation": "The Natural History Museum gives Ankylosaurus a weight of 8,000 kilograms and a length of 8 metres."
+        },
+        {
+          "id": "daily-the-sims-release-year",
+          "category": "games",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was the original The Sims video game released?",
+          "answer": 2000,
+          "min": 1965,
+          "max": 2005,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — The Sims (video game)",
+            "url": "https://en.wikipedia.org/wiki/The_Sims_(video_game)"
+          },
+          "explanation": "The first Sims game was released in 2000."
+        },
+        {
+          "id": "daily-mount-kosciuszko-elevation",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How high is Mount Kosciuszko, mainland Australia's highest peak, in metres?",
+          "answer": 2228,
+          "min": 600,
+          "max": 6400,
+          "scale": "linear",
+          "unit": "metre",
+          "source": {
+            "title": "Wikipedia — Mount Kosciuszko",
+            "url": "https://en.wikipedia.org/wiki/Mount_Kosciuszko"
+          },
+          "explanation": "Mount Kosciuszko rises to 2,228 metres."
+        },
+        {
+          "id": "daily-vasco-da-gama-reaches-india-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did Vasco da Gama's fleet reach India by sea from Europe?",
+          "answer": 1498,
+          "min": 1450,
+          "max": 1750,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Vasco da Gama",
+            "url": "https://en.wikipedia.org/wiki/Vasco_da_Gama"
+          },
+          "explanation": "Vasco da Gama landed at Kozhikode on 20 May 1498, opening a sea route from Europe to India."
+        },
+        {
+          "id": "daily-lion-king-1994-running-time",
+          "category": "movies",
+          "measure": "physics",
+          "subtype": "duration",
+          "prompt": "What is the running time of Disney's animated The Lion King (1994), in minutes?",
+          "answer": 88,
+          "min": 30,
+          "max": 120,
+          "scale": "linear",
+          "unit": "minute",
+          "source": {
+            "title": "Wikipedia — The Lion King",
+            "url": "https://en.wikipedia.org/wiki/The_Lion_King"
+          },
+          "explanation": "The 1994 animated Lion King runs for 88 minutes."
+        }
+      ]
+    },
+    {
+      "date": "2026-12-05",
+      "questions": [
+        {
+          "id": "daily-kenya-population-2023",
+          "category": "population",
+          "measure": "population",
+          "subtype": "country",
+          "prompt": "What was the estimated population of Kenya in 2023?",
+          "answer": 55339003,
+          "min": 4700000,
+          "max": 150000000,
+          "scale": "log",
+          "unit": "people",
+          "referenceYear": "2023 midyear estimate",
+          "source": {
+            "title": "Wikipedia — List of countries by population (United Nations), World Population Prospects 2024",
+            "url": "https://en.wikipedia.org/wiki/List_of_countries_by_population_(United_Nations)"
+          },
+          "explanation": "The UN's World Population Prospects 2024 puts Kenya's mid-2023 population at about 55.3 million."
+        },
+        {
+          "id": "daily-speed-of-light-kph",
+          "category": "science",
+          "measure": "physics",
+          "subtype": "speed",
+          "prompt": "How fast does light travel in a vacuum, in kilometres per hour?",
+          "answer": 1079252849,
+          "min": 270000,
+          "max": 28000000000,
+          "scale": "log",
+          "unit": "kph",
+          "source": {
+            "title": "Wikipedia — Speed of light",
+            "url": "https://en.wikipedia.org/wiki/Speed_of_light"
+          },
+          "explanation": "Light travels at exactly 299,792,458 metres per second, about 1.08 billion kilometres per hour."
+        },
+        {
+          "id": "daily-apollo-13-launch-year",
+          "category": "space",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did Apollo 13 launch on its ill-fated Moon mission?",
+          "answer": 1970,
+          "min": 1940,
+          "max": 1983,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "NASA — Apollo 13",
+            "url": "https://www.nasa.gov/mission/apollo-13/"
+          },
+          "explanation": "Apollo 13 launched on 11 April 1970 and splashed down on 17 April."
+        },
+        {
+          "id": "daily-thrustssc-land-speed-record",
+          "category": "technology",
+          "measure": "physics",
+          "subtype": "speed",
+          "prompt": "What speed did ThrustSSC reach to set the land speed record in 1997, in kilometres per hour?",
+          "answer": 1228,
+          "min": 580,
+          "max": 2900,
+          "scale": "linear",
+          "unit": "kph",
+          "source": {
+            "title": "Wikipedia — ThrustSSC",
+            "url": "https://en.wikipedia.org/wiki/ThrustSSC"
+          },
+          "explanation": "ThrustSSC reached 1,228 km/h on 15 October 1997, the first land vehicle to officially break the sound barrier."
+        },
+        {
+          "id": "daily-california-condor-soaring-altitude",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "Up to what altitude can California condors soar, in metres?",
+          "answer": 4600,
+          "min": 0,
+          "max": 5900,
+          "scale": "linear",
+          "unit": "metre",
+          "source": {
+            "title": "San Diego Zoo Wildlife Alliance — California Condor",
+            "url": "https://animals.sandiegozoo.org/animals/california-condor"
+          },
+          "explanation": "California condors can soar at altitudes of 15,000 feet, about 4,600 metres, and fly at 88 kilometres per hour."
+        }
+      ]
+    },
+    {
+      "date": "2026-12-06",
+      "questions": [
+        {
+          "id": "daily-lake-michigan-area",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "area",
+          "prompt": "What is the surface area of Lake Michigan, in square kilometres?",
+          "answer": 58030,
+          "min": 310,
+          "max": 160000,
+          "scale": "log",
+          "unit": "square-kilometre",
+          "source": {
+            "title": "Wikipedia — Lake Michigan",
+            "url": "https://en.wikipedia.org/wiki/Lake_Michigan"
+          },
+          "explanation": "Lake Michigan has a surface area of about 58,030 square kilometres."
+        },
+        {
+          "id": "daily-magellan-expedition-return-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did the survivors of Magellan's expedition complete the first circumnavigation?",
+          "answer": 1522,
+          "min": 1455,
+          "max": 1755,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Magellan expedition",
+            "url": "https://en.wikipedia.org/wiki/Magellan_expedition"
+          },
+          "explanation": "The expedition left Spain in 1519 and returned to Sanlúcar de Barrameda on 6 September 1522."
+        },
+        {
+          "id": "daily-bambi-release-year",
+          "category": "movies",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was Disney's Bambi first released?",
+          "answer": 1942,
+          "min": 1930,
+          "max": 2010,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Bambi",
+            "url": "https://en.wikipedia.org/wiki/Bambi"
+          },
+          "explanation": "Bambi premiered in London on 9 August 1942."
+        },
+        {
+          "id": "daily-argentina-population-2023",
+          "category": "population",
+          "measure": "population",
+          "subtype": "country",
+          "prompt": "What was the estimated population of Argentina in 2023?",
+          "answer": 45538401,
+          "min": 27000000,
+          "max": 680000000,
+          "scale": "log",
+          "unit": "people",
+          "referenceYear": "2023 midyear estimate",
+          "source": {
+            "title": "Wikipedia — List of countries by population (United Nations), World Population Prospects 2024",
+            "url": "https://en.wikipedia.org/wiki/List_of_countries_by_population_(United_Nations)"
+          },
+          "explanation": "The UN's World Population Prospects 2024 puts Argentina's mid-2023 population at about 45.5 million."
+        },
+        {
+          "id": "daily-special-relativity-year",
+          "category": "science",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did Albert Einstein publish his theory of special relativity?",
+          "answer": 1905,
+          "min": 1820,
+          "max": 1930,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Special relativity",
+            "url": "https://en.wikipedia.org/wiki/Special_relativity"
+          },
+          "explanation": "Einstein set out special relativity in 1905, the same year he showed that E = mc²."
+        }
+      ]
+    },
+    {
+      "date": "2026-12-07",
+      "questions": [
+        {
+          "id": "daily-cassini-saturn-orbit-year",
+          "category": "space",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did Cassini become the first spacecraft to orbit Saturn?",
+          "answer": 2004,
+          "min": 1976,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "NASA Science — Cassini",
+            "url": "https://science.nasa.gov/mission/cassini/"
+          },
+          "explanation": "Cassini began its close study of Saturn, its rings and moons in 2004, the first spacecraft to orbit the planet."
+        },
+        {
+          "id": "daily-shanghai-tower-height",
+          "category": "technology",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How tall is the Shanghai Tower, in metres?",
+          "answer": 632,
+          "min": 450,
+          "max": 1600,
+          "scale": "linear",
+          "unit": "metre",
+          "source": {
+            "title": "Wikipedia — Shanghai Tower",
+            "url": "https://en.wikipedia.org/wiki/Shanghai_Tower"
+          },
+          "explanation": "The Shanghai Tower has an architectural height of 632 metres."
+        },
+        {
+          "id": "daily-capybara-shoulder-height",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How tall does a capybara, the world's largest rodent, stand at the shoulder, in metres?",
+          "answer": 0.6,
+          "min": 0.17,
+          "max": 2.2,
+          "scale": "linear",
+          "unit": "metre",
+          "source": {
+            "title": "San Diego Zoo Wildlife Alliance — Capybara",
+            "url": "https://animals.sandiegozoo.org/animals/capybara"
+          },
+          "explanation": "A capybara stands about 2 feet, or 60 centimetres, tall at the shoulder."
+        },
+        {
+          "id": "daily-pachycephalosaurus-weight",
+          "category": "dinosaurs",
+          "measure": "size",
+          "subtype": "mass",
+          "prompt": "How much did the dome-headed Pachycephalosaurus weigh, in kilograms?",
+          "answer": 450,
+          "min": 65,
+          "max": 65000,
+          "scale": "log",
+          "unit": "kilogram",
+          "source": {
+            "title": "Natural History Museum — Pachycephalosaurus, Dino Directory",
+            "url": "https://www.nhm.ac.uk/discover/dino-directory/pachycephalosaurus.html"
+          },
+          "explanation": "The Natural History Museum gives Pachycephalosaurus a weight of 450 kilograms and a length of 3 metres."
+        },
+        {
+          "id": "daily-sonic-the-hedgehog-release-year",
+          "category": "games",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did Sega release the first Sonic the Hedgehog game?",
+          "answer": 1991,
+          "min": 1955,
+          "max": 1995,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Sonic the Hedgehog (1991 video game)",
+            "url": "https://en.wikipedia.org/wiki/Sonic_the_Hedgehog_(1991_video_game)"
+          },
+          "explanation": "The original Sonic the Hedgehog game came out in 1991."
+        }
+      ]
+    },
+    {
+      "date": "2026-12-08",
+      "questions": [
+        {
+          "id": "daily-fantasia-running-time",
+          "category": "movies",
+          "measure": "physics",
+          "subtype": "duration",
+          "prompt": "What is the running time of Disney's Fantasia (1940), in minutes?",
+          "answer": 126,
+          "min": 40,
+          "max": 160,
+          "scale": "linear",
+          "unit": "minute",
+          "source": {
+            "title": "Wikipedia — Fantasia (1940 film)",
+            "url": "https://en.wikipedia.org/wiki/Fantasia_(1940_film)"
+          },
+          "explanation": "Fantasia runs for 126 minutes."
+        },
+        {
+          "id": "daily-seattle-census-population-2020",
+          "category": "population",
+          "measure": "population",
+          "subtype": "city",
+          "prompt": "What was Seattle's population in the 2020 U.S. Census?",
+          "answer": 737015,
+          "min": 290000,
+          "max": 7800000,
+          "scale": "log",
+          "unit": "people",
+          "referenceYear": "2020 decennial census (city proper)",
+          "source": {
+            "title": "Wikipedia — List of United States cities by population (2020 census)",
+            "url": "https://en.wikipedia.org/wiki/List_of_United_States_cities_by_population"
+          },
+          "explanation": "The 2020 census counted 737,015 residents inside Seattle's city limits."
+        },
+        {
+          "id": "daily-first-heart-transplant-year",
+          "category": "science",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was the first human-to-human heart transplant performed?",
+          "answer": 1967,
+          "min": 1916,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Heart transplantation",
+            "url": "https://en.wikipedia.org/wiki/Heart_transplantation"
+          },
+          "explanation": "Christiaan Barnard's team transplanted a heart into Louis Washkansky in Cape Town on 3 December 1967."
+        },
+        {
+          "id": "daily-pluto-discovery-year",
+          "category": "space",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was Pluto discovered?",
+          "answer": 1930,
+          "min": 1816,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "NASA Science — Pluto Facts",
+            "url": "https://science.nasa.gov/dwarf-planets/pluto/facts/"
+          },
+          "explanation": "Pluto was discovered in 1930 and was long counted as the Solar System's ninth planet."
+        },
+        {
+          "id": "daily-trans-siberian-railway-length",
+          "category": "technology",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How long is the Trans-Siberian Railway line from Moscow to Vladivostok, in kilometres?",
+          "answer": 9289,
+          "min": 6200,
+          "max": 26000,
+          "scale": "linear",
+          "unit": "kilometre",
+          "source": {
+            "title": "Wikipedia — Trans-Siberian Railway",
+            "url": "https://en.wikipedia.org/wiki/Trans-Siberian_Railway"
+          },
+          "explanation": "The Trans-Siberian Railway's main line is 9,289 kilometres long."
+        }
+      ]
+    },
+    {
+      "date": "2026-12-09",
+      "questions": [
+        {
+          "id": "daily-yellowstone-bull-moose-weight",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "mass",
+          "prompt": "About how much does an adult bull moose in Yellowstone weigh, in kilograms?",
+          "answer": 454,
+          "min": 31,
+          "max": 1300,
+          "scale": "log",
+          "unit": "kilogram",
+          "source": {
+            "title": "National Park Service — Yellowstone Moose",
+            "url": "https://www.nps.gov/yell/learn/nature/moose.htm"
+          },
+          "explanation": "The park service says an adult bull moose weighs close to 1,000 pounds, about 454 kilograms."
+        },
+        {
+          "id": "daily-brachiosaurus-naming-year",
+          "category": "dinosaurs",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was Brachiosaurus named?",
+          "answer": 1903,
+          "min": 1846,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Natural History Museum — Brachiosaurus, Dino Directory",
+            "url": "https://www.nhm.ac.uk/discover/dino-directory/brachiosaurus.html"
+          },
+          "explanation": "Brachiosaurus was named by Riggs in 1903."
+        },
+        {
+          "id": "daily-tarot-deck-card-count",
+          "category": "games",
+          "measure": "quantity",
+          "subtype": "count",
+          "prompt": "How many cards are in a standard tarot deck?",
+          "answer": 78,
+          "min": 57,
+          "max": 190,
+          "scale": "linear",
+          "unit": "count",
+          "source": {
+            "title": "Wikipedia — Tarot",
+            "url": "https://en.wikipedia.org/wiki/Tarot"
+          },
+          "explanation": "A tarot pack combines trumps, the Fool and four suits for a total of 78 cards."
+        },
+        {
+          "id": "daily-ganges-length",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "How long is the Ganges River, in kilometres?",
+          "answer": 2525,
+          "min": 0,
+          "max": 3600,
+          "scale": "linear",
+          "unit": "kilometre",
+          "source": {
+            "title": "Wikipedia — Ganges",
+            "url": "https://en.wikipedia.org/wiki/Ganges"
+          },
+          "explanation": "The Ganges flows for about 2,525 kilometres."
+        },
+        {
+          "id": "daily-gettysburg-address-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did Abraham Lincoln deliver the Gettysburg Address?",
+          "answer": 1863,
+          "min": 1815,
+          "max": 1989,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Gettysburg Address",
+            "url": "https://en.wikipedia.org/wiki/Gettysburg_Address"
+          },
+          "explanation": "Lincoln gave the Gettysburg Address on 19 November 1863."
+        }
+      ]
+    },
+    {
+      "date": "2026-12-10",
+      "questions": [
+        {
+          "id": "daily-human-liver-mass",
+          "category": "science",
+          "measure": "size",
+          "subtype": "mass",
+          "prompt": "About how much does an adult human liver weigh, in kilograms?",
+          "answer": 1.5,
+          "min": 0.4,
+          "max": 42,
+          "scale": "log",
+          "unit": "kilogram",
+          "source": {
+            "title": "Wikipedia — Liver",
+            "url": "https://en.wikipedia.org/wiki/Liver"
+          },
+          "explanation": "A human liver normally weighs about 1.5 kilograms."
+        },
+        {
+          "id": "daily-ceres-radius",
+          "category": "space",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "What is the radius of the dwarf planet Ceres, in kilometres?",
+          "answer": 476,
+          "min": 210,
+          "max": 32000,
+          "scale": "log",
+          "unit": "kilometre",
+          "source": {
+            "title": "NASA Science — Ceres Facts",
+            "url": "https://science.nasa.gov/dwarf-planets/ceres/facts/"
+          },
+          "explanation": "Ceres has a radius of 476 kilometres, about one-thirteenth of Earth's."
+        },
+        {
+          "id": "daily-ford-model-t-introduction-year",
+          "category": "technology",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did Ford introduce the Model T?",
+          "answer": 1908,
+          "min": 1885,
+          "max": 1975,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Ford Model T",
+            "url": "https://en.wikipedia.org/wiki/Ford_Model_T"
+          },
+          "explanation": "Ford built the Model T from 1908 to 1927."
+        },
+        {
+          "id": "daily-sperm-whale-male-length",
+          "category": "animals",
+          "measure": "size",
+          "subtype": "length",
+          "prompt": "Up to how long can a male sperm whale grow, in metres?",
+          "answer": 15.8,
+          "min": 0,
+          "max": 19,
+          "scale": "linear",
+          "unit": "metre",
+          "source": {
+            "title": "NOAA Fisheries — Sperm Whale",
+            "url": "https://www.fisheries.noaa.gov/species/sperm-whale"
+          },
+          "explanation": "Male sperm whales reach up to 52 feet, about 15.8 metres; females up to 40 feet."
+        },
+        {
+          "id": "daily-allosaurus-naming-year",
+          "category": "dinosaurs",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was Allosaurus named?",
+          "answer": 1877,
+          "min": 1715,
+          "max": 1905,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Natural History Museum — Allosaurus, Dino Directory",
+            "url": "https://www.nhm.ac.uk/discover/dino-directory/allosaurus.html"
+          },
+          "explanation": "Allosaurus was named by the palaeontologist Othniel Marsh in 1877."
+        }
+      ]
+    },
+    {
+      "date": "2026-12-11",
+      "questions": [
+        {
+          "id": "daily-angry-birds-release-year",
+          "category": "games",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was the first Angry Birds game released?",
+          "answer": 2009,
+          "min": 1985,
+          "max": 2015,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Angry Birds (video game)",
+            "url": "https://en.wikipedia.org/wiki/Angry_Birds_(video_game)"
+          },
+          "explanation": "The original Angry Birds was released in 2009."
+        },
+        {
+          "id": "daily-borneo-area",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "area",
+          "prompt": "What is the area of Borneo, the world's third-largest island, in square kilometres?",
+          "answer": 748168,
+          "min": 0,
+          "max": 2700000,
+          "scale": "linear",
+          "unit": "square-kilometre",
+          "source": {
+            "title": "Wikipedia — Borneo",
+            "url": "https://en.wikipedia.org/wiki/Borneo"
+          },
+          "explanation": "Borneo covers about 748,000 square kilometres, shared by Indonesia, Malaysia and Brunei."
+        },
+        {
+          "id": "daily-black-death-reaches-europe-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did the Black Death pandemic reach Europe?",
+          "answer": 1347,
+          "min": 880,
+          "max": 1480,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Black Death",
+            "url": "https://en.wikipedia.org/wiki/Black_Death"
+          },
+          "explanation": "The plague pandemic known as the Black Death arrived in Europe in 1347."
+        },
+        {
+          "id": "daily-rocky-1976-budget",
+          "category": "movies",
+          "measure": "quantity",
+          "subtype": "money",
+          "prompt": "What was the budget of the original Rocky (1976), in the dollars of the day?",
+          "answer": 1000000,
+          "min": 180000,
+          "max": 360000000,
+          "scale": "log",
+          "unit": "usd",
+          "referenceYear": "1976",
+          "source": {
+            "title": "Wikipedia — Rocky",
+            "url": "https://en.wikipedia.org/wiki/Rocky"
+          },
+          "explanation": "Rocky was made for about $1 million and grossed about $225 million."
+        },
+        {
+          "id": "daily-boston-census-population-2020",
+          "category": "population",
+          "measure": "population",
+          "subtype": "city",
+          "prompt": "What was Boston's population in the 2020 U.S. Census?",
+          "answer": 675647,
+          "min": 96000,
+          "max": 1500000,
+          "scale": "log",
+          "unit": "people",
+          "referenceYear": "2020 decennial census (city proper)",
+          "source": {
+            "title": "Wikipedia — List of United States cities by population (2020 census)",
+            "url": "https://en.wikipedia.org/wiki/List_of_United_States_cities_by_population"
+          },
+          "explanation": "The 2020 census counted 675,647 residents inside Boston's city limits."
+        }
+      ]
+    },
+    {
+      "date": "2026-12-12",
+      "questions": [
+        {
+          "id": "daily-de-havilland-comet-service-year",
+          "category": "technology",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did the de Havilland Comet, the first commercial jet airliner, enter passenger service?",
+          "answer": 1952,
+          "min": 1900,
+          "max": 1970,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — de Havilland Comet",
+            "url": "https://en.wikipedia.org/wiki/De_Havilland_Comet"
+          },
+          "explanation": "The Comet entered service with BOAC on 2 May 1952, three years after its first flight."
+        },
+        {
+          "id": "daily-narwhal-lifespan",
+          "category": "animals",
+          "measure": "physics",
+          "subtype": "duration",
+          "prompt": "Up to how many years can a narwhal live?",
+          "answer": 50,
+          "min": 17,
+          "max": 170,
+          "scale": "linear",
+          "unit": "duration-year",
+          "source": {
+            "title": "NOAA Fisheries — Narwhal",
+            "url": "https://www.fisheries.noaa.gov/species/narwhal"
+          },
+          "explanation": "Narwhals can live up to 50 years."
+        },
+        {
+          "id": "daily-gallimimus-age",
+          "category": "dinosaurs",
+          "measure": "physics",
+          "subtype": "duration",
+          "prompt": "About how many years ago did the ostrich-like Gallimimus live?",
+          "answer": 70000000,
+          "min": 10000000,
+          "max": 4000000000,
+          "scale": "log",
+          "unit": "duration-year",
+          "source": {
+            "title": "Natural History Museum — Gallimimus, Dino Directory",
+            "url": "https://www.nhm.ac.uk/discover/dino-directory/gallimimus.html"
+          },
+          "explanation": "Gallimimus lived in the Late Cretaceous, about 70 million years ago, in what is now Mongolia."
+        },
+        {
+          "id": "daily-halo-combat-evolved-release-year",
+          "category": "games",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was Halo: Combat Evolved released?",
+          "answer": 2001,
+          "min": 1991,
+          "max": 2026,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Halo: Combat Evolved",
+            "url": "https://en.wikipedia.org/wiki/Halo:_Combat_Evolved"
+          },
+          "explanation": "Halo: Combat Evolved was released in 2001."
+        },
+        {
+          "id": "daily-atacama-desert-area",
+          "category": "geography",
+          "measure": "size",
+          "subtype": "area",
+          "prompt": "What area does Chile's Atacama Desert cover, in square kilometres?",
+          "answer": 104741,
+          "min": 1400,
+          "max": 560000,
+          "scale": "log",
+          "unit": "square-kilometre",
+          "source": {
+            "title": "Wikipedia — Atacama Desert",
+            "url": "https://en.wikipedia.org/wiki/Atacama_Desert"
+          },
+          "explanation": "The Atacama Desert covers about 104,700 square kilometres."
+        }
+      ]
+    },
+    {
+      "date": "2026-12-13",
+      "questions": [
+        {
+          "id": "daily-genghis-khan-death-year",
+          "category": "history",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year did Genghis Khan die?",
+          "answer": 1227,
+          "min": 835,
+          "max": 1335,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Genghis Khan",
+            "url": "https://en.wikipedia.org/wiki/Genghis_Khan"
+          },
+          "explanation": "Genghis Khan, founder of the Mongol Empire, died in 1227."
+        },
+        {
+          "id": "daily-ghostbusters-release-year",
+          "category": "movies",
+          "measure": "history",
+          "subtype": "event",
+          "prompt": "In what year was the original Ghostbusters released?",
+          "answer": 1984,
+          "min": 1935,
+          "max": 1995,
+          "scale": "linear",
+          "unit": "year",
+          "source": {
+            "title": "Wikipedia — Ghostbusters",
+            "url": "https://en.wikipedia.org/wiki/Ghostbusters"
+          },
+          "explanation": "Ghostbusters was released on 8 June 1984."
+        },
+        {
+          "id": "daily-detroit-census-population-2020",
+          "category": "population",
+          "measure": "population",
+          "subtype": "city",
+          "prompt": "What was Detroit's population in the 2020 U.S. Census?",
+          "answer": 639111,
+          "min": 100000,
+          "max": 800000,
+          "scale": "linear",
+          "unit": "people",
+          "referenceYear": "2020 decennial census (city proper)",
+          "source": {
+            "title": "Wikipedia — List of United States cities by population (2020 census)",
+            "url": "https://en.wikipedia.org/wiki/List_of_United_States_cities_by_population"
+          },
+          "explanation": "The 2020 census counted 639,111 residents inside Detroit's city limits."
+        },
+        {
+          "id": "daily-oxygen-share-of-earths-crust",
+          "category": "science",
+          "measure": "quantity",
+          "subtype": "percentage",
+          "prompt": "What share of the Earth's crust, by mass, is oxygen?",
+          "answer": 46.1,
+          "min": 0,
+          "max": 100,
+          "scale": "linear",
+          "unit": "percent",
+          "source": {
+            "title": "Wikipedia — Abundance of elements in Earth's crust",
+            "url": "https://en.wikipedia.org/wiki/Abundance_of_elements_in_Earth%27s_crust"
+          },
+          "explanation": "Oxygen makes up about 46.1 per cent of the crust by mass, more than any other element; silicon is next at 28.2."
+        },
+        {
+          "id": "daily-mercury-orbital-speed",
+          "category": "space",
+          "measure": "physics",
+          "subtype": "speed",
+          "prompt": "How fast does Mercury travel along its orbit, in kilometres per hour?",
+          "answer": 169200,
+          "min": 59000,
+          "max": 450000,
+          "scale": "linear",
+          "unit": "kph",
+          "source": {
+            "title": "NASA Science — Mercury Facts",
+            "url": "https://science.nasa.gov/mercury/facts/"
+          },
+          "explanation": "Mercury moves at nearly 47 kilometres per second, about 169,000 km/h, faster than any other planet."
+        }
+      ]
     }
   ]
 }
